@@ -1,0 +1,11 @@
+pub_on_prop: true
+use_ros_time_now: false
+verbose: false
+verbose_out_of_order: false
+discard_ooo_prop_meas: true
+
+use_tcpnodelay: true
+
+pub_cb_buffer_size: 1
+sub_imu_cb_buffer_size: 200
+sub_sensor_cb_buffer_size: 1

@@ -1,0 +1,21 @@
+FROM ros:kinetic-ros-core
+
+LABEL maintainer="Christian Brommer <christian.brommer@aau.at>"
+LABEL description="Mars Ros Wrapper Test Environment"
+
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN apt-get update && apt-get install -y vim wget doxygen graphviz build-essential && rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update && apt-get install -y libeigen3-dev && rm -rf /var/lib/apt/lists/*
+
+#RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu `lsb_release -sc` main" > /etc/apt/sources.list.d/ros-latest.list'
+#RUN wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
+RUN apt-get update && apt-get install -y python-catkin-tools ros-kinetic-dynamic-reconfigure
+
+RUN mkdir -p /catkin_ws/src
+WORKDIR /catkin_ws
+RUN /bin/bash -c '. /opt/ros/kinetic/setup.bash; catkin build'
+
+COPY ./docker_application_test.sh /
+CMD /docker_application_test.sh

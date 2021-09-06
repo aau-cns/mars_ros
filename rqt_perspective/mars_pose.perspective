@@ -1,0 +1,418 @@
+{
+  "keys": {},
+  "groups": {
+    "pluginmanager": {
+      "keys": {
+        "running-plugins": {
+          "type": "repr",
+          "repr": "{u'rqt_reconfigure/Param': [1], u'rqt_plot/Plot': [7, 6, 5, 4, 3, 2, 1]}"
+        }
+      },
+      "groups": {
+        "plugin__rqt_reconfigure__Param__1": {
+          "keys": {},
+          "groups": {
+            "dock_widget___plugincontainer_top_widget": {
+              "keys": {
+                "dockable": {
+                  "type": "repr",
+                  "repr": "True"
+                },
+                "parent": {
+                  "type": "repr",
+                  "repr": "None"
+                },
+                "dock_widget_title": {
+                  "type": "repr",
+                  "repr": "u'Dynamic Reconfigure'"
+                }
+              },
+              "groups": {}
+            },
+            "plugin": {
+              "keys": {
+                "expanded_nodes": {
+                  "type": "repr",
+                  "repr": "[]"
+                },
+                "splitter": {
+                  "type": "repr(QByteArray.hex)",
+                  "repr(QByteArray.hex)": "QtCore.QByteArray('000000ff0000000100000002000000ae0000006401ffffffff010000000100')",
+                  "pretty-print": "         d     "
+                },
+                "selected_nodes": {
+                  "type": "repr",
+                  "repr": "[]"
+                },
+                "_splitter": {
+                  "type": "repr(QByteArray.hex)",
+                  "repr(QByteArray.hex)": "QtCore.QByteArray('000000ff00000001000000020000012c000000640100000009010000000200')",
+                  "pretty-print": "       , d     "
+                },
+                "text": {
+                  "type": "repr",
+                  "repr": "u''"
+                }
+              },
+              "groups": {}
+            }
+          }
+        },
+        "plugin__rqt_plot__Plot__1": {
+          "keys": {},
+          "groups": {
+            "dock_widget__DataPlotWidget": {
+              "keys": {
+                "dockable": {
+                  "type": "repr",
+                  "repr": "True"
+                },
+                "parent": {
+                  "type": "repr",
+                  "repr": "None"
+                },
+                "dock_widget_title": {
+                  "type": "repr",
+                  "repr": "u'p_wi'"
+                }
+              },
+              "groups": {}
+            },
+            "plugin": {
+              "keys": {
+                "autoscroll": {
+                  "type": "repr",
+                  "repr": "True"
+                },
+                "plot_type": {
+                  "type": "repr",
+                  "repr": "0"
+                },
+                "topics": {
+                  "type": "repr",
+                  "repr": "[u'/mars_pose_node/full_state_out/p_wi/y', u'/mars_pose_node/full_state_out/p_wi/x', u'/mars_pose_node/full_state_out/p_wi/z']"
+                },
+                "y_limits": {
+                  "type": "repr",
+                  "repr": "[-3.814964659477894, 0.9920244450741658]"
+                },
+                "x_limits": {
+                  "type": "repr",
+                  "repr": "[0.0, 30.0]"
+                }
+              },
+              "groups": {}
+            }
+          }
+        },
+        "plugin__rqt_plot__Plot__2": {
+          "keys": {},
+          "groups": {
+            "dock_widget__DataPlotWidget": {
+              "keys": {
+                "dockable": {
+                  "type": "repr",
+                  "repr": "True"
+                },
+                "parent": {
+                  "type": "repr",
+                  "repr": "None"
+                },
+                "dock_widget_title": {
+                  "type": "repr",
+                  "repr": "u'p_ip'"
+                }
+              },
+              "groups": {}
+            },
+            "plugin": {
+              "keys": {
+                "autoscroll": {
+                  "type": "repr",
+                  "repr": "True"
+                },
+                "plot_type": {
+                  "type": "repr",
+                  "repr": "0"
+                },
+                "topics": {
+                  "type": "repr",
+                  "repr": "[u'/mars_pose_node/pose_cal_state_out/pose/position/z', u'/mars_pose_node/pose_cal_state_out/pose/position/x', u'/mars_pose_node/pose_cal_state_out/pose/position/y']"
+                },
+                "y_limits": {
+                  "type": "repr",
+                  "repr": "[-0.05048779059722195, 0.056052055950202705]"
+                },
+                "x_limits": {
+                  "type": "repr",
+                  "repr": "[0.0, 30.0]"
+                }
+              },
+              "groups": {}
+            }
+          }
+        },
+        "plugin__rqt_plot__Plot__3": {
+          "keys": {},
+          "groups": {
+            "dock_widget__DataPlotWidget": {
+              "keys": {
+                "dockable": {
+                  "type": "repr",
+                  "repr": "True"
+                },
+                "parent": {
+                  "type": "repr",
+                  "repr": "None"
+                },
+                "dock_widget_title": {
+                  "type": "repr",
+                  "repr": "u'q_wi'"
+                }
+              },
+              "groups": {}
+            },
+            "plugin": {
+              "keys": {
+                "autoscroll": {
+                  "type": "repr",
+                  "repr": "True"
+                },
+                "plot_type": {
+                  "type": "repr",
+                  "repr": "0"
+                },
+                "topics": {
+                  "type": "repr",
+                  "repr": "[u'/mars_pose_node/full_state_out/q_wi/z', u'/mars_pose_node/full_state_out/q_wi/x', u'/mars_pose_node/full_state_out/q_wi/y', u'/mars_pose_node/full_state_out/q_wi/w']"
+                },
+                "y_limits": {
+                  "type": "repr",
+                  "repr": "[-1.0806026456805824, 1.1203829288943499]"
+                },
+                "x_limits": {
+                  "type": "repr",
+                  "repr": "[0.0, 30.0]"
+                }
+              },
+              "groups": {}
+            }
+          }
+        },
+        "plugin__rqt_plot__Plot__4": {
+          "keys": {},
+          "groups": {
+            "dock_widget__DataPlotWidget": {
+              "keys": {
+                "dockable": {
+                  "type": "repr",
+                  "repr": "True"
+                },
+                "parent": {
+                  "type": "repr",
+                  "repr": "None"
+                },
+                "dock_widget_title": {
+                  "type": "repr",
+                  "repr": "u'q_ip'"
+                }
+              },
+              "groups": {}
+            },
+            "plugin": {
+              "keys": {
+                "autoscroll": {
+                  "type": "repr",
+                  "repr": "True"
+                },
+                "plot_type": {
+                  "type": "repr",
+                  "repr": "0"
+                },
+                "topics": {
+                  "type": "repr",
+                  "repr": "[u'/mars_pose_node/pose_cal_state_out/pose/orientation/z', u'/mars_pose_node/pose_cal_state_out/pose/orientation/x', u'/mars_pose_node/pose_cal_state_out/pose/orientation/y', u'/mars_pose_node/pose_cal_state_out/pose/orientation/w']"
+                },
+                "y_limits": {
+                  "type": "repr",
+                  "repr": "[-0.0808926055261009, 1.051978893318994]"
+                },
+                "x_limits": {
+                  "type": "repr",
+                  "repr": "[0.0, 30.0]"
+                }
+              },
+              "groups": {}
+            }
+          }
+        },
+        "plugin__rqt_plot__Plot__5": {
+          "keys": {},
+          "groups": {
+            "dock_widget__DataPlotWidget": {
+              "keys": {
+                "dockable": {
+                  "type": "repr",
+                  "repr": "True"
+                },
+                "parent": {
+                  "type": "repr",
+                  "repr": "None"
+                },
+                "dock_widget_title": {
+                  "type": "repr",
+                  "repr": "u'Bias Gyro'"
+                }
+              },
+              "groups": {}
+            },
+            "plugin": {
+              "keys": {
+                "autoscroll": {
+                  "type": "repr",
+                  "repr": "True"
+                },
+                "plot_type": {
+                  "type": "repr",
+                  "repr": "0"
+                },
+                "topics": {
+                  "type": "repr",
+                  "repr": "[u'/mars_pose_node/full_state_out/b_w/z', u'/mars_pose_node/full_state_out/b_w/y', u'/mars_pose_node/full_state_out/b_w/x']"
+                },
+                "y_limits": {
+                  "type": "repr",
+                  "repr": "[-0.6192956046950763, 1.024670028147415]"
+                },
+                "x_limits": {
+                  "type": "repr",
+                  "repr": "[0.0, 30.0]"
+                }
+              },
+              "groups": {}
+            }
+          }
+        },
+        "plugin__rqt_plot__Plot__6": {
+          "keys": {},
+          "groups": {
+            "dock_widget__DataPlotWidget": {
+              "keys": {
+                "dockable": {
+                  "type": "repr",
+                  "repr": "True"
+                },
+                "parent": {
+                  "type": "repr",
+                  "repr": "None"
+                },
+                "dock_widget_title": {
+                  "type": "repr",
+                  "repr": "u'Bias Acc'"
+                }
+              },
+              "groups": {}
+            },
+            "plugin": {
+              "keys": {
+                "autoscroll": {
+                  "type": "repr",
+                  "repr": "True"
+                },
+                "plot_type": {
+                  "type": "repr",
+                  "repr": "0"
+                },
+                "topics": {
+                  "type": "repr",
+                  "repr": "[u'/mars_pose_node/full_state_out/b_a/y', u'/mars_pose_node/full_state_out/b_a/x', u'/mars_pose_node/full_state_out/b_a/z']"
+                },
+                "y_limits": {
+                  "type": "repr",
+                  "repr": "[0.0, 1.0]"
+                },
+                "x_limits": {
+                  "type": "repr",
+                  "repr": "[0.0, 30.0]"
+                }
+              },
+              "groups": {}
+            }
+          }
+        },
+        "plugin__rqt_plot__Plot__7": {
+          "keys": {},
+          "groups": {
+            "dock_widget__DataPlotWidget": {
+              "keys": {
+                "dockable": {
+                  "type": "repr",
+                  "repr": "True"
+                },
+                "parent": {
+                  "type": "repr",
+                  "repr": "None"
+                },
+                "dock_widget_title": {
+                  "type": "repr",
+                  "repr": "u'v_wi'"
+                }
+              },
+              "groups": {}
+            },
+            "plugin": {
+              "keys": {
+                "autoscroll": {
+                  "type": "repr",
+                  "repr": "True"
+                },
+                "plot_type": {
+                  "type": "repr",
+                  "repr": "0"
+                },
+                "topics": {
+                  "type": "repr",
+                  "repr": "[u'/mars_pose_node/full_state_out/v_wi/z', u'/mars_pose_node/full_state_out/v_wi/y', u'/mars_pose_node/full_state_out/v_wi/x']"
+                },
+                "y_limits": {
+                  "type": "repr",
+                  "repr": "[0.0, 1.0]"
+                },
+                "x_limits": {
+                  "type": "repr",
+                  "repr": "[0.0, 30.0]"
+                }
+              },
+              "groups": {}
+            }
+          }
+        }
+      }
+    },
+    "mainwindow": {
+      "keys": {
+        "geometry": {
+          "type": "repr(QByteArray.hex)",
+          "repr(QByteArray.hex)": "QtCore.QByteArray('01d9d0cb000200000000004100000018000009ff0000059f0000004100000018000009ff0000059f00000000000000000a00')",
+          "pretty-print": "     A       A           "
+        },
+        "state": {
+          "type": "repr(QByteArray.hex)",
+          "repr(QByteArray.hex)": "QtCore.QByteArray('000000ff00000000fd0000000100000003000009bf00000572fc0100000003fc000000000000033c0000017800fffffffc0200000002fb00000042007200710074005f0070006c006f0074005f005f0050006c006f0074005f005f0031005f005f00440061007400610050006c006f0074005700690064006700650074010000000000000297000000a700fffffffb00000042007200710074005f0070006c006f0074005f005f0050006c006f0074005f005f0033005f005f00440061007400610050006c006f0074005700690064006700650074010000029d000002d5000000a700fffffffc000003420000033b0000017800fffffffc0200000002fb00000042007200710074005f0070006c006f0074005f005f0050006c006f0074005f005f0032005f005f00440061007400610050006c006f0074005700690064006700650074010000000000000294000000a700fffffffb00000042007200710074005f0070006c006f0074005f005f0050006c006f0074005f005f0034005f005f00440061007400610050006c006f0074005700690064006700650074010000029a000002d8000000a700fffffffc000006830000033c0000017800fffffffc0200000003fc000000000000028f0000012d0100001dfa000000000100000002fb00000042007200710074005f0070006c006f0074005f005f0050006c006f0074005f005f0037005f005f00440061007400610050006c006f00740057006900640067006500740100000000ffffffff0000017800fffffffb0000006c007200710074005f007200650063006f006e006600690067007500720065005f005f0050006100720061006d005f005f0031005f005f005f0070006c007500670069006e0063006f006e007400610069006e00650072005f0074006f0070005f00770069006400670065007401000006830000033c0000010900fffffffb00000042007200710074005f0070006c006f0074005f005f0050006c006f0074005f005f0036005f005f00440061007400610050006c006f007400570069006400670065007401000002950000015e000000a700fffffffb00000042007200710074005f0070006c006f0074005f005f0050006c006f0074005f005f0035005f005f00440061007400610050006c006f007400570069006400670065007401000003f900000179000000a700ffffff000009bf0000000000000004000000040000000800000008fc00000001000000030000000100000036004d0069006e0069006d0069007a006500640044006f0063006b00570069006400670065007400730054006f006f006c0062006100720000000000ffffffff0000000000000000')",
+          "pretty-print": "                   < x                                                                                                          Brqt_plot__Plot__2__DataPlotWidget          Brqt_plot__Plot__4__DataPlotWidget            < x                    Brqt_plot__Plot__7__DataPlotWidget          lrqt_reconfigure__Param__1___plugincontainer_top_widget          Brqt_plot__Plot__6__DataPlotWidget          Brqt_plot__Plot__5__DataPlotWidget                            6MinimizedDockWidgetsToolbar        "
+        }
+      },
+      "groups": {
+        "toolbar_areas": {
+          "keys": {
+            "MinimizedDockWidgetsToolbar": {
+              "type": "repr",
+              "repr": "8"
+            }
+          },
+          "groups": {}
+        }
+      }
+    }
+  }
+}

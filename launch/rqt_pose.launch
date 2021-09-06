@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<launch>
+  <node name = "mars_rqt" pkg = "rqt_gui" respawn = "false" type = "rqt_gui" output = "screen" args = "--perspective-file $(find mars_ros)/rqt_perspective/mars_pose.perspective"/>
+</launch>

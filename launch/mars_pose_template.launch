@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<launch>
+
+  <include file="$(find mars_ros)/launch/mars_pose.launch">
+
+    <!-- Input -->
+    <arg name="imu_in_topic" default="~imu_in_topic" />
+    <arg name="transform_in_topic" default="~transform_in_topic" />
+    <arg name="pose_in_topic" default="~pose_in" />
+    <arg name="pose_with_cov_in_topic" default="~pose_with_cov_in" />
+    <arg name="odom_in_topic" default="~odom_in" />
+
+    <!-- Output Core State -->
+    <arg name="full_state_out_topic" default="~full_state_out" />
+    <arg name="full_state_lite_out_topic" default="~full_state_lite_out" />
+    <arg name="pose_state_out_topic" default="~pose_state_out" />
+
+    <!-- Output Calibration State -->
+    <arg name="pose_cal_state_out_topic" default="~pose_cal_state_out" />
+
+    <!-- Node Options -->
+    <arg name="respawn" default="false" />
+
+  </include>
+
+</launch>
