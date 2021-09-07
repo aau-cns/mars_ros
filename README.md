@@ -59,7 +59,7 @@ $ catkin build
 ## Isolated Build with Docker
 
 ```sh
-$ cd mars_cpp # Enter the source directory
+$ cd mars_ros # Enter the source directory
 $ docker build --network=host -t mars_ros_test_env:latest . # Build the Docker image
 
 # The following runs the container, maps the source code (read only)
