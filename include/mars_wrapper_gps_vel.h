@@ -25,8 +25,11 @@
 #include <dynamic_reconfigure/server.h>
 #include <mars_ros/marsConfig.h>
 #include <message_filters/subscriber.h>
+#include <message_filters/sync_policies/approximate_time.h>
 #include <message_filters/time_synchronizer.h>
 #include <boost/bind/bind.hpp>
+
+#define APPROX_TIME_SYNC
 
 ///
 /// \brief The MarsWrapperGpsVel class MaRS multi GPS node
@@ -40,6 +43,9 @@ public:
   using GpsVelMsgFilter = message_filters::Subscriber<geometry_msgs::TwistWithCovarianceStamped>;
   using GpsMeasSyncFilter =
       message_filters::TimeSynchronizer<sensor_msgs::NavSatFix, geometry_msgs::TwistWithCovarianceStamped>;
+  using ApproxTimePolicy = message_filters::sync_policies::ApproximateTime<sensor_msgs::NavSatFix,
+                                                                           geometry_msgs::TwistWithCovarianceStamped>;
+  using GpsMeasApproxSyncFilter = message_filters::Synchronizer<ApproxTimePolicy>;
 
   // Settings
   bool publish_on_propagation_{ false };   ///< Set true to publish the core state on propagation
@@ -104,8 +110,12 @@ public:
 
   GpsCoordMsgFilter sub_gps1_coord_meas_;  ///< GPS 1 NavSatFix measurement subscriber
   GpsVelMsgFilter sub_gps1_vel_meas_;      ///< GPS 1 TwistWithCovarianceStamped measurement subscriber
-  GpsMeasSyncFilter sync_gps1_meas_;       ///< GPS 1 Measurement Synchronizer
 
+#ifndef APPROX_TIME_SYNC
+  GpsMeasSyncFilter sync_gps1_meas_;  ///< GPS 1 Measurement Synchronizer exact time
+#else
+  GpsMeasApproxSyncFilter sync_gps1_meas_;  ///< GPS 1 Measurement Synchronizer Approximate time
+#endif
   // Sensor Callbacks
   ///
   /// \brief ImuMeasurementCallback IMU measurment callback

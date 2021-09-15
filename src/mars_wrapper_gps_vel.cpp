@@ -30,7 +30,12 @@ using namespace mars;
 
 MarsWrapperGpsVel::MarsWrapperGpsVel(ros::NodeHandle nh)
   : reconfigure_cb_(boost::bind(&MarsWrapperGpsVel::configCallback, this, _1, _2))
+#if NOT APPROX_TIME_SYNC
   , sync_gps1_meas_(sub_gps1_coord_meas_, sub_gps1_vel_meas_, sub_sensor_cb_buffer_size_)
+#else
+  , sync_gps1_meas_(ApproxTimePolicy(3), sub_gps1_coord_meas_, sub_gps1_vel_meas_)
+#endif
+
   , p_wi_init_(0.0, 0.0, 0.0)
   , q_wi_init_(Eigen::Quaterniond::Identity())
 {
@@ -72,11 +77,11 @@ MarsWrapperGpsVel::MarsWrapperGpsVel(ros::NodeHandle nh)
 
   {  // Limit scope of temp variables
     Eigen::Matrix<double, 6, 1> gps_meas_std;
-    gps_meas_std << 0.50, 0.50, 0.50, 0.40, 0.40, 0.40;
+    gps_meas_std << 1, 1, 1, 0.80, 0.80, 0.80;
     gps1_sensor_sptr_->R_ = gps_meas_std.cwiseProduct(gps_meas_std);
 
     GpsVelSensorData gps_calibration;
-    gps_calibration.state_.p_ig_ = Eigen::Vector3d(0.3607, 0.4207, 0);
+    gps_calibration.state_.p_ig_ = Eigen::Vector3d(0.05, 0, -0.02);
     Eigen::Matrix<double, 9, 9> gps_cov;
     gps_cov.setZero();
     gps_cov.diagonal() << 1e-2, 1e-2, 1e-2, 1e-6, 1e-6, 1e-6, 1e-6, 1e-6, 1e-6;
