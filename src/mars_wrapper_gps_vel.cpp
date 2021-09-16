@@ -237,8 +237,11 @@ void MarsWrapperGpsVel::RunCoreStatePublisher()
   pub_ext_core_state_lite_.publish(
       MarsMsgConv::ExtCoreStateLiteToMsg(latest_state.timestamp_.get_seconds(), latest_core_state));
 
-  pub_core_pose_state_.publish(
+  geometry_msgs::PoseStamped core_pose_state(
       MarsMsgConv::ExtCoreStateToPoseMsg(latest_state.timestamp_.get_seconds(), latest_core_state));
+  core_pose_state.header.frame_id = "world";
+
+  pub_core_pose_state_.publish(core_pose_state);
 }
 
 void MarsWrapperGpsVel::GpsVelMeasurementUpdate(std::shared_ptr<mars::GpsVelSensorClass> sensor_sptr,
