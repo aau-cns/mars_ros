@@ -333,7 +333,7 @@ public:
   }
 
   static inline geometry_msgs::PoseWithCovarianceStamped MagStateToMsg(const double& t,
-                                                                          const mars::MagSensorStateType& mag_state)
+                                                                       const mars::MagSensorStateType& mag_state)
   {
     geometry_msgs::PoseWithCovarianceStamped pose_msg;
     pose_msg.header.stamp.fromSec(t);
