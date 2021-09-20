@@ -111,8 +111,7 @@ bool MarsWrapperPose::init()
   return true;
 }
 
-bool MarsWrapperPose::initServiceCallback(std_srvs::SetBool::Request& /*request*/,
-                                          std_srvs::SetBool::Response& res)
+bool MarsWrapperPose::initServiceCallback(std_srvs::SetBool::Request& /*request*/, std_srvs::SetBool::Response& res)
 {
   init();
   res.success = true;

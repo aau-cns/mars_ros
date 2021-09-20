@@ -22,6 +22,9 @@
 #ifdef GPS_VEL
 #include "mars_wrapper_gps_vel.h"
 #endif
+#ifdef GPS_MAG
+#include "mars_wrapper_gps_mag.h"
+#endif
 
 int main(int argc, char* argv[])
 {
@@ -47,6 +50,9 @@ int main(int argc, char* argv[])
 #endif
 #ifdef GPS_VEL
   MarsWrapperGpsVel mars_core(nh);
+#endif
+#ifdef GPS_MAG
+  MarsWrapperGpsMag mars_core(nh);
 #endif
 
   ros::spin();

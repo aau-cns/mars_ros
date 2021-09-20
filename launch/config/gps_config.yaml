@@ -1,8 +1,8 @@
 pub_on_prop: true
-use_ros_time_now: true
+use_ros_time_now: false
 verbose: false
-verbose_out_of_order: false
-discard_ooo_prop_meas: true
+verbose_out_of_order: true
+discard_ooo_prop_meas: false
 
 use_tcpnodelay: true
 

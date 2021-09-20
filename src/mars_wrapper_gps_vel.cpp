@@ -77,11 +77,11 @@ MarsWrapperGpsVel::MarsWrapperGpsVel(ros::NodeHandle nh)
 
   {  // Limit scope of temp variables
     Eigen::Matrix<double, 6, 1> gps_meas_std;
-    gps_meas_std << 1, 1, 1, 0.80, 0.80, 0.80;
+    gps_meas_std << 2, 2, 2, 0.80, 0.80, 0.80;
     gps1_sensor_sptr_->R_ = gps_meas_std.cwiseProduct(gps_meas_std);
 
     GpsVelSensorData gps_calibration;
-    gps_calibration.state_.p_ig_ = Eigen::Vector3d(0.05, 0, -0.02);
+    gps_calibration.state_.p_ig_ = Eigen::Vector3d(0, 0, 0);
     Eigen::Matrix<double, 9, 9> gps_cov;
     gps_cov.setZero();
     gps_cov.diagonal() << 1e-2, 1e-2, 1e-2, 1e-6, 1e-6, 1e-6, 1e-6, 1e-6, 1e-6;

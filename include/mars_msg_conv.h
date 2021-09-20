@@ -22,8 +22,9 @@
 #include <mars/sensors/gps/gps_sensor_state_type.h>
 #include <mars/sensors/gps_w_vel/gps_w_vel_measurement_type.h>
 #include <mars/sensors/gps_w_vel/gps_w_vel_sensor_state_type.h>
-
 #include <mars/sensors/imu/imu_measurement_type.h>
+#include <mars/sensors/mag/mag_measurement_type.h>
+#include <mars/sensors/mag/mag_sensor_state_type.h>
 #include <mars/sensors/pose/pose_measurement_type.h>
 #include <mars/sensors/pose/pose_sensor_state_type.h>
 #include <mars/sensors/position/position_measurement_type.h>
@@ -33,6 +34,7 @@
 #include <mars_ros/ExtCoreStateLite.h>
 #include <nav_msgs/Odometry.h>
 #include <sensor_msgs/Imu.h>
+#include <sensor_msgs/MagneticField.h>
 #include <sensor_msgs/NavSatFix.h>
 
 ///
@@ -284,7 +286,8 @@ public:
       const sensor_msgs::NavSatFix& msg_coord, const geometry_msgs::TwistWithCovarianceStamped& msg_vel)
   {
     return mars::GpsVelMeasurementType(msg_coord.latitude, msg_coord.longitude, msg_coord.altitude,
-                                       msg_vel.twist.twist.linear.x, msg_vel.twist.twist.linear.y, msg_vel.twist.twist.linear.z);
+                                       msg_vel.twist.twist.linear.x, msg_vel.twist.twist.linear.y,
+                                       msg_vel.twist.twist.linear.z);
   }
 
   static inline geometry_msgs::PoseWithCovarianceStamped GpsStateToMsg(const double& t,
@@ -320,6 +323,29 @@ public:
     pose_msg.pose.pose.orientation.y = 0;
     pose_msg.pose.pose.orientation.z = 0;
     pose_msg.pose.pose.orientation.w = 1;
+    return pose_msg;
+  }
+
+  static inline mars::MagMeasurementType MagMsgToMagMeas(const sensor_msgs::MagneticField& msg)
+  {
+    const Eigen::Vector3d mag_vector(msg.magnetic_field.x, msg.magnetic_field.y, msg.magnetic_field.z);
+    return mars::MagMeasurementType(mag_vector);
+  }
+
+  static inline geometry_msgs::PoseWithCovarianceStamped MagStateToMsg(const double& t,
+                                                                          const mars::MagSensorStateType& mag_state)
+  {
+    geometry_msgs::PoseWithCovarianceStamped pose_msg;
+    pose_msg.header.stamp.fromSec(t);
+
+    pose_msg.pose.pose.position.x = mag_state.mag_(0);
+    pose_msg.pose.pose.position.y = mag_state.mag_(1);
+    pose_msg.pose.pose.position.z = mag_state.mag_(2);
+
+    pose_msg.pose.pose.orientation.x = mag_state.q_im_.x();
+    pose_msg.pose.pose.orientation.y = mag_state.q_im_.y();
+    pose_msg.pose.pose.orientation.z = mag_state.q_im_.z();
+    pose_msg.pose.pose.orientation.w = mag_state.q_im_.w();
     return pose_msg;
   }
 };
