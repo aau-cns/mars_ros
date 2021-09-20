@@ -114,6 +114,8 @@ public:
     geometry_msgs::PoseStamped pose_msg;
     pose_msg.header.stamp.fromSec(t);
 
+    pose_msg.header.frame_id = "map";
+
     pose_msg.pose.position.x = core_state.p_wi_(0);
     pose_msg.pose.position.y = core_state.p_wi_(1);
     pose_msg.pose.position.z = core_state.p_wi_(2);
@@ -124,6 +126,29 @@ public:
     pose_msg.pose.orientation.z = q_wi(2);
     pose_msg.pose.orientation.w = q_wi(3);
     return pose_msg;
+  }
+
+  static inline nav_msgs::Odometry ExtCoreStateToOdomMsg(const double& t, const mars::CoreStateType& core_state)
+  {
+    nav_msgs::Odometry odom_msg;
+
+    odom_msg.header.stamp.fromSec(t);
+    odom_msg.header.frame_id = "map";
+    odom_msg.child_frame_id = "map";
+    odom_msg.pose.pose.position.x = core_state.p_wi_.x();
+    odom_msg.pose.pose.position.y = core_state.p_wi_.y();
+    odom_msg.pose.pose.position.z = core_state.p_wi_.z();
+
+    odom_msg.pose.pose.orientation.w = core_state.q_wi_.w();
+    odom_msg.pose.pose.orientation.x = core_state.q_wi_.x();
+    odom_msg.pose.pose.orientation.y = core_state.q_wi_.y();
+    odom_msg.pose.pose.orientation.z = core_state.q_wi_.z();
+
+    odom_msg.twist.twist.linear.x = core_state.v_wi_.x();
+    odom_msg.twist.twist.linear.y = core_state.v_wi_.y();
+    odom_msg.twist.twist.linear.z = core_state.v_wi_.z();
+
+    return odom_msg;
   }
 
   static inline mars::PositionMeasurementType PointMsgToPositionMeas(const geometry_msgs::PointStamped& msg)

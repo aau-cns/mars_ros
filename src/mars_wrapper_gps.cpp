@@ -17,6 +17,7 @@
 #include <mars/type_definitions/buffer_data_type.h>
 #include <mars/type_definitions/buffer_entry_type.h>
 #include <mars_msg_conv.h>
+#include <nav_msgs/Odometry.h>
 #include <ros/ros.h>
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/NavSatFix.h>
@@ -92,6 +93,7 @@ MarsWrapperGps::MarsWrapperGps(ros::NodeHandle nh)
   pub_ext_core_state_ = nh.advertise<mars_ros::ExtCoreState>("core_ext_state_out", pub_cb_buffer_size_);
   pub_ext_core_state_lite_ = nh.advertise<mars_ros::ExtCoreStateLite>("core_ext_state_lite_out", pub_cb_buffer_size_);
   pub_core_pose_state_ = nh.advertise<geometry_msgs::PoseStamped>("core_pose_state_out", pub_cb_buffer_size_);
+  pub_core_odom_state_ = nh.advertise<nav_msgs::Odometry>("core_odom_state_out", pub_cb_buffer_size_);
   pub_gps_state_ = nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("gps_cal_state_out", pub_cb_buffer_size_);
 }
 
@@ -204,6 +206,9 @@ void MarsWrapperGps::RunCoreStatePublisher()
 
   pub_core_pose_state_.publish(
       MarsMsgConv::ExtCoreStateToPoseMsg(latest_state.timestamp_.get_seconds(), latest_core_state));
+
+  pub_core_odom_state_.publish(
+      MarsMsgConv::ExtCoreStateToOdomMsg(latest_state.timestamp_.get_seconds(), latest_core_state));
 }
 
 void MarsWrapperGps::GpsMeasurementUpdate(std::shared_ptr<mars::GpsSensorClass> sensor_sptr,
