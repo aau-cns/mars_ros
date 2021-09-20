@@ -61,8 +61,9 @@ MarsWrapperGps::MarsWrapperGps(ros::NodeHandle nh)
   core_logic_.verbose_out_of_order_ = verbose_ooo_;
   core_logic_.discard_ooo_prop_meas_ = discard_ooo_prop_meas_;
 
-  core_states_sptr_->set_noise_std(Eigen::Vector3d(0.013, 0.013, 0.013), Eigen::Vector3d(0.0013, 0.0013, 0.0013),
-                                   Eigen::Vector3d(0.083, 0.083, 0.083), Eigen::Vector3d(0.0083, 0.0083, 0.0083));
+  core_states_sptr_->set_noise_std(
+      Eigen::Vector3d(0.0024, 0.0024, 0.0024), Eigen::Vector3d(1.319e-5, 1.319e-5, 1.319e-5),
+      Eigen::Vector3d(0.1071, 0.1071, 0.1071), Eigen::Vector3d(2.2246e-4, 2.2246e-4, 2.2246e-4));
 
   // Sensors
   gps1_sensor_sptr_ = std::make_shared<mars::GpsSensorClass>("Gps1", core_states_sptr_);
@@ -73,7 +74,7 @@ MarsWrapperGps::MarsWrapperGps(ros::NodeHandle nh)
     gps1_sensor_sptr_->R_ = gps_meas_std.cwiseProduct(gps_meas_std);
 
     GpsSensorData gps_calibration;
-    gps_calibration.state_.p_ig_ = Eigen::Vector3d(0, 0, 0.10);
+    gps_calibration.state_.p_ig_ = Eigen::Vector3d(0, 0, 0);
     Eigen::Matrix<double, 9, 9> gps_cov;
     gps_cov.setZero();
     gps_cov.diagonal() << 1e-2, 1e-2, 1e-2, 1e-16, 1e-16, 1e-16, 1e-16, 1e-16, 1e-16;

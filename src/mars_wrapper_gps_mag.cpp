@@ -33,7 +33,7 @@ MarsWrapperGpsMag::MarsWrapperGpsMag(ros::NodeHandle nh)
   : reconfigure_cb_(boost::bind(&MarsWrapperGpsMag::configCallback, this, _1, _2))
   , sync_gps1_meas_(ApproxTimePolicy(3), sub_gps1_coord_meas_, sub_gps1_vel_meas_)
   , p_wi_init_(0.0, 0.0, 0.0)
-  , q_wi_init_(Eigen::Quaterniond(0.9950, 0, 0, -0.0997))
+  , q_wi_init_(Eigen::Quaterniond::Identity())
 {
   reconfigure_srv_.setCallback(reconfigure_cb_);
 
@@ -77,10 +77,10 @@ MarsWrapperGpsMag::MarsWrapperGpsMag(ros::NodeHandle nh)
     gps1_sensor_sptr_->R_ = gps_meas_std.cwiseProduct(gps_meas_std);
 
     GpsVelSensorData gps_calibration;
-    gps_calibration.state_.p_ig_ = Eigen::Vector3d(0,0,0);
+    gps_calibration.state_.p_ig_ = Eigen::Vector3d(0, 0, 0);
     Eigen::Matrix<double, 9, 9> gps_cov;
     gps_cov.setZero();
-    gps_cov.diagonal() << 1e-2, 1e-2, 1e-2, 1e-6, 1e-6, 1e-6, 1e-6, 1e-6, 1e-6;
+    gps_cov.diagonal() << 1e-16, 1e-16, 1e-16, 1e-6, 1e-6, 1e-6, 1e-6, 1e-6, 1e-6;
     gps_calibration.sensor_cov_ = gps_cov;
 
     gps1_sensor_sptr_->set_initial_calib(std::make_shared<GpsVelSensorData>(gps_calibration));

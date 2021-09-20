@@ -68,8 +68,9 @@ MarsWrapperGpsVel::MarsWrapperGpsVel(ros::NodeHandle nh)
   core_logic_.verbose_out_of_order_ = verbose_ooo_;
   core_logic_.discard_ooo_prop_meas_ = discard_ooo_prop_meas_;
 
-  core_states_sptr_->set_noise_std(Eigen::Vector3d(0.013, 0.013, 0.013), Eigen::Vector3d(0.0013, 0.0013, 0.0013),
-                                   Eigen::Vector3d(0.083, 0.083, 0.083), Eigen::Vector3d(0.0083, 0.0083, 0.0083));
+  core_states_sptr_->set_noise_std(
+      Eigen::Vector3d(0.0024, 0.0024, 0.0024), Eigen::Vector3d(1.319e-5, 1.319e-5, 1.319e-5),
+      Eigen::Vector3d(0.1071, 0.1071, 0.1071), Eigen::Vector3d(2.2246e-4, 2.2246e-4, 2.2246e-4));
 
   // Sensors
   // GPS1
