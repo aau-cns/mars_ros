@@ -128,6 +128,7 @@ MarsWrapperGpsMag::MarsWrapperGpsMag(ros::NodeHandle nh)
   pub_core_pose_state_ = nh.advertise<geometry_msgs::PoseStamped>("core_pose_state_out", pub_cb_buffer_size_);
   pub_gps1_state_ = nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("gps1_cal_state_out", pub_cb_buffer_size_);
   pub_mag1_state_ = nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("mag1_cal_state_out", pub_cb_buffer_size_);
+  pub_core_odom_state_ = nh.advertise<nav_msgs::Odometry>("core_odom_state_out", pub_cb_buffer_size_);
 }
 
 bool MarsWrapperGpsMag::init()
@@ -292,6 +293,9 @@ void MarsWrapperGpsMag::RunCoreStatePublisher()
 
   pub_core_pose_state_.publish(
       MarsMsgConv::ExtCoreStateToPoseMsg(latest_state.timestamp_.get_seconds(), latest_core_state));
+
+  pub_core_odom_state_.publish(
+      MarsMsgConv::ExtCoreStateToOdomMsg(latest_state.timestamp_.get_seconds(), latest_core_state));
 }
 
 void MarsWrapperGpsMag::GpsVelMeasurementUpdate(std::shared_ptr<mars::GpsVelSensorClass> sensor_sptr,
