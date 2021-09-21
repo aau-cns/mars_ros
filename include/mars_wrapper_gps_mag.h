@@ -163,7 +163,7 @@ public:
   /// \param gps_meas Measurement to be used for the update
   /// \param timestamp Timestamp of the measurement
   ///
-  void GpsVelMeasurementUpdate(std::shared_ptr<mars::GpsVelSensorClass> sensor_sptr,
+  bool GpsVelMeasurementUpdate(std::shared_ptr<mars::GpsVelSensorClass> sensor_sptr,
                                const mars::GpsVelMeasurementType& gps_meas, const mars::Time& timestamp);
   ///
   /// \brief MagMeasurementUpdate
@@ -171,7 +171,7 @@ public:
   /// \param gps_meas
   /// \param timestamp
   ///
-  void MagMeasurementUpdate(std::shared_ptr<mars::MagSensorClass> sensor_sptr, const mars::MagMeasurementType& gps_meas,
+  bool MagMeasurementUpdate(std::shared_ptr<mars::MagSensorClass> sensor_sptr, const mars::MagMeasurementType& gps_meas,
                             const mars::Time& timestamp);
 };
 

@@ -64,8 +64,9 @@ MarsWrapperGpsMag::MarsWrapperGpsMag(ros::NodeHandle nh)
   core_logic_.verbose_out_of_order_ = verbose_ooo_;
   core_logic_.discard_ooo_prop_meas_ = discard_ooo_prop_meas_;
 
-  core_states_sptr_->set_noise_std(Eigen::Vector3d(0.013, 0.013, 0.013), Eigen::Vector3d(0.0013, 0.0013, 0.0013),
-                                   Eigen::Vector3d(0.083, 0.083, 0.083), Eigen::Vector3d(0.0083, 0.0083, 0.0083));
+  core_states_sptr_->set_noise_std(
+      Eigen::Vector3d(0.0024, 0.0024, 0.0024), Eigen::Vector3d(1.319e-5, 1.319e-5, 1.319e-5),
+      Eigen::Vector3d(0.1071, 0.1071, 0.1071), Eigen::Vector3d(2.2246e-4, 2.2246e-4, 2.2246e-4));
 
   // Sensors
   // GPS1
@@ -80,7 +81,7 @@ MarsWrapperGpsMag::MarsWrapperGpsMag(ros::NodeHandle nh)
     gps_calibration.state_.p_ig_ = Eigen::Vector3d(0, 0, 0);
     Eigen::Matrix<double, 9, 9> gps_cov;
     gps_cov.setZero();
-    gps_cov.diagonal() << 1e-16, 1e-16, 1e-16, 1e-6, 1e-6, 1e-6, 1e-6, 1e-6, 1e-6;
+    gps_cov.diagonal() << 1e-2, 1e-2, 1e-2, 1e-16, 1e-16, 1e-16, 1e-16, 1e-16, 1e-16;
     gps_calibration.sensor_cov_ = gps_cov;
 
     gps1_sensor_sptr_->set_initial_calib(std::make_shared<GpsVelSensorData>(gps_calibration));
@@ -92,17 +93,19 @@ MarsWrapperGpsMag::MarsWrapperGpsMag(ros::NodeHandle nh)
   // MAG1
   mag1_sensor_sptr_ = std::make_shared<mars::MagSensorClass>("Mag1", core_states_sptr_);
 
-  {  // Limit scope of temp variables
-    Eigen::Matrix<double, 6, 1> mag_meas_std;
-    mag_meas_std << 0.05, 0.05, 0.05;
+  {
+    // Limit scope of temp variables
+    Eigen::Matrix<double, 3, 1> mag_meas_std;
+    mag_meas_std << 0.1, 0.1, 0.1;
     mag1_sensor_sptr_->R_ = mag_meas_std.cwiseProduct(mag_meas_std);
 
     MagSensorData mag_calibration;
-    mag_calibration.state_.mag_ = Eigen::Vector3d(0, 0.85, -0.51);
+    mag_calibration.state_.mag_ = Eigen::Vector3d(0, 1, 0);
+
     mag_calibration.state_.q_im_ = Eigen::Quaterniond::Identity();
     Eigen::Matrix<double, 6, 6> mag_cov;
     mag_cov.setZero();
-    mag_cov.diagonal() << 0.025, 0.025, 0.025, 1e-12, 1e-12, 1e-12;
+    mag_cov.diagonal() << 0.02, 0.02, 0.02, 0.005, 0.005, 0.005;
     mag_calibration.sensor_cov_ = mag_cov;
 
     mag1_sensor_sptr_->set_initial_calib(std::make_shared<MagSensorData>(mag_calibration));
@@ -205,7 +208,7 @@ void MarsWrapperGpsMag::ImuMeasurementCallback(const sensor_msgs::ImuConstPtr& m
   // Initialize the first time at which the propagation sensor occures
   if (!core_logic_.core_is_initialized_)
   {
-    core_logic_.Initialize(p_wi_init_, q_wi_init_);
+    return;
   }
 
   if (publish_on_propagation_)
@@ -238,20 +241,46 @@ void MarsWrapperGpsMag::Gps1MeasurementCallback(const sensor_msgs::NavSatFixCons
 
   set_common_gps_reference(gps_meas.coordinates_);
 
-  GpsVelMeasurementUpdate(gps1_sensor_sptr_, gps_meas, timestamp);
+  if (GpsVelMeasurementUpdate(gps1_sensor_sptr_, gps_meas, timestamp))
+  {
+    // Publish latest sensor state
+    mars::BufferEntryType latest_sensor_state;
+    core_logic_.buffer_.get_latest_sensor_handle_state(gps1_sensor_sptr_, &latest_sensor_state);
 
-  // Publish latest sensor state
-  mars::BufferEntryType latest_sensor_state;
-  core_logic_.buffer_.get_latest_sensor_handle_state(gps1_sensor_sptr_, &latest_sensor_state);
+    mars::GpsVelSensorStateType gps_sensor_state =
+        gps1_sensor_sptr_.get()->get_state(latest_sensor_state.data_.sensor_);
 
-  mars::GpsVelSensorStateType gps_sensor_state = gps1_sensor_sptr_.get()->get_state(latest_sensor_state.data_.sensor_);
-
-  pub_gps1_state_.publish(
-      MarsMsgConv::GpsVelStateToMsg(latest_sensor_state.timestamp_.get_seconds(), gps_sensor_state));
+    pub_gps1_state_.publish(
+        MarsMsgConv::GpsVelStateToMsg(latest_sensor_state.timestamp_.get_seconds(), gps_sensor_state));
+  }
 }
 
 void MarsWrapperGpsMag::Mag1MeasurementCallback(const sensor_msgs::MagneticFieldConstPtr& meas)
 {
+  Eigen::Vector3d m(meas->magnetic_field.x, meas->magnetic_field.y, meas->magnetic_field.z);
+
+  const double r = m.norm();
+  const double az = atan2(m(1), m(0));
+  const double el = atan2(m(1), sqrt(m(0) * m(0) + m(1) * m(1)));
+
+  const double yaw = (M_PI / 2) - az;
+
+  //  std::cout << yaw * (180 / M_PI) << std::endl;
+
+  Eigen::Matrix3d r_z;
+  r_z << cos(yaw), -sin(yaw), 0, sin(yaw), cos(yaw), 0, 0, 0, 1;
+
+  q_wi_init_ = Eigen::Quaterniond(r_z);
+
+  //  std::cout << r_z << std::endl;
+  //  std::cout << q_wi_init_.w() << " " << q_wi_init_.x() << " " << q_wi_init_.y() << " " << q_wi_init_.z() <<
+  //  std::endl;
+
+  if (!core_logic_.core_is_initialized_)
+  {
+    core_logic_.Initialize(p_wi_init_, q_wi_init_);
+  }
+
   Time timestamp;
 
   if (use_ros_time_now_)
@@ -268,17 +297,16 @@ void MarsWrapperGpsMag::Mag1MeasurementCallback(const sensor_msgs::MagneticField
 
   mag_meas.mag_vector_ = mag_meas.mag_vector_ / mag_meas.mag_vector_.norm();
 
-  std::cout << mag_meas.mag_vector_ << std::endl;
+  if (MagMeasurementUpdate(mag1_sensor_sptr_, mag_meas, timestamp))
+  {
+    // Publish latest sensor state
+    mars::BufferEntryType latest_sensor_state;
+    core_logic_.buffer_.get_latest_sensor_handle_state(mag1_sensor_sptr_, &latest_sensor_state);
 
-  MagMeasurementUpdate(mag1_sensor_sptr_, mag_meas, timestamp);
+    mars::MagSensorStateType mag_sensor_state = mag1_sensor_sptr_.get()->get_state(latest_sensor_state.data_.sensor_);
 
-  // Publish latest sensor state
-  mars::BufferEntryType latest_sensor_state;
-  core_logic_.buffer_.get_latest_sensor_handle_state(mag1_sensor_sptr_, &latest_sensor_state);
-
-  mars::MagSensorStateType mag_sensor_state = mag1_sensor_sptr_.get()->get_state(latest_sensor_state.data_.sensor_);
-
-  pub_mag1_state_.publish(MarsMsgConv::MagStateToMsg(latest_sensor_state.timestamp_.get_seconds(), mag_sensor_state));
+    pub_mag1_state_.publish(MarsMsgConv::MagStateToMsg(latest_sensor_state.timestamp_.get_seconds(), mag_sensor_state));
+  }
 }
 
 void MarsWrapperGpsMag::RunCoreStatePublisher()
@@ -298,13 +326,9 @@ void MarsWrapperGpsMag::RunCoreStatePublisher()
       MarsMsgConv::ExtCoreStateToOdomMsg(latest_state.timestamp_.get_seconds(), latest_core_state));
 }
 
-void MarsWrapperGpsMag::GpsVelMeasurementUpdate(std::shared_ptr<mars::GpsVelSensorClass> sensor_sptr,
+bool MarsWrapperGpsMag::GpsVelMeasurementUpdate(std::shared_ptr<mars::GpsVelSensorClass> sensor_sptr,
                                                 const GpsVelMeasurementType& gps_meas, const Time& timestamp)
 {
-  // TMP feedback init pose
-  // p_wi_init_ = pose_meas.position_;
-  // q_wi_init_ = pose_meas.orientation_;
-
   // Generate a measurement data block
   BufferDataType data;
   data.set_sensor_data(std::make_shared<GpsVelMeasurementType>(gps_meas));
@@ -312,19 +336,18 @@ void MarsWrapperGpsMag::GpsVelMeasurementUpdate(std::shared_ptr<mars::GpsVelSens
   // Call process measurement
   if (!core_logic_.ProcessMeasurement(sensor_sptr, timestamp, data))
   {
-    return;
+    return false;
   }
 
   // Publish the latest core state
   this->RunCoreStatePublisher();
+
+  return true;
 }
 
-void MarsWrapperGpsMag::MagMeasurementUpdate(std::shared_ptr<MagSensorClass> sensor_sptr,
+bool MarsWrapperGpsMag::MagMeasurementUpdate(std::shared_ptr<MagSensorClass> sensor_sptr,
                                              const MagMeasurementType& mag_meas, const Time& timestamp)
 {
-  // TMP feedback init pose
-  // q_wi_init_ = pose_meas.orientation_;
-
   // Generate a measurement data block
   BufferDataType data;
   data.set_sensor_data(std::make_shared<MagMeasurementType>(mag_meas));
@@ -332,9 +355,11 @@ void MarsWrapperGpsMag::MagMeasurementUpdate(std::shared_ptr<MagSensorClass> sen
   // Call process measurement
   if (!core_logic_.ProcessMeasurement(sensor_sptr, timestamp, data))
   {
-    return;
+    return false;
   }
 
   // Publish the latest core state
   this->RunCoreStatePublisher();
+
+  return true;
 }
