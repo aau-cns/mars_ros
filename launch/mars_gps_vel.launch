@@ -6,6 +6,7 @@
   <arg name="imu_in_topic" default="~imu_in" />
   <arg name="gps1_coord_in" default="~gps1_coord_in" />
   <arg name="gps1_vel_in" default="~gps1_vel_in" />
+  <arg name="mag1_in" default="~mag1_in" />
 
   <!-- Output Core State -->
   <arg name="full_state_out_topic" default="~full_state_out" />
@@ -27,6 +28,7 @@
     <remap from="~imu_in" to="$(arg imu_in_topic)"/>
     <remap from="~gps1_coord_in" to="$(arg gps1_coord_in)"/>
     <remap from="~gps1_vel_in" to="$(arg gps1_vel_in)"/>
+    <remap from="~mag1_in" to="$(arg mag1_in)"/>
 
     <!-- Output Core State -->
     <remap from="~core_ext_state_out" to="$(arg full_state_out_topic)"/>

@@ -244,7 +244,12 @@ void MarsWrapperGps::GpsMeasurementUpdate(std::shared_ptr<mars::GpsSensorClass> 
 
   // Publish latest sensor state
   mars::BufferEntryType latest_sensor_state;
-  core_logic_.buffer_.get_latest_sensor_handle_state(sensor_sptr, &latest_sensor_state);
+  const bool valid_state = core_logic_.buffer_.get_latest_sensor_handle_state(sensor_sptr, &latest_sensor_state);
+
+  if (!valid_state)
+  {
+    return;
+  }
 
   mars::GpsSensorStateType gps_sensor_state = sensor_sptr.get()->get_state(latest_sensor_state.data_.sensor_);
   pub_gps_state_.publish(MarsMsgConv::GpsStateToMsg(latest_sensor_state.timestamp_.get_seconds(), gps_sensor_state));

@@ -245,7 +245,13 @@ void MarsWrapperGpsMag::Gps1MeasurementCallback(const sensor_msgs::NavSatFixCons
   {
     // Publish latest sensor state
     mars::BufferEntryType latest_sensor_state;
-    core_logic_.buffer_.get_latest_sensor_handle_state(gps1_sensor_sptr_, &latest_sensor_state);
+    const bool valid_state =
+        core_logic_.buffer_.get_latest_sensor_handle_state(gps1_sensor_sptr_, &latest_sensor_state);
+
+    if (!valid_state)
+    {
+      return;
+    }
 
     mars::GpsVelSensorStateType gps_sensor_state =
         gps1_sensor_sptr_.get()->get_state(latest_sensor_state.data_.sensor_);
@@ -296,12 +302,19 @@ void MarsWrapperGpsMag::Mag1MeasurementCallback(const sensor_msgs::MagneticField
   MagMeasurementType mag_meas(MarsMsgConv::MagMsgToMagMeas(*meas));
 
   mag_meas.mag_vector_ = mag_meas.mag_vector_ / mag_meas.mag_vector_.norm();
+  std::cout << mag_meas.mag_vector_ << std::endl;
 
   if (MagMeasurementUpdate(mag1_sensor_sptr_, mag_meas, timestamp))
   {
     // Publish latest sensor state
     mars::BufferEntryType latest_sensor_state;
-    core_logic_.buffer_.get_latest_sensor_handle_state(mag1_sensor_sptr_, &latest_sensor_state);
+    const bool valid_state =
+        core_logic_.buffer_.get_latest_sensor_handle_state(mag1_sensor_sptr_, &latest_sensor_state);
+
+    if (!valid_state)
+    {
+      return;
+    }
 
     mars::MagSensorStateType mag_sensor_state = mag1_sensor_sptr_.get()->get_state(latest_sensor_state.data_.sensor_);
 

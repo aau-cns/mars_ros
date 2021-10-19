@@ -262,7 +262,13 @@ void MarsWrapperPosition::PositionMeasurementUpdate(std::shared_ptr<mars::Positi
 
   // Publish the latest sensor state
   mars::BufferEntryType latest_result;
-  core_logic_.buffer_.get_latest_sensor_handle_state(sensor_sptr, &latest_result);
+  const bool valid_state = core_logic_.buffer_.get_latest_sensor_handle_state(sensor_sptr, &latest_result);
+
+  if (!valid_state)
+  {
+    return;
+  }
+
   mars::PositionSensorStateType position_sensor_state = sensor_sptr.get()->get_state(latest_result.data_.sensor_);
 
   pub_position1_state_.publish(

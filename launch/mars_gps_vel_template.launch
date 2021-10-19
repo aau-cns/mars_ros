@@ -9,6 +9,7 @@
 
     <arg name="gps1_coord_in" default="~gps1_coord_in" />
     <arg name="gps1_vel_in" default="~gps1_vel_in" />
+    <arg name="mag1_in" default="~mag1_in" />
 
     <!-- Output Core State -->
     <arg name="full_state_out_topic" default="~full_state_out" />

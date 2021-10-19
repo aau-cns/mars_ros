@@ -1,12 +1,40 @@
+# NOTE: Do not use 1e-6 format because this is reqognized as a string
+# Framework Settings
 pub_on_prop: true
 use_ros_time_now: false
 verbose: false
 verbose_out_of_order: false
-discard_ooo_prop_meas: true
+discard_ooo_prop_meas: false
+cov_debug: false
 use_common_gps_reference: true
 
+# Ros Settings
 use_tcpnodelay: true
 
 pub_cb_buffer_size: 1
 sub_imu_cb_buffer_size: 200
 sub_sensor_cb_buffer_size: 1
+
+# Sensor Settings
+#gyro_rate_noise: 0.0023089
+#gyro_bias_noise: 0.0012655
+#acc_noise: 0.038932
+#acc_bias_noise: 0.057518
+
+gyro_rate_noise: 0.0012341
+gyro_bias_noise: 0.0023675
+acc_noise: 0.02081
+acc_bias_noise: 0.10761
+
+# Core state covariance p,v,q,bw,ba
+core_init_cov_p: [1,1,1]
+core_init_cov_v: [1,1,1]
+core_init_cov_q: [0.0305,0.0305,0.0305]
+core_init_cov_bw: [0.0076,0.0076,0.0076]
+core_init_cov_ba: [0.2,0.2,0.2]
+
+# GPS Settings
+gps_pos_meas_noise: [2,2,3]
+gps_vel_meas_noise: [0.5,0.5,0.8]
+gps_cal_ig: [0,0,0]
+gps_state_init_cov: [0.0000001,0.0000001,0.0000001]
