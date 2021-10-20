@@ -269,9 +269,12 @@ void MarsWrapperGpsMag::Mag1MeasurementCallback(const sensor_msgs::MagneticField
   const double az = atan2(m(1), m(0));
   const double el = atan2(m(1), sqrt(m(0) * m(0) + m(1) * m(1)));
 
+  std::cout << m << std::endl;
+  std::cout << az << std::endl;
+
   const double yaw = (M_PI / 2) - az;
 
-  //  std::cout << yaw * (180 / M_PI) << std::endl;
+  std::cout << "Yaw initialization:" << yaw * (180 / M_PI) << std::endl;
 
   Eigen::Matrix3d r_z;
   r_z << cos(yaw), -sin(yaw), 0, sin(yaw), cos(yaw), 0, 0, 0, 1;

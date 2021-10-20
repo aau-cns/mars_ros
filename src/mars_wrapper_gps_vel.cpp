@@ -57,9 +57,9 @@ MarsWrapperGpsVel::MarsWrapperGpsVel(ros::NodeHandle nh)
   core_logic_ = mars::CoreLogic(core_states_sptr_);
   core_logic_.buffer_.set_max_buffer_size(800);
 
-  core_logic_.verbose_ = verbose_output_;
-  core_logic_.verbose_out_of_order_ = verbose_ooo_;
-  core_logic_.discard_ooo_prop_meas_ = discard_ooo_prop_meas_;
+  core_logic_.verbose_ = m_sett.verbose_output_;
+  core_logic_.verbose_out_of_order_ = m_sett.verbose_ooo_;
+  core_logic_.discard_ooo_prop_meas_ = m_sett.discard_ooo_prop_meas_;
 
   core_states_sptr_->set_noise_std(Eigen::Vector3d(m_sett.g_rate_noise_, m_sett.g_rate_noise_, m_sett.g_rate_noise_),
                                    Eigen::Vector3d(m_sett.g_bias_noise_, m_sett.g_bias_noise_, m_sett.g_bias_noise_),
@@ -92,21 +92,21 @@ MarsWrapperGpsVel::MarsWrapperGpsVel(ros::NodeHandle nh)
 
   // Subscriber
   sub_imu_measurement_ =
-      nh.subscribe("imu_in", sub_imu_cb_buffer_size_, &MarsWrapperGpsVel::ImuMeasurementCallback, this);
+      nh.subscribe("imu_in", m_sett.sub_imu_cb_buffer_size_, &MarsWrapperGpsVel::ImuMeasurementCallback, this);
 
-  sub_gps1_coord_meas_.subscribe(nh, "gps1_coord_in", sub_sensor_cb_buffer_size_);
-  sub_gps1_vel_meas_.subscribe(nh, "gps1_vel_in", sub_sensor_cb_buffer_size_);
+  sub_gps1_coord_meas_.subscribe(nh, "gps1_coord_in", m_sett.sub_sensor_cb_buffer_size_);
+  sub_gps1_vel_meas_.subscribe(nh, "gps1_vel_in", m_sett.sub_sensor_cb_buffer_size_);
   sync_gps1_meas_.registerCallback(boost::bind(&MarsWrapperGpsVel::Gps1MeasurementCallback, this, _1, _2));
 
   sub_mag_measurement_ =
-      nh.subscribe("mag1_in", sub_sensor_cb_buffer_size_, &MarsWrapperGpsVel::MagMeasurementCallback, this);
+      nh.subscribe("mag1_in", m_sett.sub_sensor_cb_buffer_size_, &MarsWrapperGpsVel::MagMeasurementCallback, this);
 
   // Publisher
-  pub_ext_core_state_ = nh.advertise<mars_ros::ExtCoreState>("core_ext_state_out", pub_cb_buffer_size_);
-  pub_ext_core_state_lite_ = nh.advertise<mars_ros::ExtCoreStateLite>("core_ext_state_lite_out", pub_cb_buffer_size_);
-  pub_core_pose_state_ = nh.advertise<geometry_msgs::PoseStamped>("core_pose_state_out", pub_cb_buffer_size_);
-  pub_core_odom_state_ = nh.advertise<nav_msgs::Odometry>("core_odom_state_out", pub_cb_buffer_size_);
-  pub_gps1_state_ = nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("gps1_cal_state_out", pub_cb_buffer_size_);
+  pub_ext_core_state_ = nh.advertise<mars_ros::ExtCoreState>("core_ext_state_out", m_sett.pub_cb_buffer_size_);
+  pub_ext_core_state_lite_ = nh.advertise<mars_ros::ExtCoreStateLite>("core_ext_state_lite_out", m_sett.pub_cb_buffer_size_);
+  pub_core_pose_state_ = nh.advertise<geometry_msgs::PoseStamped>("core_pose_state_out", m_sett.pub_cb_buffer_size_);
+  pub_core_odom_state_ = nh.advertise<nav_msgs::Odometry>("core_odom_state_out", m_sett.pub_cb_buffer_size_);
+  pub_gps1_state_ = nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("gps1_cal_state_out", m_sett.pub_cb_buffer_size_);
 }
 
 bool MarsWrapperGpsVel::init()
@@ -184,20 +184,12 @@ void MarsWrapperGpsVel::ImuMeasurementCallback(const sensor_msgs::ImuConstPtr& m
   if (!core_logic_.core_is_initialized_ && mag_init_.is_done())
   {
     core_logic_.Initialize(p_wi_init_, q_wi_init_);
-  }
-  else
-  {
     return;
   }
 
   if (m_sett.publish_on_propagation_)
   {
-    mars::BufferEntryType latest_state;
-    core_logic_.buffer_.get_latest_state(&latest_state);
-    mars::CoreStateType latest_core_state = static_cast<mars::CoreType*>(latest_state.data_.core_.get())->state_;
-
-    pub_ext_core_state_.publish(
-        MarsMsgConv::ExtCoreStateToMsg(latest_state.timestamp_.get_seconds(), latest_core_state));
+    RunCoreStatePublisher();
   }
 }
 
@@ -256,7 +248,13 @@ void MarsWrapperGpsVel::MagMeasurementCallback(const sensor_msgs::MagneticFieldC
 void MarsWrapperGpsVel::RunCoreStatePublisher()
 {
   mars::BufferEntryType latest_state;
-  core_logic_.buffer_.get_latest_state(&latest_state);
+  const bool valid_state = core_logic_.buffer_.get_latest_state(&latest_state);
+
+  if (!valid_state)
+  {
+    return;
+  }
+
   mars::CoreStateType latest_core_state = static_cast<mars::CoreType*>(latest_state.data_.core_.get())->state_;
 
   pub_ext_core_state_.publish(MarsMsgConv::ExtCoreStateToMsg(latest_state.timestamp_.get_seconds(), latest_core_state));

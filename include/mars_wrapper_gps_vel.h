@@ -235,18 +235,6 @@ public:
                                                                            geometry_msgs::TwistWithCovarianceStamped>;
   using GpsMeasApproxSyncFilter = message_filters::Synchronizer<ApproxTimePolicy>;
 
-  // Settings
-  bool publish_on_propagation_{ false };   ///< Set true to publish the core state on propagation
-  bool use_ros_time_now_{ false };         ///< Set to true to use rostime now for all sensor updates
-  bool verbose_output_{ false };           ///< If true, all verbose infos are printed
-  bool verbose_ooo_{ false };              ///< If true, only out of order verbose msgs are printed
-  bool discard_ooo_prop_meas_{ false };    ///< If true, all out of order propagation sensor meas are discarded
-  bool use_common_gps_reference_{ true };  ///< Use a common GPS reference for all sensors
-
-  uint32_t pub_cb_buffer_size_{ 1 };         ///< Callback buffersize for all outgoing topics
-  uint32_t sub_imu_cb_buffer_size_{ 200 };   ///< Callback buffersize for propagation sensor measurements
-  uint32_t sub_sensor_cb_buffer_size_{ 1 };  ///< Callback buffersize for all non-propagation sensor measurements
-
   // Node services
   ros::ServiceServer initialization_service_;  ///< Service handle for filter initialization
 
