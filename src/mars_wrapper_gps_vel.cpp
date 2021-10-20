@@ -66,6 +66,18 @@ MarsWrapperGpsVel::MarsWrapperGpsVel(ros::NodeHandle nh)
                                    Eigen::Vector3d(m_sett.a_noise_, m_sett.a_noise_, m_sett.a_noise_),
                                    Eigen::Vector3d(m_sett.a_bias_noise_, m_sett.a_bias_noise_, m_sett.a_bias_noise_));
 
+  if (this->m_sett.enable_manual_yaw_init_)
+  {
+    const double yaw = m_sett.yaw_init_deg_ * (M_PI / 180);
+    Eigen::Matrix3d r;
+    r << cos(yaw), -sin(yaw), 0, sin(yaw), cos(yaw), 0, 0, 0, 1;
+    q_wi_init_ = Eigen::Quaterniond(r);
+
+    std::cout << "Manual yaw initialization: " << yaw * (180 / M_PI) << "\n" << std::endl;
+
+    mag_init_.set_done();
+  }
+
   // Sensors
   // GPS1
   gps1_sensor_sptr_ = std::make_shared<mars::GpsVelSensorClass>("Gps1", core_states_sptr_);
@@ -103,10 +115,14 @@ MarsWrapperGpsVel::MarsWrapperGpsVel(ros::NodeHandle nh)
 
   // Publisher
   pub_ext_core_state_ = nh.advertise<mars_ros::ExtCoreState>("core_ext_state_out", m_sett.pub_cb_buffer_size_);
-  pub_ext_core_state_lite_ = nh.advertise<mars_ros::ExtCoreStateLite>("core_ext_state_lite_out", m_sett.pub_cb_buffer_size_);
+  pub_ext_core_state_lite_ =
+      nh.advertise<mars_ros::ExtCoreStateLite>("core_ext_state_lite_out", m_sett.pub_cb_buffer_size_);
   pub_core_pose_state_ = nh.advertise<geometry_msgs::PoseStamped>("core_pose_state_out", m_sett.pub_cb_buffer_size_);
   pub_core_odom_state_ = nh.advertise<nav_msgs::Odometry>("core_odom_state_out", m_sett.pub_cb_buffer_size_);
-  pub_gps1_state_ = nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("gps1_cal_state_out", m_sett.pub_cb_buffer_size_);
+  pub_gps1_state_ =
+      nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("gps1_cal_state_out", m_sett.pub_cb_buffer_size_);
+
+  pub_gps1_enu_odom_ = nh.advertise<nav_msgs::Odometry>("gps1_enu", m_sett.pub_cb_buffer_size_);
 }
 
 bool MarsWrapperGpsVel::init()
@@ -214,6 +230,13 @@ void MarsWrapperGpsVel::Gps1MeasurementCallback(const sensor_msgs::NavSatFixCons
 
   GpsVelMeasurementUpdate(gps1_sensor_sptr_, gps_meas, timestamp);
 
+  // Publish GPS ENU as Odometry
+  if (m_sett.publish_gps_enu_)
+  {
+    Eigen::Vector3d gps_enu(gps1_sensor_sptr_->gps_conversion_.get_enu(gps_meas.coordinates_));
+    pub_gps1_enu_odom_.publish(MarsMsgConv::EigenVec3dToOdomMsg(timestamp.get_seconds(), gps_enu));
+  }
+
   // Publish latest sensor state
   mars::BufferEntryType latest_sensor_state;
   const bool valid_state = core_logic_.buffer_.get_latest_sensor_handle_state(gps1_sensor_sptr_, &latest_sensor_state);
@@ -231,14 +254,14 @@ void MarsWrapperGpsVel::Gps1MeasurementCallback(const sensor_msgs::NavSatFixCons
 
 void MarsWrapperGpsVel::MagMeasurementCallback(const sensor_msgs::MagneticFieldConstPtr& meas)
 {
-  if (!mag_init_.is_done())
+  if (!mag_init_.is_done() && !this->m_sett.enable_manual_yaw_init_)
   {
     mag_init_.add_element(meas->magnetic_field.x, meas->magnetic_field.y, meas->magnetic_field.z);
 
-    if (mag_init_.get_size() >= 30)
+    if (mag_init_.get_size() >= m_sett.auto_mag_init_samples_)
     {
       mag_init_.get_quat(q_wi_init_);
-      std::cout << "Yaw initialization: " << mag_init_.yaw_ * (180 / M_PI) << std::endl;
+      std::cout << "Magnetometer yaw initialization: " << mag_init_.yaw_ * (180 / M_PI) << std::endl;
 
       mag_init_.set_done();
     }

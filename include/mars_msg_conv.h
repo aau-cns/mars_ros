@@ -153,6 +153,20 @@ public:
     return odom_msg;
   }
 
+  static inline nav_msgs::Odometry EigenVec3dToOdomMsg(const double& t, const Eigen::Vector3d& position)
+  {
+    nav_msgs::Odometry odom_msg;
+
+    odom_msg.header.stamp.fromSec(t);
+    odom_msg.header.frame_id = "map";
+    odom_msg.child_frame_id = "map";
+    odom_msg.pose.pose.position.x = position[0];
+    odom_msg.pose.pose.position.y = position[1];
+    odom_msg.pose.pose.position.z = position[2];
+
+    return odom_msg;
+  }
+
   static inline mars::PositionMeasurementType PointMsgToPositionMeas(const geometry_msgs::PointStamped& msg)
   {
     const Eigen::Vector3d position(msg.point.x, msg.point.y, msg.point.z);

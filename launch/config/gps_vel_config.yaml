@@ -1,5 +1,8 @@
 # NOTE: Do not use 1e-6 format because this is reqognized as a string
 # Framework Settings
+# GPS with Velocity Settings
+
+# Framework Settings
 pub_on_prop: false
 use_ros_time_now: false
 verbose: false
@@ -8,12 +11,20 @@ discard_ooo_prop_meas: false
 cov_debug: false
 use_common_gps_reference: true
 
+# Yaw initialization
+enable_manual_yaw_init: false
+yaw_init_deg: -30
+auto_mag_init_samples: 30
+
 # Ros Settings
 use_tcpnodelay: true
 
 pub_cb_buffer_size: 1
 sub_imu_cb_buffer_size: 200
 sub_sensor_cb_buffer_size: 1
+
+# Publisher
+publish_gps_enu: true
 
 # Sensor Settings
 gyro_rate_noise: 0.0023089
@@ -33,3 +44,4 @@ gps_pos_meas_noise: [2,2,3]
 gps_vel_meas_noise: [0.5,0.5,0.8]
 gps_cal_ig: [0,0,0]
 gps_state_init_cov: [0.0000001,0.0000001,0.0000001]
+

@@ -109,7 +109,6 @@ private:
   int size_;
   std::deque<Eigen::Vector3d> m_vec_;
   bool once_{ false };
-
 };
 
 class ParamLoad
@@ -123,9 +122,15 @@ public:
   bool use_common_gps_reference_{ true };  ///< Use a common GPS reference for all sensors
   bool cov_debug_{ false };
 
+  bool enable_manual_yaw_init_{ false };
+  double yaw_init_deg_{ 0 };
+  uint32_t auto_mag_init_samples_{ 30 };
+
   uint32_t pub_cb_buffer_size_{ 1 };         ///< Callback buffersize for all outgoing topics
   uint32_t sub_imu_cb_buffer_size_{ 200 };   ///< Callback buffersize for propagation sensor measurements
   uint32_t sub_sensor_cb_buffer_size_{ 1 };  ///< Callback buffersize for all non-propagation sensor measurements
+
+  bool publish_gps_enu_{ false };
 
   double g_rate_noise_;
   double g_bias_noise_;
@@ -161,11 +166,17 @@ public:
     discard_ooo_prop_meas_ = nh.param<bool>("discard_ooo_prop_meas", discard_ooo_prop_meas_);
     cov_debug_ = nh.param<bool>("cov_debug", cov_debug_);
 
+    enable_manual_yaw_init_ = nh.param<bool>("enable_manual_yaw_init", enable_manual_yaw_init_);
+    nh.param("yaw_init_deg", yaw_init_deg_, double());
+    auto_mag_init_samples_ = uint32_t(nh.param<int>("auto_mag_init_samples", int(auto_mag_init_samples_)));
+
     use_common_gps_reference_ = nh.param<bool>("use_common_gps_reference", use_common_gps_reference_);
 
     pub_cb_buffer_size_ = uint32_t(nh.param<int>("pub_cb_buffer_size", int(pub_cb_buffer_size_)));
     sub_imu_cb_buffer_size_ = uint32_t(nh.param<int>("sub_imu_cb_buffer_size", int(sub_imu_cb_buffer_size_)));
     sub_sensor_cb_buffer_size_ = uint32_t(nh.param<int>("sub_sensor_cb_buffer_size", int(sub_sensor_cb_buffer_size_)));
+
+    publish_gps_enu_ = nh.param<bool>("publish_gps_enu", publish_gps_enu_);
 
     nh.param("gyro_rate_noise", g_rate_noise_, double());
     nh.param("gyro_bias_noise", g_bias_noise_, double());
@@ -330,6 +341,8 @@ public:
   ros::Publisher pub_core_odom_state_;      ///< Publisher for the Core-State as Odometry message
   ros::Publisher pub_ext_core_state_lite_;  ///< Publisher for the Core-State mars_ros::ExtCoreStateLite message
   ros::Publisher pub_gps1_state_;           ///< Publisher for the GPS 1 sensor calibration state
+
+  ros::Publisher pub_gps1_enu_odom_;  ///< Publisher for the GPS1 ENU position Odometry message
 
   // Publish groups
   ///
