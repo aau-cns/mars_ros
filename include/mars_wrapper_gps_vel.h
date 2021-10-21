@@ -95,7 +95,7 @@ public:
     const double az = atan2(m(1), m(0));
     const double el = atan2(m(1), sqrt(m(0) * m(0) + m(1) * m(1)));
 
-    yaw_ = az - (M_PI / 2);
+    yaw_ = (M_PI / 2) - az;
 
     Eigen::Matrix3d r_z;
     r_z << cos(yaw_), -sin(yaw_), 0, sin(yaw_), cos(yaw_), 0, 0, 0, 1;
@@ -125,6 +125,9 @@ public:
   bool enable_manual_yaw_init_{ false };
   double yaw_init_deg_{ 0 };
   uint32_t auto_mag_init_samples_{ 30 };
+
+  bool use_tcpnodelay_{false};
+  bool bypass_init_service_{false};
 
   uint32_t pub_cb_buffer_size_{ 1 };         ///< Callback buffersize for all outgoing topics
   uint32_t sub_imu_cb_buffer_size_{ 200 };   ///< Callback buffersize for propagation sensor measurements
@@ -169,6 +172,9 @@ public:
     enable_manual_yaw_init_ = nh.param<bool>("enable_manual_yaw_init", enable_manual_yaw_init_);
     nh.param("yaw_init_deg", yaw_init_deg_, double());
     auto_mag_init_samples_ = uint32_t(nh.param<int>("auto_mag_init_samples", int(auto_mag_init_samples_)));
+
+    use_tcpnodelay_ = nh.param<bool>("use_tcpnodelay", use_tcpnodelay_);
+    bypass_init_service_ = nh.param<bool>("bypass_init_service", bypass_init_service_);
 
     use_common_gps_reference_ = nh.param<bool>("use_common_gps_reference", use_common_gps_reference_);
 

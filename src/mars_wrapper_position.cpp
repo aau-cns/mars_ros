@@ -111,12 +111,13 @@ bool MarsWrapperPosition::init()
   return true;
 }
 
-bool MarsWrapperPosition::initServiceCallback(std_srvs::SetBool::Request& /*request*/, std_srvs::SetBool::Response& res)
+bool MarsWrapperPosition::initServiceCallback(std_srvs::SetBool::Request& /*request*/,
+                                              std_srvs::SetBool::Response& response)
 {
   init();
-  res.success = true;
   ROS_INFO_STREAM("Initialized filter trough ROS Service");
 
+  response.success = true;
   return true;
 }
 

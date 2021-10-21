@@ -164,6 +164,11 @@ public:
     odom_msg.pose.pose.position.y = position[1];
     odom_msg.pose.pose.position.z = position[2];
 
+    odom_msg.pose.pose.orientation.w = 1;
+    odom_msg.pose.pose.orientation.x = 0;
+    odom_msg.pose.pose.orientation.y = 0;
+    odom_msg.pose.pose.orientation.z = 0;
+
     return odom_msg;
   }
 

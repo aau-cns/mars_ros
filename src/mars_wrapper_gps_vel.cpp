@@ -137,11 +137,19 @@ bool MarsWrapperGpsVel::init()
 }
 
 bool MarsWrapperGpsVel::initServiceCallback(std_srvs::SetBool::Request& /*request*/,
-                                            std_srvs::SetBool::Response& /*response*/)
+                                            std_srvs::SetBool::Response& response)
 {
-  init();
-  ROS_INFO_STREAM("Initialized filter trough ROS Service");
+  if (m_sett.bypass_init_service_)
+  {
+    ROS_INFO_STREAM("Initialized filter Bypass ROS Service Response");
+  }
+  else
+  {
+    init();
+    ROS_INFO_STREAM("Initialized filter trough ROS Service");
+  }
 
+  response.success = true;
   return true;
 }
 
