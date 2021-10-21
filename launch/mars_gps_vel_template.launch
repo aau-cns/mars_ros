@@ -6,14 +6,15 @@
 
     <!-- Input -->
     <arg name="imu_in_topic" default="~imu_in_topic" />
+    <arg name="mag1_in" default="~mag1_in" />
 
     <arg name="gps1_coord_in" default="~gps1_coord_in" />
     <arg name="gps1_vel_in" default="~gps1_vel_in" />
-    <arg name="mag1_in" default="~mag1_in" />
 
     <!-- Output Core State -->
     <arg name="full_state_out_topic" default="~full_state_out" />
     <arg name="full_state_lite_out_topic" default="~full_state_lite_out" />
+    <arg name="odom_state_out_topic" default="~odom_state_out" />
     <arg name="pose_state_out_topic" default="~pose_state_out" />
     
     <!-- Output Calibration State -->
