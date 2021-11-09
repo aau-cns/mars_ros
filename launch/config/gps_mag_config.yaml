@@ -9,6 +9,7 @@ verbose: false
 verbose_out_of_order: true
 discard_ooo_prop_meas: false
 cov_debug: false
+pub_cov: true
 use_common_gps_reference: true
 
 # Yaw initialization

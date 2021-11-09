@@ -357,7 +357,18 @@ void MarsWrapperGpsMag::RunCoreStatePublisher()
 
   mars::CoreStateType latest_core_state = static_cast<mars::CoreType*>(latest_state.data_.core_.get())->state_;
 
-  pub_ext_core_state_.publish(MarsMsgConv::ExtCoreStateToMsg(latest_state.timestamp_.get_seconds(), latest_core_state));
+  if (m_sett.pub_cov_)
+  {
+    mars::CoreStateMatrix cov = static_cast<mars::CoreType*>(latest_state.data_.core_.get())->cov_;
+    pub_ext_core_state_.publish(
+        MarsMsgConv::ExtCoreStateToMsgCov(latest_state.timestamp_.get_seconds(), latest_core_state, cov));
+  }
+  else
+  {
+    pub_ext_core_state_.publish(
+        MarsMsgConv::ExtCoreStateToMsg(latest_state.timestamp_.get_seconds(), latest_core_state));
+  }
+
   pub_ext_core_state_lite_.publish(
       MarsMsgConv::ExtCoreStateLiteToMsg(latest_state.timestamp_.get_seconds(), latest_core_state));
 

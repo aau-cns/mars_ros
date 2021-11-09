@@ -121,6 +121,7 @@ public:
   bool discard_ooo_prop_meas_{ false };    ///< If true, all out of order propagation sensor meas are discarded
   bool use_common_gps_reference_{ true };  ///< Use a common GPS reference for all sensors
   bool cov_debug_{ false };
+  bool pub_cov_{ true };
 
   bool enable_manual_yaw_init_{ false };
   double yaw_init_deg_{ 0 };
@@ -184,6 +185,7 @@ public:
     verbose_ooo_ = nh.param<bool>("verbose_out_of_order", verbose_ooo_);
     discard_ooo_prop_meas_ = nh.param<bool>("discard_ooo_prop_meas", discard_ooo_prop_meas_);
     cov_debug_ = nh.param<bool>("cov_debug", cov_debug_);
+    pub_cov_ = nh.param<bool>("pub_cov", pub_cov_);
 
     // Yaw initialization
     enable_manual_yaw_init_ = nh.param<bool>("enable_manual_yaw_init", enable_manual_yaw_init_);

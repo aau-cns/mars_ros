@@ -36,6 +36,7 @@
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/MagneticField.h>
 #include <sensor_msgs/NavSatFix.h>
+#include <Eigen/Dense>
 
 ///
 /// \brief The MarsMsgConv class Conversion between MaRS types and ROS messages
@@ -83,6 +84,17 @@ public:
     state_msg.FRAME_TYPE = 1;
     state_msg.QUATERNION_TYPE = 1;
 
+    return state_msg;
+  }
+
+  static inline mars_ros::ExtCoreState ExtCoreStateToMsgCov(const double& t, const mars::CoreStateType& core_state,
+                                                            const mars::CoreStateMatrix state_cov)
+  {
+    // Map States
+    mars_ros::ExtCoreState state_msg(ExtCoreStateToMsg(t, core_state));
+
+    // Map Covariance
+    std::copy(state_cov.data(), state_cov.data() + state_cov.size(), state_msg.cov.begin());
     return state_msg;
   }
 
