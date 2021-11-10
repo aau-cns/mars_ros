@@ -82,12 +82,7 @@ MarsWrapperGpsMag::MarsWrapperGpsMag(ros::NodeHandle nh)
     Eigen::Matrix<double, 6, 1> gps_meas_std;
 
     gps_meas_std << m_sett.gps_pos_meas_noise_, m_sett.gps_vel_meas_noise_;
-
-    std::cout << "Pos " << m_sett.gps_pos_meas_noise_ << "Vel" << m_sett.gps_vel_meas_noise_ << std::endl;
-
     gps1_sensor_sptr_->R_ = gps_meas_std.cwiseProduct(gps_meas_std);
-
-    std::cout << gps1_sensor_sptr_->R_ << std::endl;
 
     GpsVelSensorData gps_calibration;
     gps_calibration.state_.p_ig_ = Eigen::Vector3d(m_sett.gps_cal_ig_);
@@ -110,8 +105,6 @@ MarsWrapperGpsMag::MarsWrapperGpsMag(ros::NodeHandle nh)
     Eigen::Matrix<double, 3, 1> mag_meas_std;
     mag_meas_std << m_sett.mag_meas_noise_;
     mag1_sensor_sptr_->R_ = mag_meas_std.cwiseProduct(mag_meas_std);
-
-    std::cout << "Mag measurement noise " << m_sett.mag_meas_noise_ << std::endl;
 
     MagSensorData mag_calibration;
     mag_calibration.state_.mag_ = Eigen::Vector3d(0, 1, 0);
