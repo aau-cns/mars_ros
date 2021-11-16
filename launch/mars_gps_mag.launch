@@ -27,10 +27,14 @@
   <!-- Node Options -->
   <arg name="respawn" default="false" />
 
+  <!-- Config File -->
+  <arg name="config_file" default="$(find mars_ros)/launch/config/gps_mag_config.yaml" />
+
   <!-- Launching the mars_ros multi_gps_node -->
   <node name="mars_gps_mag_node" pkg="mars_ros" type="gps_mag_node" clear_params="true" output="screen" respawn="$(arg respawn)"  launch-prefix="$(arg launchprefix)">
 
-    <rosparam command="load" file="$(find mars_ros)/launch/config/gps_mag_config.yaml" />
+    <!-- Config File -->
+    <rosparam command="load" file="$(arg config_file)" />
 
     <!-- Input -->
     <remap from="~imu_in" to="$(arg imu_in_topic)"/>

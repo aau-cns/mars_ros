@@ -2,7 +2,7 @@
 
 <launch>
 
-  <include file="$(find mars_ros)/launch/mars_gps_vel.launch">
+  <include file="$(find mars_ros)/launch/mars_gps_mag.launch">
 
     <!-- Input -->
     <arg name="imu_in_topic" default="~imu_in_topic" />
@@ -19,6 +19,10 @@
     
     <!-- Output Calibration State -->
     <arg name="gps1_cal_state_out_topic" default="~gps1_cal_state_out" />
+    <arg name="mag1_cal_state_out_topic" default="~mag1_cal_state_out" />
+
+    <!-- Config File -->
+    <arg name="config_file" default="$(find mars_ros)/launch/config/gps_mag_config.yaml" />
 
     <!-- Node Options -->
     <arg name="respawn" default="false" />
