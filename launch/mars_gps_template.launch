@@ -19,6 +19,9 @@
     <!-- Node Options -->
     <arg name="respawn" default="false" />
 
+    <!-- Config File -->
+    <arg name="config_file" default="$(find mars_ros)/launch/config/gps_config.yaml" />
+
   </include>
 
 </launch>
