@@ -1,5 +1,5 @@
 pub_on_prop: true
-use_ros_time_now: false
+use_ros_time_now: true
 verbose: false
 verbose_out_of_order: true
 discard_ooo_prop_meas: false

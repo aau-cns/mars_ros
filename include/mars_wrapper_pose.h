@@ -136,6 +136,7 @@ public:
   ros::Publisher pub_ext_core_state_;       ///< Publisher for the Core-State mars_ros::ExtCoreState message
   ros::Publisher pub_ext_core_state_lite_;  ///< Publisher for the Core-State mars_ros::ExtCoreStateLite message
   ros::Publisher pub_core_pose_state_;      ///< Publisher for the Core-State pose stamped message
+  ros::Publisher pub_core_odom_state_;      //!< Publisher for the Core-State odom stamped message
   ros::Publisher pub_pose1_state_;          ///< Publisher for the pose sensor calibration state
 
   // Publish groups

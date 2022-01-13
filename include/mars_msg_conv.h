@@ -15,7 +15,9 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/TransformStamped.h>
+#include <geometry_msgs/TwistStamped.h>
 #include <geometry_msgs/TwistWithCovarianceStamped.h>
+#include <geometry_msgs/Vector3Stamped.h>
 #include <mars/core_state.h>
 #include <mars/sensors/gps/gps_conversion.h>
 #include <mars/sensors/gps/gps_measurement_type.h>
@@ -29,13 +31,20 @@
 #include <mars/sensors/pose/pose_sensor_state_type.h>
 #include <mars/sensors/position/position_measurement_type.h>
 #include <mars/sensors/position/position_sensor_state_type.h>
+#include <mars/sensors/pressure/pressure_measurement_type.h>
+#include <mars/sensors/vision/vision_measurement_type.h>
+#include <mars/sensors/vision/vision_sensor_state_type.h>
 #include <mars/type_definitions/core_state_type.h>
 #include <mars_ros/ExtCoreState.h>
 #include <mars_ros/ExtCoreStateLite.h>
+#include <mars_ros/VisionSensorState.h>
 #include <nav_msgs/Odometry.h>
+#include <sensor_msgs/FluidPressure.h>
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/MagneticField.h>
 #include <sensor_msgs/NavSatFix.h>
+#include <sensor_msgs/Temperature.h>
+
 #include <Eigen/Dense>
 
 ///
@@ -308,17 +317,32 @@ public:
     return mars::PoseMeasurementType(position, orientation);
   }
 
+  static inline mars::VisionMeasurementType PoseMsgToVisionMeas(const geometry_msgs::PoseStamped& msg)
+  {
+    const Eigen::Vector3d position(msg.pose.position.x, msg.pose.position.y, msg.pose.position.z);
+    const Eigen::Quaterniond orientation(msg.pose.orientation.w, msg.pose.orientation.x, msg.pose.orientation.y,
+                                         msg.pose.orientation.z);
+    return mars::VisionMeasurementType(position, orientation);
+  }
+
   static inline mars::GpsMeasurementType NavSatFixMsgToGpsMeas(const sensor_msgs::NavSatFix& msg)
   {
     return mars::GpsMeasurementType(msg.latitude, msg.longitude, msg.altitude);
   }
 
-  static inline mars::GpsVelMeasurementType NavSatTwistMsgToGpsVelMeas(
+  static inline mars::GpsVelMeasurementType NavSatTwistWithCovMsgToGpsVelMeas(
       const sensor_msgs::NavSatFix& msg_coord, const geometry_msgs::TwistWithCovarianceStamped& msg_vel)
   {
     return mars::GpsVelMeasurementType(msg_coord.latitude, msg_coord.longitude, msg_coord.altitude,
                                        msg_vel.twist.twist.linear.x, msg_vel.twist.twist.linear.y,
                                        msg_vel.twist.twist.linear.z);
+  }
+
+  static inline mars::GpsVelMeasurementType NavSatTwistMsgToGpsVelMeas(const sensor_msgs::NavSatFix& msg_coord,
+                                                                       const geometry_msgs::TwistStamped& msg_vel)
+  {
+    return mars::GpsVelMeasurementType(msg_coord.latitude, msg_coord.longitude, msg_coord.altitude,
+                                       msg_vel.twist.linear.x, msg_vel.twist.linear.y, msg_vel.twist.linear.z);
   }
 
   static inline geometry_msgs::PoseWithCovarianceStamped GpsStateToMsg(const double& t,
@@ -378,6 +402,59 @@ public:
     pose_msg.pose.pose.orientation.z = mag_state.q_im_.z();
     pose_msg.pose.pose.orientation.w = mag_state.q_im_.w();
     return pose_msg;
+  }
+
+  static inline mars::PressureMeasurementType FluidPressureMsgtoPressureMeas(const sensor_msgs::FluidPressure& msg,
+                                                                             const double& temperature)
+  {
+    return mars::PressureMeasurementType(msg.fluid_pressure, temperature);
+  }
+
+  static inline mars::PressureMeasurementType
+  FluidPressureMsgtoPressureMeas(const sensor_msgs::FluidPressure& msg_press, const sensor_msgs::Temperature& msg_temp)
+  {
+    return mars::PressureMeasurementType(msg_press.fluid_pressure, msg_temp.temperature);
+  }
+
+  static inline geometry_msgs::Vector3Stamped EigenVec3dToVec3Msg(const double& t, const Eigen::Vector3d& vec)
+  {
+    geometry_msgs::Vector3Stamped vec_msg;
+    vec_msg.header.stamp.fromSec(t);
+
+    vec_msg.vector.x = vec(0);
+    vec_msg.vector.y = vec(1);
+    vec_msg.vector.z = vec(2);
+    return vec_msg;
+  }
+
+  static inline mars_ros::VisionSensorState VisionStateToMsg(const double& t,
+                                                             const mars::VisionSensorStateType& vision_state)
+  {
+    mars_ros::VisionSensorState vision_msg;
+    vision_msg.header.stamp.fromSec(t);
+    vision_msg.header.frame_id = "map";
+
+    vision_msg.p_ic.x = vision_state.p_ic_(0);
+    vision_msg.p_ic.y = vision_state.p_ic_(1);
+    vision_msg.p_ic.z = vision_state.p_ic_(2);
+    vision_msg.q_ic.x = vision_state.q_ic_.x();
+    vision_msg.q_ic.y = vision_state.q_ic_.y();
+    vision_msg.q_ic.z = vision_state.q_ic_.z();
+    vision_msg.q_ic.w = vision_state.q_ic_.w();
+
+    vision_msg.p_vw.x = vision_state.p_vw_(0);
+    vision_msg.p_vw.y = vision_state.p_vw_(1);
+    vision_msg.p_vw.z = vision_state.p_vw_(2);
+    vision_msg.q_vw.x = vision_state.q_vw_.x();
+    vision_msg.q_vw.y = vision_state.q_vw_.y();
+    vision_msg.q_vw.z = vision_state.q_vw_.z();
+    vision_msg.q_vw.w = vision_state.q_vw_.w();
+
+    vision_msg.lambda = vision_state.lambda_;
+
+    vision_msg.QUATERNION_TYPE = 1;
+
+    return vision_msg;
   }
 };
 
