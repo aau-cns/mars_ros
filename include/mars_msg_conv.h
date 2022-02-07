@@ -15,10 +15,13 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/TransformStamped.h>
+#include <geometry_msgs/TwistWithCovarianceStamped.h>
 #include <mars/core_state.h>
 #include <mars/sensors/gps/gps_conversion.h>
 #include <mars/sensors/gps/gps_measurement_type.h>
 #include <mars/sensors/gps/gps_sensor_state_type.h>
+#include <mars/sensors/gps_w_vel/gps_w_vel_measurement_type.h>
+#include <mars/sensors/gps_w_vel/gps_w_vel_sensor_state_type.h>
 
 #include <mars/sensors/imu/imu_measurement_type.h>
 #include <mars/sensors/pose/pose_measurement_type.h>
@@ -137,7 +140,8 @@ public:
     return mars::PositionMeasurementType(position);
   }
 
-  static inline mars::PositionMeasurementType PoseWithCovMsgToPositionMeas(const geometry_msgs::PoseWithCovarianceStamped& msg)
+  static inline mars::PositionMeasurementType
+  PoseWithCovMsgToPositionMeas(const geometry_msgs::PoseWithCovarianceStamped& msg)
   {
     const Eigen::Vector3d position(msg.pose.pose.position.x, msg.pose.pose.position.y, msg.pose.pose.position.z);
 
@@ -251,8 +255,33 @@ public:
     return mars::GpsMeasurementType(msg.latitude, msg.longitude, msg.altitude);
   }
 
+  static inline mars::GpsVelMeasurementType NavSatTwistMsgToGpsVelMeas(
+      const sensor_msgs::NavSatFix& msg_coord, const geometry_msgs::TwistWithCovarianceStamped& msg_vel)
+  {
+    return mars::GpsVelMeasurementType(msg_coord.latitude, msg_coord.longitude, msg_coord.altitude,
+                                       msg_vel.twist.twist.linear.x, msg_vel.twist.twist.linear.y, msg_vel.twist.twist.linear.z);
+  }
+
   static inline geometry_msgs::PoseWithCovarianceStamped GpsStateToMsg(const double& t,
                                                                        const mars::GpsSensorStateType& gps_state)
+  {
+    geometry_msgs::PoseWithCovarianceStamped pose_msg;
+    pose_msg.header.stamp.fromSec(t);
+
+    pose_msg.pose.pose.position.x = gps_state.p_ig_(0);
+    pose_msg.pose.pose.position.y = gps_state.p_ig_(1);
+    pose_msg.pose.pose.position.z = gps_state.p_ig_(2);
+
+    // Return unit quaternion
+    pose_msg.pose.pose.orientation.x = 0;
+    pose_msg.pose.pose.orientation.y = 0;
+    pose_msg.pose.pose.orientation.z = 0;
+    pose_msg.pose.pose.orientation.w = 1;
+    return pose_msg;
+  }
+
+  static inline geometry_msgs::PoseWithCovarianceStamped GpsVelStateToMsg(const double& t,
+                                                                          const mars::GpsVelSensorStateType& gps_state)
   {
     geometry_msgs::PoseWithCovarianceStamped pose_msg;
     pose_msg.header.stamp.fromSec(t);

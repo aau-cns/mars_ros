@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<launch>
+
+  <include file="$(find mars_ros)/launch/mars_gps_vel.launch">
+
+    <!-- Input -->
+    <arg name="imu_in_topic" default="~imu_in_topic" />
+
+    <arg name="gps1_coord_in" default="~gps1_coord_in" />
+    <arg name="gps1_vel_in" default="~gps1_vel_in" />
+
+    <!-- Output Core State -->
+    <arg name="full_state_out_topic" default="~full_state_out" />
+    <arg name="full_state_lite_out_topic" default="~full_state_lite_out" />
+    <arg name="pose_state_out_topic" default="~pose_state_out" />
+    
+    <!-- Output Calibration State -->
+    <arg name="gps1_cal_state_out_topic" default="~gps1_cal_state_out" />
+
+    <!-- Node Options -->
+    <arg name="respawn" default="false" />
+
+  </include>
+
+</launch>
