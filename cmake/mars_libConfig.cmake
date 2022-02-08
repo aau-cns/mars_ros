@@ -30,4 +30,5 @@ endif()
 #)
 
 set(MARS_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/mars_lib/source/mars/include)
-set(MARS_LIBRARIE ${CMAKE_BINARY_DIR}/mars_lib/lib/libmars.a)
+set(MARS_LIBRARY_RELEASE ${CMAKE_BINARY_DIR}/mars_lib/lib/libmars.a)
+set(MARS_LIBRARY_DEBUG ${CMAKE_BINARY_DIR}/mars_lib/lib/libmarsd.a)
