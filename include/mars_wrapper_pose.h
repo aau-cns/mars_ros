@@ -37,8 +37,8 @@ public:
   bool verbose_ooo_{ false };              ///< If true, only out of order verbose msgs are printed
   bool discard_ooo_prop_meas_{ false };    ///< If true, all out of order propagation sensor meas are discarded
   bool use_common_gps_reference_{ true };  ///< Use a common GPS reference for all sensors
-  bool cov_debug_{ false };
-  bool pub_cov_{ true };
+  bool cov_debug_{ false };       ///< Print covariance matrices in each publication step
+  bool pub_cov_{ true };          ///< Publish covariances in the ext core state message if true
   uint32_t buffer_size_{ 1000 };  ///< Set mars buffersize
 
   bool use_tcpnodelay_{ false };

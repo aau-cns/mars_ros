@@ -123,18 +123,19 @@ public:
   bool cov_debug_{ false };
   bool pub_cov_{ true };
 
-  bool enable_manual_yaw_init_{ false };
-  double yaw_init_deg_{ 0 };
-  uint32_t auto_mag_init_samples_{ 30 };
+  bool enable_manual_yaw_init_{ false };  ///< Initialize the yaw based on 'yaw_init_deg_'
+  double yaw_init_deg_{ 0 };              ///< Yaw for core state init if 'enable_manual_yaw_init_' is true
+  uint32_t auto_mag_init_samples_{ 30 };  ///< Number if meas. sample if auto init is used
+                                          ///(enable_manual_yaw_init_=false)
 
-  bool use_tcpnodelay_{ false };
+  bool use_tcpnodelay_{ false };  ///< Use tcp no delay for the ROS msg. system
   bool bypass_init_service_{ false };
 
   uint32_t pub_cb_buffer_size_{ 1 };         ///< Callback buffersize for all outgoing topics
   uint32_t sub_imu_cb_buffer_size_{ 200 };   ///< Callback buffersize for propagation sensor measurements
   uint32_t sub_sensor_cb_buffer_size_{ 1 };  ///< Callback buffersize for all non-propagation sensor measurements
 
-  bool publish_gps_enu_{ false };
+  bool publish_gps_enu_{ false };  ///< Publish GPS as ENU in the ref. frame used by the filter
 
   double g_rate_noise_;
   double g_bias_noise_;
