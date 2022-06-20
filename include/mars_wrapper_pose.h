@@ -38,9 +38,8 @@ public:
   bool discard_ooo_prop_meas_{ false };    ///< If true, all out of order propagation sensor meas are discarded
   bool use_common_gps_reference_{ true };  ///< Use a common GPS reference for all sensors
   bool cov_debug_{ false };
-  uint32_t buffer_size_{ 1000 };             ///< Set mars buffersize
-  bool post_transform_core_state_{ false };  ///< Transform core state before publishing (e.g. to match controler
-                                             /// reference frame)
+  bool pub_cov_{ true };
+  uint32_t buffer_size_{ 1000 };  ///< Set mars buffersize
 
   bool use_tcpnodelay_{ false };
   bool bypass_init_service_{ false };
@@ -88,8 +87,8 @@ public:
     verbose_ooo_ = nh.param<bool>("verbose_out_of_order", verbose_ooo_);
     discard_ooo_prop_meas_ = nh.param<bool>("discard_ooo_prop_meas", discard_ooo_prop_meas_);
     cov_debug_ = nh.param<bool>("cov_debug", cov_debug_);
+    pub_cov_ = nh.param<bool>("pub_cov", pub_cov_);
     buffer_size_ = nh.param<int>("buffer_size", buffer_size_);
-    post_transform_core_state_ = nh.param<bool>("post_transform_core_state", post_transform_core_state_);
 
     use_tcpnodelay_ = nh.param<bool>("use_tcpnodelay", use_tcpnodelay_);
     bypass_init_service_ = nh.param<bool>("bypass_init_service", bypass_init_service_);
