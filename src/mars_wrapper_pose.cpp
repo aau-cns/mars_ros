@@ -9,7 +9,6 @@
 // You can contact the author at <christian.brommer@ieee.org>
 
 #include "mars_wrapper_pose.h"
-#include "mars_msg_conv.h"
 
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <mars/core_logic.h>
@@ -25,6 +24,7 @@
 #include <nav_msgs/Odometry.h>
 #include <ros/ros.h>
 #include <sensor_msgs/Imu.h>
+
 #include <Eigen/Dense>
 #include <iostream>
 #include <string>

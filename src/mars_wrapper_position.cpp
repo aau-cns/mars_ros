@@ -9,7 +9,6 @@
 // You can contact the author at <christian.brommer@ieee.org>
 
 #include "mars_wrapper_position.h"
-#include "mars_msg_conv.h"
 
 #include <mars/core_logic.h>
 #include <mars/core_state.h>
@@ -19,9 +18,12 @@
 #include <mars/type_definitions/buffer_data_type.h>
 #include <mars/type_definitions/buffer_entry_type.h>
 #include <mars_msg_conv.h>
+#include <mars_ros/ExtCoreState.h>
+#include <mars_ros/ExtCoreStateLite.h>
 #include <nav_msgs/Odometry.h>
 #include <ros/ros.h>
 #include <sensor_msgs/Imu.h>
+
 #include <Eigen/Dense>
 #include <iostream>
 #include <string>
