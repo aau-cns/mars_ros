@@ -80,7 +80,7 @@ MarsWrapperPose::MarsWrapperPose(ros::NodeHandle nh)
 
   pose1_sensor_sptr_->set_initial_calib(std::make_shared<PoseSensorData>(pose_calibration));
 
-  // TODO is set here for now, but will be managed by core logic in later versions
+  // TODO(CHB) is set here for now, but will be managed by core logic in later versions
   pose1_sensor_sptr_->const_ref_to_nav_ = true;
 
   // Subscriber
@@ -100,8 +100,8 @@ MarsWrapperPose::MarsWrapperPose(ros::NodeHandle nh)
   pub_ext_core_state_lite_ =
       nh.advertise<mars_ros::ExtCoreStateLite>("core_ext_state_lite_out", m_sett.pub_cb_buffer_size_);
   pub_core_pose_state_ = nh.advertise<geometry_msgs::PoseStamped>("core_pose_state_out", m_sett.pub_cb_buffer_size_);
-  pub_pose1_state_ = nh.advertise<geometry_msgs::PoseStamped>("pose_cal_state_out", m_sett.pub_cb_buffer_size_);
   pub_core_odom_state_ = nh.advertise<nav_msgs::Odometry>("core_odom_state_out", m_sett.pub_cb_buffer_size_);
+  pub_pose1_state_ = nh.advertise<geometry_msgs::PoseStamped>("pose_cal_state_out", m_sett.pub_cb_buffer_size_);
 }
 
 bool MarsWrapperPose::init()
