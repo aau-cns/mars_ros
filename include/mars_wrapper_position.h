@@ -146,7 +146,7 @@ public:
   MarsWrapperPosition(ros::NodeHandle nh);
 
   // Settings
-  ParamLoad m_sett;
+  ParamLoad m_sett_;
 
   // Node services
   ros::ServiceServer initialization_service_;  ///< Service handle for filter initialization

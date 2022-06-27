@@ -52,11 +52,11 @@ public:
   uint32_t sub_sensor_cb_buffer_size_{ 1 };  ///< Callback buffersize for all non-propagation sensor measurements
 
   bool use_common_gps_reference_{ true };  ///< Use a common GPS reference for all sensors
-  bool publish_gps_enu_{ false };         ///< Publish GPS as ENU in the ref. frame used by the filter
-  bool enable_manual_yaw_init_{ false };  ///< Initialize the yaw based on 'yaw_init_deg_'
-  double yaw_init_deg_{ 0 };              ///< Yaw for core state init if 'enable_manual_yaw_init_' is true
-  uint32_t auto_mag_init_samples_{ 30 };  ///< Number if meas. sample if auto init is used
-                                          ///(enable_manual_yaw_init_=false)
+  bool publish_gps_enu_{ false };          ///< Publish GPS as ENU in the ref. frame used by the filter
+  bool enable_manual_yaw_init_{ false };   ///< Initialize the yaw based on 'yaw_init_deg_'
+  double yaw_init_deg_{ 0 };               ///< Yaw for core state init if 'enable_manual_yaw_init_' is true
+  uint32_t auto_mag_init_samples_{ 30 };   ///< Number if meas. sample if auto init is used
+                                           ///(enable_manual_yaw_init_=false)
 
   double g_rate_noise_;
   double g_bias_noise_;

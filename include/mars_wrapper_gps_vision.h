@@ -80,7 +80,7 @@ public:
   // Node services
   ros::ServiceServer initialization_service_;  ///< Service handle for filter initialization
 
-  ParamLoad m_sett;
+  ParamLoad m_sett_;
 
   ///
   /// \brief initServiceCallback Service to initialize / re-initialize the filter

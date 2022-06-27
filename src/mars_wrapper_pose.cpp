@@ -35,7 +35,7 @@ MarsWrapperPose::MarsWrapperPose(ros::NodeHandle nh)
   : reconfigure_cb_(boost::bind(&MarsWrapperPose::configCallback, this, _1, _2))
   , p_wi_init_(0, 0, 0)
   , q_wi_init_(Eigen::Quaterniond::Identity())
-  , m_sett(nh)
+  , m_sett_(nh)
 {
   reconfigure_srv_.setCallback(reconfigure_cb_);
 
@@ -46,36 +46,37 @@ MarsWrapperPose::MarsWrapperPose(ros::NodeHandle nh)
   // Framework components
   imu_sensor_sptr_ = std::make_shared<mars::ImuSensorClass>("IMU");
   core_states_sptr_ = std::make_shared<mars::CoreState>();
-  core_states_sptr_.get()->set_initial_covariance(m_sett.core_init_cov_p_, m_sett.core_init_cov_v_,
-                                                  m_sett.core_init_cov_q_, m_sett.core_init_cov_bw_,
-                                                  m_sett.core_init_cov_ba_);
+  core_states_sptr_.get()->set_initial_covariance(m_sett_.core_init_cov_p_, m_sett_.core_init_cov_v_,
+                                                  m_sett_.core_init_cov_q_, m_sett_.core_init_cov_bw_,
+                                                  m_sett_.core_init_cov_ba_);
 
   core_states_sptr_.get()->set_propagation_sensor(imu_sensor_sptr_);
   core_logic_ = mars::CoreLogic(core_states_sptr_);
-  core_logic_.buffer_.set_max_buffer_size(m_sett.buffer_size_);
+  core_logic_.buffer_.set_max_buffer_size(m_sett_.buffer_size_);
 
-  core_logic_.verbose_ = m_sett.verbose_output_;
-  core_logic_.verbose_out_of_order_ = m_sett.verbose_ooo_;
-  core_logic_.discard_ooo_prop_meas_ = m_sett.discard_ooo_prop_meas_;
+  core_logic_.verbose_ = m_sett_.verbose_output_;
+  core_logic_.verbose_out_of_order_ = m_sett_.verbose_ooo_;
+  core_logic_.discard_ooo_prop_meas_ = m_sett_.discard_ooo_prop_meas_;
 
-  core_states_sptr_->set_noise_std(Eigen::Vector3d(m_sett.g_rate_noise_, m_sett.g_rate_noise_, m_sett.g_rate_noise_),
-                                   Eigen::Vector3d(m_sett.g_bias_noise_, m_sett.g_bias_noise_, m_sett.g_bias_noise_),
-                                   Eigen::Vector3d(m_sett.a_noise_, m_sett.a_noise_, m_sett.a_noise_),
-                                   Eigen::Vector3d(m_sett.a_bias_noise_, m_sett.a_bias_noise_, m_sett.a_bias_noise_));
+  core_states_sptr_->set_noise_std(
+      Eigen::Vector3d(m_sett_.g_rate_noise_, m_sett_.g_rate_noise_, m_sett_.g_rate_noise_),
+      Eigen::Vector3d(m_sett_.g_bias_noise_, m_sett_.g_bias_noise_, m_sett_.g_bias_noise_),
+      Eigen::Vector3d(m_sett_.a_noise_, m_sett_.a_noise_, m_sett_.a_noise_),
+      Eigen::Vector3d(m_sett_.a_bias_noise_, m_sett_.a_bias_noise_, m_sett_.a_bias_noise_));
 
   // Sensors
   pose1_sensor_sptr_ = std::make_shared<mars::PoseSensorClass>("Pose1", core_states_sptr_);
   Eigen::Matrix<double, 6, 1> pose_meas_std;
-  pose_meas_std << m_sett.pose1_pos_meas_noise_, m_sett.pose1_rot_meas_noise_;
+  pose_meas_std << m_sett_.pose1_pos_meas_noise_, m_sett_.pose1_rot_meas_noise_;
   pose1_sensor_sptr_->R_ = pose_meas_std.cwiseProduct(pose_meas_std);
 
   mars::PoseSensorData pose_calibration;
-  pose_calibration.state_.p_ip_ = m_sett.pose1_cal_p_ip_;
-  pose_calibration.state_.q_ip_ = m_sett.pose1_cal_q_ip_;
+  pose_calibration.state_.p_ip_ = m_sett_.pose1_cal_p_ip_;
+  pose_calibration.state_.q_ip_ = m_sett_.pose1_cal_q_ip_;
 
   Eigen::Matrix<double, 6, 6> pose_cov;
   pose_cov.setZero();
-  pose_cov.diagonal() << m_sett.pose1_state_init_cov_;
+  pose_cov.diagonal() << m_sett_.pose1_state_init_cov_;
   pose_calibration.sensor_cov_ = pose_cov;
 
   pose1_sensor_sptr_->set_initial_calib(std::make_shared<PoseSensorData>(pose_calibration));
@@ -85,23 +86,23 @@ MarsWrapperPose::MarsWrapperPose(ros::NodeHandle nh)
 
   // Subscriber
   sub_imu_measurement_ =
-      nh.subscribe("imu_in", m_sett.sub_imu_cb_buffer_size_, &MarsWrapperPose::ImuMeasurementCallback, this);
+      nh.subscribe("imu_in", m_sett_.sub_imu_cb_buffer_size_, &MarsWrapperPose::ImuMeasurementCallback, this);
   sub_pose_measurement_ =
-      nh.subscribe("pose_in", m_sett.sub_sensor_cb_buffer_size_, &MarsWrapperPose::PoseMeasurementCallback, this);
-  sub_pose_with_cov_measurement_ = nh.subscribe("pose_with_cov_in", m_sett.sub_sensor_cb_buffer_size_,
+      nh.subscribe("pose_in", m_sett_.sub_sensor_cb_buffer_size_, &MarsWrapperPose::PoseMeasurementCallback, this);
+  sub_pose_with_cov_measurement_ = nh.subscribe("pose_with_cov_in", m_sett_.sub_sensor_cb_buffer_size_,
                                                 &MarsWrapperPose::PoseWithCovMeasurementCallback, this);
   sub_odom_measurement_ =
-      nh.subscribe("odom_in", m_sett.sub_sensor_cb_buffer_size_, &MarsWrapperPose::OdomMeasurementCallback, this);
-  sub_transform_measurement_ = nh.subscribe("transform_in", m_sett.sub_sensor_cb_buffer_size_,
+      nh.subscribe("odom_in", m_sett_.sub_sensor_cb_buffer_size_, &MarsWrapperPose::OdomMeasurementCallback, this);
+  sub_transform_measurement_ = nh.subscribe("transform_in", m_sett_.sub_sensor_cb_buffer_size_,
                                             &MarsWrapperPose::TransformMeasurementCallback, this);
 
   // Publisher
-  pub_ext_core_state_ = nh.advertise<mars_ros::ExtCoreState>("core_ext_state_out", m_sett.pub_cb_buffer_size_);
+  pub_ext_core_state_ = nh.advertise<mars_ros::ExtCoreState>("core_ext_state_out", m_sett_.pub_cb_buffer_size_);
   pub_ext_core_state_lite_ =
-      nh.advertise<mars_ros::ExtCoreStateLite>("core_ext_state_lite_out", m_sett.pub_cb_buffer_size_);
-  pub_core_pose_state_ = nh.advertise<geometry_msgs::PoseStamped>("core_pose_state_out", m_sett.pub_cb_buffer_size_);
-  pub_core_odom_state_ = nh.advertise<nav_msgs::Odometry>("core_odom_state_out", m_sett.pub_cb_buffer_size_);
-  pub_pose1_state_ = nh.advertise<geometry_msgs::PoseStamped>("pose_cal_state_out", m_sett.pub_cb_buffer_size_);
+      nh.advertise<mars_ros::ExtCoreStateLite>("core_ext_state_lite_out", m_sett_.pub_cb_buffer_size_);
+  pub_core_pose_state_ = nh.advertise<geometry_msgs::PoseStamped>("core_pose_state_out", m_sett_.pub_cb_buffer_size_);
+  pub_core_odom_state_ = nh.advertise<nav_msgs::Odometry>("core_odom_state_out", m_sett_.pub_cb_buffer_size_);
+  pub_pose1_state_ = nh.advertise<geometry_msgs::PoseStamped>("pose_cal_state_out", m_sett_.pub_cb_buffer_size_);
 }
 
 bool MarsWrapperPose::init()
@@ -126,10 +127,10 @@ bool MarsWrapperPose::initServiceCallback(std_srvs::SetBool::Request& /*request*
 void MarsWrapperPose::configCallback(mars_ros::marsConfig& config, uint32_t /*level*/)
 {
   // Config parameter overwrite
-  m_sett.publish_on_propagation_ = config.pub_on_prop;
+  m_sett_.publish_on_propagation_ = config.pub_on_prop;
   core_logic_.verbose_ = config.verbose;
-  m_sett.verbose_output_ = config.verbose;
-  m_sett.use_ros_time_now_ = config.use_ros_time_now;
+  m_sett_.verbose_output_ = config.verbose;
+  m_sett_.use_ros_time_now_ = config.use_ros_time_now;
 
   if (config.initialize)
   {
@@ -145,7 +146,7 @@ void MarsWrapperPose::ImuMeasurementCallback(const sensor_msgs::ImuConstPtr& mea
   // Map the measutement to the mars type
   Time timestamp;
 
-  if (m_sett.use_ros_time_now_)
+  if (m_sett_.use_ros_time_now_)
   {
     timestamp = Time(ros::Time::now().toSec());
   }
@@ -167,7 +168,7 @@ void MarsWrapperPose::ImuMeasurementCallback(const sensor_msgs::ImuConstPtr& mea
     core_logic_.Initialize(p_wi_init_, q_wi_init_);
   }
 
-  if (m_sett.publish_on_propagation_ && valid_update)
+  if (m_sett_.publish_on_propagation_ && valid_update)
   {
     this->RunCoreStatePublisher();
   }
@@ -221,7 +222,7 @@ void MarsWrapperPose::RunCoreStatePublisher()
 
   mars::CoreStateType latest_core_state = static_cast<mars::CoreType*>(latest_state.data_.core_.get())->state_;
 
-  if (m_sett.pub_cov_)
+  if (m_sett_.pub_cov_)
   {
     mars::CoreStateMatrix cov = static_cast<mars::CoreType*>(latest_state.data_.core_.get())->cov_;
     pub_ext_core_state_.publish(
@@ -257,7 +258,7 @@ void MarsWrapperPose::PoseMeasurementUpdate(std::shared_ptr<mars::PoseSensorClas
 
   Time timestamp_corr;
 
-  if (m_sett.use_ros_time_now_)
+  if (m_sett_.use_ros_time_now_)
   {
     timestamp_corr = Time(ros::Time::now().toSec());
   }
