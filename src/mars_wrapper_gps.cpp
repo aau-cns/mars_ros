@@ -106,9 +106,9 @@ MarsWrapperGps::MarsWrapperGps(ros::NodeHandle nh)
   if (this->m_sett_.enable_manual_yaw_init_)
   {
     const double yaw = m_sett_.yaw_init_deg_ * (M_PI / 180);
-    Eigen::Matrix3d r;
-    r << cos(yaw), -sin(yaw), 0, sin(yaw), cos(yaw), 0, 0, 0, 1;
-    q_wi_init_ = Eigen::Quaterniond(r);
+    Eigen::Matrix3d R_wi;
+    R_wi << cos(yaw), -sin(yaw), 0, sin(yaw), cos(yaw), 0, 0, 0, 1;
+    q_wi_init_ = Eigen::Quaterniond(R_wi);
 
     std::cout << "Manual yaw initialization: " << yaw * (180 / M_PI) << "\n" << std::endl;
   }
@@ -119,6 +119,8 @@ bool MarsWrapperGps::init()
   core_logic_.core_is_initialized_ = false;
   core_logic_.buffer_.ResetBufferData();
   gps1_sensor_sptr_->is_initialized_ = false;
+
+  common_gps_ref_is_set_ = false;
 
   return true;
 }
@@ -217,6 +219,7 @@ void MarsWrapperGps::Gps1MeasurementCallback(const sensor_msgs::NavSatFixConstPt
 
   // Map the measurement to the mars sensor type
   GpsMeasurementType gps_meas = MarsMsgConv::NavSatFixMsgToGpsMeas(*meas);
+
   set_common_gps_reference(gps_meas.coordinates_);
 
   GpsMeasurementUpdate(gps1_sensor_sptr_, gps_meas, timestamp);

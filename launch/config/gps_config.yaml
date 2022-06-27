@@ -42,4 +42,3 @@ gps1_pos_meas_noise: [0.5,0.5,0.5]
 gps1_vel_meas_noise: [0.1,0.1,0.1]
 gps1_cal_ig: [0,0,0]
 gps1_state_init_cov: [0.0000001,0.0000001,0.0000001]
-
