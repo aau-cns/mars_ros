@@ -29,6 +29,114 @@
 #include <mars_ros/marsConfig.h>
 #include <boost/bind/bind.hpp>
 
+class ParamLoad
+{
+public:
+  bool publish_on_propagation_{ true };  ///< Set true to publish the core state on propagation
+  bool use_ros_time_now_{ false };       ///< Set to true to use rostime now for all sensor updates
+  bool verbose_output_{ false };         ///< If true, all verbose infos are printed
+  bool verbose_ooo_{ true };             ///< If true, only out of order verbose msgs are printed
+  bool discard_ooo_prop_meas_{ false };  ///< If true, all out of order propagation sensor meas are discarded
+  bool pub_cov_{ true };                 ///< Publish covariances in the ext core state message if true
+  uint32_t buffer_size_{ 2000 };         ///< Set mars buffersize
+
+  bool use_tcpnodelay_{ true };  ///< Use tcp no delay for the ROS msg. system
+  bool bypass_init_service_{ false };
+
+  uint32_t pub_cb_buffer_size_{ 1 };         ///< Callback buffersize for all outgoing topics
+  uint32_t sub_imu_cb_buffer_size_{ 200 };   ///< Callback buffersize for propagation sensor measurements
+  uint32_t sub_sensor_cb_buffer_size_{ 1 };  ///< Callback buffersize for all non-propagation sensor measurements
+
+  double g_rate_noise_;
+  double g_bias_noise_;
+  double a_noise_;
+  double a_bias_noise_;
+
+  Eigen::Vector3d core_init_cov_p_;
+  Eigen::Vector3d core_init_cov_v_;
+  Eigen::Vector3d core_init_cov_q_;
+  Eigen::Vector3d core_init_cov_bw_;
+  Eigen::Vector3d core_init_cov_ba_;
+
+  Eigen::Vector3d position1_pos_meas_noise_;
+  Eigen::Vector3d position1_cal_p_ip_;
+  Eigen::Quaterniond position1_cal_q_ip_;
+  Eigen::Matrix<double, 3, 1> position1_state_init_cov_;
+
+  void check_size(const int& size_in, const int& size_comp)
+  {
+    if (size_comp != size_in)
+    {
+      std::cerr << "YAML array with wrong size" << std::endl;
+      exit(EXIT_FAILURE);
+    }
+  }
+
+  ParamLoad(const ros::NodeHandle& nh)
+  {
+    publish_on_propagation_ = nh.param<bool>("pub_on_prop", publish_on_propagation_);
+    use_ros_time_now_ = nh.param<bool>("use_ros_time_now", use_ros_time_now_);
+    verbose_output_ = nh.param<bool>("verbose", verbose_output_);
+    verbose_ooo_ = nh.param<bool>("verbose_out_of_order", verbose_ooo_);
+    discard_ooo_prop_meas_ = nh.param<bool>("discard_ooo_prop_meas", discard_ooo_prop_meas_);
+    pub_cov_ = nh.param<bool>("pub_cov", pub_cov_);
+    buffer_size_ = nh.param<int>("buffer_size", buffer_size_);
+
+    use_tcpnodelay_ = nh.param<bool>("use_tcpnodelay", use_tcpnodelay_);
+    bypass_init_service_ = nh.param<bool>("bypass_init_service", bypass_init_service_);
+
+    pub_cb_buffer_size_ = uint32_t(nh.param<int>("pub_cb_buffer_size", int(pub_cb_buffer_size_)));
+    sub_imu_cb_buffer_size_ = uint32_t(nh.param<int>("sub_imu_cb_buffer_size", int(sub_imu_cb_buffer_size_)));
+    sub_sensor_cb_buffer_size_ = uint32_t(nh.param<int>("sub_sensor_cb_buffer_size", int(sub_sensor_cb_buffer_size_)));
+
+    nh.param("gyro_rate_noise", g_rate_noise_, double());
+    nh.param("gyro_bias_noise", g_bias_noise_, double());
+    nh.param("acc_noise", a_noise_, double());
+    nh.param("acc_bias_noise", a_bias_noise_, double());
+
+    std::vector<double> core_init_cov_p;
+    nh.param("core_init_cov_p", core_init_cov_p, std::vector<double>());
+    check_size(core_init_cov_p.size(), 3);
+    core_init_cov_p_ = Eigen::Map<Eigen::Matrix<double, 3, 1> >(core_init_cov_p.data());
+
+    std::vector<double> core_init_cov_v;
+    nh.param("core_init_cov_v", core_init_cov_v, std::vector<double>());
+    check_size(core_init_cov_v.size(), 3);
+    core_init_cov_v_ = Eigen::Map<Eigen::Matrix<double, 3, 1> >(core_init_cov_v.data());
+
+    std::vector<double> core_init_cov_q;
+    nh.param("core_init_cov_q", core_init_cov_q, std::vector<double>());
+    check_size(core_init_cov_q.size(), 3);
+    core_init_cov_q_ = Eigen::Map<Eigen::Matrix<double, 3, 1> >(core_init_cov_q.data());
+
+    std::vector<double> core_init_cov_bw;
+    nh.param("core_init_cov_bw", core_init_cov_bw, std::vector<double>());
+    check_size(core_init_cov_bw.size(), 3);
+    core_init_cov_bw_ = Eigen::Map<Eigen::Matrix<double, 3, 1> >(core_init_cov_bw.data());
+
+    std::vector<double> core_init_cov_ba;
+    nh.param("core_init_cov_ba", core_init_cov_ba, std::vector<double>());
+    check_size(core_init_cov_ba.size(), 3);
+    core_init_cov_ba_ = Eigen::Map<Eigen::Matrix<double, 3, 1> >(core_init_cov_ba.data());
+
+    // Position1
+    std::vector<double> position1_pos_meas_noise;
+    nh.param("position1_pos_meas_noise", position1_pos_meas_noise, std::vector<double>());
+    check_size(position1_pos_meas_noise.size(), 3);
+    position1_pos_meas_noise_ = Eigen::Map<Eigen::Matrix<double, 3, 1> >(position1_pos_meas_noise.data());
+
+    std::vector<double> position1_cal_p_ip;
+    nh.param("position1_cal_p_ip", position1_cal_p_ip, std::vector<double>());
+    check_size(position1_cal_p_ip.size(), 3);
+    position1_cal_p_ip_ = Eigen::Map<Eigen::Matrix<double, 3, 1> >(position1_cal_p_ip.data());
+
+    std::vector<double> position1_state_init_cov;
+    nh.param("position1_state_init_cov", position1_state_init_cov, std::vector<double>());
+    check_size(position1_state_init_cov.size(), 3);
+    position1_state_init_cov_ = Eigen::Map<Eigen::Matrix<double, 3, 1> >(position1_state_init_cov.data());
+  }
+};
+
 ///
 /// \brief The MarsWrapperPosition class MaRS single position node
 ///
@@ -38,15 +146,7 @@ public:
   MarsWrapperPosition(ros::NodeHandle nh);
 
   // Settings
-  bool publish_on_propagation_{ false };  ///< Set true to publish the core state on propagation
-  bool use_ros_time_now_{ false };        ///< Set to true to use rostime now for all sensor updates
-  bool verbose_output_{ false };          ///< If true, all verbose infos are printed
-  bool verbose_ooo_{ false };             ///< If true, only out of order verbose msgs are printed
-  bool discard_ooo_prop_meas_{ false };   ///< If true, all out of order propagation sensor meas are discarded
-
-  uint32_t pub_cb_buffer_size_{ 1 };         ///< Callback buffersize for all outgoing topics
-  uint32_t sub_imu_cb_buffer_size_{ 200 };   ///< Callback buffersize for propagation sensor measurements
-  uint32_t sub_sensor_cb_buffer_size_{ 1 };  ///< Callback buffersize for all non-propagation sensor measurements
+  ParamLoad m_sett;
 
   // Node services
   ros::ServiceServer initialization_service_;  ///< Service handle for filter initialization
@@ -70,6 +170,7 @@ public:
 
   Eigen::Vector3d p_wi_init_;     ///< Latest position which will be used to initialize the filter
   Eigen::Quaterniond q_wi_init_;  ///< Latest orientation to initialize the filter
+  bool do_state_init_{ false };   ///< Trigger if the filter should be initialized
 
   ///
   /// \brief init used by the reconfigure GUI to reset the the buffer and sensors
@@ -146,6 +247,7 @@ public:
   ros::Publisher pub_ext_core_state_;       ///< Publisher for the Core-State mars_ros::ExtCoreState message
   ros::Publisher pub_ext_core_state_lite_;  ///< Publisher for the Core-State mars_ros::ExtCoreStateLite message
   ros::Publisher pub_core_pose_state_;      ///< Publisher for the Core-State pose stamped message
+  ros::Publisher pub_core_odom_state_;      ///< Publisher for the Core-State odom stamped message
   ros::Publisher pub_position1_state_;      ///< Publisher for the position sensor calibration state
 
   // Publish groups

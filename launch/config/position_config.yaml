@@ -1,11 +1,36 @@
+# NOTE: Do not use 1e-6 format because this is reqognized as a string
+
+# Framework Settings
 pub_on_prop: true
 use_ros_time_now: false
 verbose: false
-verbose_out_of_order: false
-discard_ooo_prop_meas: true
+verbose_out_of_order: true
+discard_ooo_prop_meas: false
+pub_cov: true
+buffer_size: 2000
 
+# Ros Settings
 use_tcpnodelay: true
+bypass_init_service: false
 
 pub_cb_buffer_size: 1
 sub_imu_cb_buffer_size: 200
 sub_sensor_cb_buffer_size: 1
+
+# Sensor Settings
+gyro_rate_noise: 0.426188 # Noise STD [rad/s]
+gyro_bias_noise: 0.154667
+acc_noise: 0.89791        # Noise STD [m/s^2]
+acc_bias_noise: 0.28402
+
+# Core state covariance p,v,q,bw,ba
+core_init_cov_p: [0.5,0.5,0.5]
+core_init_cov_v: [0.3,0.3,0.3]
+core_init_cov_q: [0.1218,0.1218,0.1218] # 20degree
+core_init_cov_bw: [0.0076,0.0076,0.0076]
+core_init_cov_ba: [0.01,0.01,0.01]
+
+# Pose1 sensor settings
+position1_pos_meas_noise: [0.1,0.1,0.1]
+position1_cal_p_ip: [0.0, 0.0, 0.0]
+position1_state_init_cov: [0.01,0.01,0.01]
