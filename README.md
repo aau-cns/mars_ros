@@ -90,8 +90,10 @@ The MaRS nodes define a set of standard parameters which are useful in paxis. Th
 | `pub_on_prop`               | Turn on the publication of the core state for each propagation step | true          |
 | `use_ros_time_now`          | Use ros time now for incomming measurements                  | false         |
 | `verbose`                   | Extended CMD output                                          | false         |
-| `verbose_out_of_order`      | Extended CMD output regarding out of order updates           | false         |
-| `discard_ooo_prop_meas`     | Do not process out of order propagation sensor measurements (Out of order "Update Sensor" measurements are still handled) | true          |
+| `verbose_out_of_order`      | Extended CMD output regarding out of order updates           | true          |
+| `discard_ooo_prop_meas`     | Do not process out of order propagation sensor measurements (Out of order "Update Sensor" measurements are still handled) | false         |
+| `pub_cov`                   | Publish the covariance of the core state with the ROS message | true          |
+| `buffer_size`               | Size of the internal MaRS buffer                             | 2000          |
 | `use_tcpnodelay`            | Use `tcpnodelay` for TransportHints                          | true          |
 | `pub_cb_buffer_size`        | Max queue size for all outgoing messages                     | 1             |
 | `sub_imu_cb_buffer_size`    | Max queue size for incoming IMU messages messages            | 200           |
