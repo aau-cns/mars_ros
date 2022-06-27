@@ -63,7 +63,7 @@ MarsWrapperDualPoseFull::MarsWrapperDualPoseFull(ros::NodeHandle nh)
 
   core_states_sptr_.get()->set_propagation_sensor(imu_sensor_sptr_);
   core_logic_ = mars::CoreLogic(core_states_sptr_);
-  core_logic_.buffer_.set_max_buffer_size(800);                  /// \todo TODO(scm): make this a param
+  core_logic_.buffer_.set_max_buffer_size(m_sett_.buffer_size_);
   core_logic_.buffer_prior_core_init_.set_max_buffer_size(800);  /// \todo TODO(scm): make this a param
 
   core_logic_.verbose_ = m_sett_.verbose_output_;

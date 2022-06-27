@@ -27,8 +27,8 @@ public:
   bool verbose_ooo_{ false };              ///< If true, only out of order verbose msgs are printed
   bool discard_ooo_prop_meas_{ false };    ///< If true, all out of order propagation sensor meas are discarded
   bool use_common_gps_reference_{ true };  ///< Use a common GPS reference for all sensors
-  bool cov_debug_{ false };
-  bool pub_cov_{ true };
+  bool pub_cov_{ true };                   ///< Publish covariances in the ext core state message if true
+  uint32_t buffer_size_{ 2000 };           ///< Set mars buffersize
 
   bool use_pressure_{ true };
   bool use_magnetometer_{ false };
@@ -194,8 +194,8 @@ public:
     verbose_output_ = nh.param<bool>("verbose", verbose_output_);
     verbose_ooo_ = nh.param<bool>("verbose_out_of_order", verbose_ooo_);
     discard_ooo_prop_meas_ = nh.param<bool>("discard_ooo_prop_meas", discard_ooo_prop_meas_);
-    cov_debug_ = nh.param<bool>("cov_debug", cov_debug_);
     pub_cov_ = nh.param<bool>("pub_cov", pub_cov_);
+    buffer_size_ = nh.param<int>("buffer_size", buffer_size_);
 
     //    // Yaw initialization
     use_pressure_ = nh.param<bool>("use_pressure", use_pressure_);
