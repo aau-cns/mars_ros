@@ -493,15 +493,34 @@ void MarsWrapperGpsVision::PressureMeasurementCallback(const sensor_msgs::FluidP
 
 void MarsWrapperGpsVision::Mag1MeasurementCallback(const sensor_msgs::MagneticFieldConstPtr& meas)
 {
-  if (!mag_init_.IsDone() && !m_sett_.enable_manual_yaw_init_)
+  // Yaw initialization
+  if (!mag_init_.IsDone() && !this->m_sett_.enable_manual_yaw_init_)
   {
-    mag_init_.AddElement(meas->magnetic_field.x, meas->magnetic_field.y, meas->magnetic_field.z);
+    // Get last IMU measurement
+    mars::BufferEntryType latest_imu_meas_entry;
+
+    const bool found_imu_meas = core_logic_.buffer_prior_core_init_.get_latest_sensor_handle_measurement(
+        imu_sensor_sptr_, &latest_imu_meas_entry);
+
+    if (!found_imu_meas)
+    {
+      // Stop init routine if no previous IMU measurement was found
+      return;
+    };
+
+    mars::IMUMeasurementType imu_meas =
+        *static_cast<mars::IMUMeasurementType*>(latest_imu_meas_entry.data_.sensor_.get());
+
+    // Get current Magnetometer measurement
+    mars::MagMeasurementType mag_meas = MarsMsgConv::MagMsgToMagMeas(*meas);
+
+    // Feed measurements to rotation init buffer
+    mag_init_.AddElement(m_sett_.mag_cal_q_im_.toRotationMatrix() * mag_meas.mag_vector_,
+                         imu_meas.linear_acceleration_);
 
     if (mag_init_.get_size() >= m_sett_.auto_mag_init_samples_)
     {
-      mag_init_.get_quat(q_wi_init_);
-      std::cout << "Magnetometer yaw initialization: " << mag_init_.get_yaw() * (180 / M_PI) << std::endl;
-
+      q_wi_init_ = mag_init_.get_quat();
       mag_init_.set_done();
     }
 

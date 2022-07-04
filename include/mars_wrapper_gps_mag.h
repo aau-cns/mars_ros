@@ -55,7 +55,7 @@ public:
   bool publish_gps_enu_{ false };          ///< Publish GPS as ENU in the ref. frame used by the filter
   bool enable_manual_yaw_init_{ false };   ///< Initialize the yaw based on 'yaw_init_deg_'
   double yaw_init_deg_{ 0 };               ///< Yaw for core state init if 'enable_manual_yaw_init_' is true
-  uint32_t auto_mag_init_samples_{ 30 };   ///< Number if meas. sample if auto init is used
+  int auto_mag_init_samples_{ 30 };        ///< Number if meas. sample if auto init is used
                                            ///(enable_manual_yaw_init_=false)
 
   double g_rate_noise_;
@@ -77,7 +77,7 @@ public:
   bool mag1_normalize_{ true };
   double mag1_declination_{ 0.0 };
   Eigen::Vector3d mag1_meas_noise_;
-  Eigen::Vector3d mag1_cal_im_;
+  Eigen::Quaterniond mag1_cal_q_im_;
   Eigen::Matrix<double, 6, 1> mag1_state_init_cov_;
 
   void check_size(const int& size_in, const int& size_comp)
@@ -179,10 +179,10 @@ public:
     check_size(mag1_meas_noise.size(), 3);
     mag1_meas_noise_ = Eigen::Map<Eigen::Matrix<double, 3, 1> >(mag1_meas_noise.data());
 
-    std::vector<double> mag1_cal_im;
-    nh.param("mag1_cal_im", mag1_cal_im, std::vector<double>());
-    check_size(mag1_cal_im.size(), 3);
-    mag1_cal_im_ = Eigen::Map<Eigen::Matrix<double, 3, 1> >(mag1_cal_im.data());
+    std::vector<double> mag1_cal_q_im;
+    nh.param("mag1_cal_q_im", mag1_cal_q_im, std::vector<double>());
+    check_size(mag1_cal_q_im.size(), 4);
+    mag1_cal_q_im_ = Eigen::Quaterniond(mag1_cal_q_im[0], mag1_cal_q_im[1], mag1_cal_q_im[2], mag1_cal_q_im[3]);
 
     std::vector<double> mag1_state_init_cov;
     nh.param("mag1_state_init_cov", mag1_state_init_cov, std::vector<double>());

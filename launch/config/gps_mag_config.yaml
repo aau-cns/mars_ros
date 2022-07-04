@@ -48,5 +48,5 @@ gps1_state_init_cov: [0.00001,0.00001,0.00001]
 mag1_normalize: true
 mag1_declination: 0.0 #degree
 mag1_meas_noise: [0.5,0.5,0.5]
-mag1_cal_im: [0, 0, 0] #degree
-mag1_state_init_cov: [0.3, 0.3, 0.3, 0.00000076,0.00000076,0.00000076] #v_wm q_im
+mag1_cal_q_im: [1, 0, 0, 0] # w,x,y,z
+mag1_state_init_cov: [0.25, 0.25, 0.25, 0.0305,0.0305,0.0305] #v_wm q_im
