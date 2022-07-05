@@ -14,5 +14,3 @@ geometry_msgs/Quaternion q_vw
 geometry_msgs/Vector3 p_ic
 geometry_msgs/Quaternion q_ic
 float64 lambda
-
-uint8 QUATERNION_TYPE

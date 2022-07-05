@@ -452,8 +452,6 @@ public:
 
     vision_msg.lambda = vision_state.lambda_;
 
-    vision_msg.QUATERNION_TYPE = 1;
-
     return vision_msg;
   }
 };
