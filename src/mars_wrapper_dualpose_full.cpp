@@ -64,7 +64,7 @@ MarsWrapperDualPoseFull::MarsWrapperDualPoseFull(ros::NodeHandle nh)
   core_states_sptr_.get()->set_propagation_sensor(imu_sensor_sptr_);
   core_logic_ = mars::CoreLogic(core_states_sptr_);
   core_logic_.buffer_.set_max_buffer_size(m_sett_.buffer_size_);
-  core_logic_.buffer_prior_core_init_.set_max_buffer_size(800);  /// \todo TODO(scm): make this a param
+  core_logic_.buffer_prior_core_init_.set_max_buffer_size(m_sett_.buffer_size_);
 
   core_logic_.verbose_ = m_sett_.verbose_output_;
   core_logic_.verbose_out_of_order_ = m_sett_.verbose_ooo_;
@@ -133,22 +133,38 @@ MarsWrapperDualPoseFull::MarsWrapperDualPoseFull(ros::NodeHandle nh)
               << " ]" << std::endl;
   }
 
-#ifndef GPS_W_VEL
   // GPS1
+#ifndef GPS_W_VEL
   gps1_sensor_sptr_ = std::make_shared<mars::GpsSensorClass>("Gps1", core_states_sptr_);
   {  // Limit scope of temp variables
-    Eigen::Matrix<double, 3, 1> gps_meas_std;
-    gps_meas_std << m_sett_.gps_pos_meas_noise_;
-    gps1_sensor_sptr_->R_ = gps_meas_std.cwiseProduct(gps_meas_std);
+    Eigen::Matrix<double, 3, 1> gps1_meas_std;
+    gps1_meas_std << m_sett_.gps1_pos_meas_noise_;
+#else
+  gps1_sensor_sptr_ = std::make_shared<mars::GpsVelSensorClass>("Gps1", core_states_sptr_);
 
+  {  // Limit scope of temp variables
+    Eigen::Matrix<double, 6, 1> gps1_meas_std;
+
+    gps1_meas_std << m_sett_.gps1_pos_meas_noise_, m_sett_.gps1_vel_meas_noise_;
+#endif
+    gps1_sensor_sptr_->R_ = gps1_meas_std.cwiseProduct(gps1_meas_std);
+
+#ifndef GPS_W_VEL
     GpsSensorData gps_calibration;
-    gps_calibration.state_.p_ig_ = Eigen::Vector3d(m_sett_.gps_cal_ig_);
+#else
+    GpsVelSensorData gps_calibration;
+#endif
+    gps_calibration.state_.p_ig_ = Eigen::Vector3d(m_sett_.gps1_cal_ig_);
     Eigen::Matrix<double, 9, 9> gps_cov;
     gps_cov.setZero();
-    gps_cov.diagonal() << m_sett_.gps_state_init_cov_, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001;
+    gps_cov.diagonal() << m_sett_.gps1_state_init_cov_, 1e-6, 1e-6, 1e-6, 1e-6, 1e-6, 1e-6;
     gps_calibration.sensor_cov_ = gps_cov;
 
+#ifndef GPS_W_VEL
     gps1_sensor_sptr_->set_initial_calib(std::make_shared<GpsSensorData>(gps_calibration));
+#else
+    gps1_sensor_sptr_->set_initial_calib(std::make_shared<GpsVelSensorData>(gps_calibration));
+#endif
 
     // TODO is set here for now, but will be managed by core logic in later versions
     gps1_sensor_sptr_->const_ref_to_nav_ = true;
@@ -156,49 +172,25 @@ MarsWrapperDualPoseFull::MarsWrapperDualPoseFull(ros::NodeHandle nh)
     std::cout << "Info: [" << gps1_sensor_sptr_->name_ << "] Calibration(rounded):" << std::endl;
     std::cout << "\tPosition[m]: [" << gps_calibration.state_.p_ig_.transpose() << " ]" << std::endl;
   }
-#else
-  // GPS1
-  gps1_sensor_sptr_ = std::make_shared<mars::GpsVelSensorClass>("Gps1", core_states_sptr_);
-
-  {  // Limit scope of temp variables
-    Eigen::Matrix<double, 6, 1> gps_meas_std;
-
-    gps_meas_std << m_sett_.gps_pos_meas_noise_, m_sett_.gps_vel_meas_noise_;
-
-    gps1_sensor_sptr_->R_ = gps_meas_std.cwiseProduct(gps_meas_std);
-
-    GpsVelSensorData gps_calibration;
-    gps_calibration.state_.p_ig_ = Eigen::Vector3d(m_sett_.gps_cal_ig_);
-    Eigen::Matrix<double, 9, 9> gps_cov;
-    gps_cov.setZero();
-    gps_cov.diagonal() << m_sett_.gps_state_init_cov_, 1e-20, 1e-20, 1e-20, 1e-20, 1e-20, 1e-20;
-    gps_calibration.sensor_cov_ = gps_cov;
-
-    gps1_sensor_sptr_->set_initial_calib(std::make_shared<GpsVelSensorData>(gps_calibration));
-
-    // TODO is set here for now, but will be managed by core logic in later versions
-    gps1_sensor_sptr_->const_ref_to_nav_ = true;
-  }
-#endif
 
   // Pressure sensor
-  pressure_sensor_sptr_ = std::make_shared<mars::PressureSensorClass>("Pressure", core_states_sptr_);
+  pressure1_sensor_sptr_ = std::make_shared<mars::PressureSensorClass>("Pressure", core_states_sptr_);
   {  // Limit scope of temp variables
     Eigen::Matrix<double, 1, 1> pressure_meas_std;
-    pressure_meas_std << m_sett_.baro_meas_noise_;
-    pressure_sensor_sptr_->R_ = pressure_meas_std.cwiseProduct(pressure_meas_std);
+    pressure_meas_std << m_sett_.pressure1_meas_noise_;
+    pressure1_sensor_sptr_->R_ = pressure_meas_std.cwiseProduct(pressure_meas_std);
 
     PressureSensorData pressure_calibration;
-    pressure_calibration.state_.p_ip_ = Eigen::Vector3d(m_sett_.baro_cal_ip_);
+    pressure_calibration.state_.p_ip_ = Eigen::Vector3d(m_sett_.pressure1_cal_ip_);
     Eigen::Matrix<double, 3, 3> pressure_cov;
     pressure_cov.setZero();
-    pressure_cov.diagonal() << m_sett_.baro_state_init_cov_;
+    pressure_cov.diagonal() << m_sett_.pressure1_state_init_cov_;
     pressure_calibration.sensor_cov_ = pressure_cov;
-    pressure_sensor_sptr_->set_initial_calib(std::make_shared<PressureSensorData>(pressure_calibration));
+    pressure1_sensor_sptr_->set_initial_calib(std::make_shared<PressureSensorData>(pressure_calibration));
     // TODO is set here for now, but will be managed by core logic in later versions
-    pressure_sensor_sptr_->const_ref_to_nav_ = true;
+    pressure1_sensor_sptr_->const_ref_to_nav_ = true;
 
-    press_init_ = mars::PressureInit(m_sett_.pressure_init_duration_);
+    press_init_ = mars::PressureInit(m_sett_.pressure1_init_duration_);
   }
 
   // Subscriber
@@ -232,9 +224,9 @@ MarsWrapperDualPoseFull::MarsWrapperDualPoseFull(ros::NodeHandle nh)
   sync_gps1_meas_.registerCallback(boost::bind(&MarsWrapperDualPoseFull::Gps1MeasurementCallback, this, _1, _2));
 #endif
 
-  if (m_sett_.pressure_const_temp_)
+  if (m_sett_.pressure1_const_temp_)
   {
-    sub_pressure_measurement_ = nh.subscribe("pressure_in", m_sett_.sub_sensor_cb_buffer_size_,
+    sub_pressure1_measurement_ = nh.subscribe("pressure1_in", m_sett_.sub_sensor_cb_buffer_size_,
                                              &MarsWrapperDualPoseFull::PressureMeasurementCallback, this);
   }
   else
@@ -262,7 +254,7 @@ bool MarsWrapperDualPoseFull::init()
   pose1_sensor_sptr_->is_initialized_ = false;
   pose2_sensor_sptr_->is_initialized_ = false;
   gps1_sensor_sptr_->is_initialized_ = false;
-  pressure_sensor_sptr_->is_initialized_ = false;
+  pressure1_sensor_sptr_->is_initialized_ = false;
 
   common_gps_ref_is_set_ = false;
   have_pose1_ = false;
@@ -356,13 +348,13 @@ void MarsWrapperDualPoseFull::set_common_pressure_reference(const mars::Pressure
   if (!press_init_.IsDone())
   {
     mars::Pressure mean =
-        press_init_.get_press_mean(pressure_sensor_sptr_, core_logic_.buffer_prior_core_init_, reference, timestamp);
+        press_init_.get_press_mean(pressure1_sensor_sptr_, core_logic_.buffer_prior_core_init_, reference, timestamp);
 
     if (press_init_.IsDone())
     {
       if (m_sett_.verbose_output_)
         std::cout << "Setting the common pressure reference to: \n" << mean << std::endl;
-      pressure_sensor_sptr_->set_pressure_reference(mean.data_, mean.temperature_K_);
+      pressure1_sensor_sptr_->set_pressure_reference(mean.data_, mean.temperature_K_);
     }
   }  // if (!common_pressure_ref_is_set_)
 }
@@ -564,11 +556,11 @@ void MarsWrapperDualPoseFull::PressureMeasurementCallback(const sensor_msgs::Flu
     timestamp = Time(meas->header.stamp.toSec());
   }
 
-  PressureMeasurementType press_meas(MarsMsgConv::FluidPressureMsgtoPressureMeas(*meas, m_sett_.pressure_temp_K_));
+  PressureMeasurementType press_meas(MarsMsgConv::FluidPressureMsgtoPressureMeas(*meas, m_sett_.pressure1_temp_K_));
   set_common_pressure_reference(press_meas.pressure_, timestamp);
 
   // perform update
-  if (PressureMeasurementUpdate(pressure_sensor_sptr_, press_meas, timestamp))
+  if (PressureMeasurementUpdate(pressure1_sensor_sptr_, press_meas, timestamp))
   {
     // Generate a measurement data block
     //    BufferDataType data;
