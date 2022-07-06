@@ -34,6 +34,7 @@ public:
   bool verbose_ooo_{ true };             ///< If true, only out of order verbose msgs are printed
   bool discard_ooo_prop_meas_{ false };  ///< If true, all out of order propagation sensor meas are discarded
   bool pub_cov_{ true };                 ///< Publish covariances in the ext core state message if true
+  bool pub_path_{ true };                ///< Publish all core states as nav_msgs::Path (for rviz)
   uint32_t buffer_size_{ 2000 };         ///< Set mars buffersize
 
   bool use_tcpnodelay_{ true };  ///< Use tcp no delay for the ROS msg. system
@@ -80,6 +81,7 @@ public:
     verbose_ooo_ = nh.param<bool>("verbose_out_of_order", verbose_ooo_);
     discard_ooo_prop_meas_ = nh.param<bool>("discard_ooo_prop_meas", discard_ooo_prop_meas_);
     pub_cov_ = nh.param<bool>("pub_cov", pub_cov_);
+    pub_path_ = nh.param<bool>("pub_path", pub_path_);
     buffer_size_ = nh.param<int>("buffer_size", buffer_size_);
 
     use_tcpnodelay_ = nh.param<bool>("use_tcpnodelay", use_tcpnodelay_);
@@ -230,6 +232,7 @@ public:
   ros::Publisher pub_core_pose_state_;      ///< Publisher for the Core-State pose stamped message
   ros::Publisher pub_core_odom_state_;      ///< Publisher for the Core-State as Odometry message
   ros::Publisher pub_ext_core_state_lite_;  ///< Publisher for the Core-State mars_ros::ExtCoreStateLite message
+  ros::Publisher pub_core_path_;            ///< Publisher for all Core-States in buffer as path message
 
   ros::Publisher pub_gps1_state_;     ///< Publisher for the GPS sensor calibration state
   ros::Publisher pub_gps1_enu_odom_;  ///< Publisher for the GPS ENU position Odometry message

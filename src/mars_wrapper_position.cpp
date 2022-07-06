@@ -104,6 +104,10 @@ MarsWrapperPosition::MarsWrapperPosition(ros::NodeHandle nh)
   pub_position1_state_ =
       nh.advertise<geometry_msgs::PoseStamped>("position_cal_state_out", m_sett_.pub_cb_buffer_size_);
   pub_core_odom_state_ = nh.advertise<nav_msgs::Odometry>("core_odom_state_out", m_sett_.pub_cb_buffer_size_);
+  if (m_sett_.pub_path_)
+  {
+    pub_core_path_ = nh.advertise<nav_msgs::Path>("core_states_path", m_sett_.pub_cb_buffer_size_);
+  }
 }
 
 bool MarsWrapperPosition::init()
@@ -252,6 +256,12 @@ void MarsWrapperPosition::RunCoreStatePublisher()
 
   pub_core_odom_state_.publish(
       MarsMsgConv::ExtCoreStateToOdomMsg(latest_state.timestamp_.get_seconds(), latest_core_state));
+
+  if (m_sett_.pub_path_)
+  {
+    pub_core_path_.publish(
+        MarsMsgConv::BufferCoreStateToPathMsg(latest_state.timestamp_.get_seconds(), core_logic_.buffer_));
+  }
 }
 
 void MarsWrapperPosition::PositionMeasurementUpdate(std::shared_ptr<mars::PositionSensorClass> sensor_sptr,
