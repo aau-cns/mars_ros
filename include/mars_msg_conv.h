@@ -18,6 +18,7 @@
 #include <geometry_msgs/TwistStamped.h>
 #include <geometry_msgs/TwistWithCovarianceStamped.h>
 #include <geometry_msgs/Vector3Stamped.h>
+#include <mars/buffer.h>
 #include <mars/core_state.h>
 #include <mars/sensors/gps/gps_conversion.h>
 #include <mars/sensors/gps/gps_measurement_type.h>
@@ -40,6 +41,7 @@
 #include <mars_ros/ExtCoreStateLite.h>
 #include <mars_ros/VisionSensorState.h>
 #include <nav_msgs/Odometry.h>
+#include <nav_msgs/Path.h>
 #include <sensor_msgs/FluidPressure.h>
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/MagneticField.h>
@@ -173,6 +175,33 @@ public:
     odom_msg.twist.twist.linear.z = core_state.v_wi_.z();
 
     return odom_msg;
+  }
+
+  static inline nav_msgs::Path BufferCoreStateToPathMsg(const double& t, const mars::Buffer& buffer)
+  {
+    nav_msgs::Path path_msg;
+    path_msg.header.stamp.fromSec(t);
+    path_msg.header.frame_id = "map";
+    path_msg.poses.clear();
+
+    /// \todo(scm): this functionality to get all states should be part of the buffer
+    for (int idx = 0; idx < buffer.get_length(); ++idx)
+    {
+      mars::BufferEntryType buffer_entry;
+      if (!buffer.get_entry_at_idx(idx, &buffer_entry))
+      {
+        break;
+      }
+
+      // add core state to path msg if vaild
+      if (buffer_entry.IsState())
+      {
+        mars::CoreStateType buffer_core_state = static_cast<mars::CoreType*>(buffer_entry.data_.core_.get())->state_;
+        path_msg.poses.push_back(ExtCoreStateToPoseMsg(buffer_entry.timestamp_.get_seconds(), buffer_core_state));
+      }
+    }
+
+    return path_msg;
   }
 
   static inline nav_msgs::Odometry EigenVec3dToOdomMsg(const double& t, const Eigen::Vector3d& position)
