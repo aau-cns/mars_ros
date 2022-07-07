@@ -17,7 +17,6 @@
 #include <mars/sensors/position/position_measurement_type.h>
 #include <mars/type_definitions/buffer_data_type.h>
 #include <mars/type_definitions/buffer_entry_type.h>
-#include <mars_msg_conv.h>
 #include <mars_ros/ExtCoreState.h>
 #include <mars_ros/ExtCoreStateLite.h>
 #include <nav_msgs/Odometry.h>
@@ -259,8 +258,10 @@ void MarsWrapperPosition::RunCoreStatePublisher()
 
   if (m_sett_.pub_path_)
   {
+    //    pub_core_path_.publish(
+    //        MarsMsgConv::BufferCoreStateToPathMsg(latest_state.timestamp_.get_seconds(), core_logic_.buffer_));
     pub_core_path_.publish(
-        MarsMsgConv::BufferCoreStateToPathMsg(latest_state.timestamp_.get_seconds(), core_logic_.buffer_));
+        path_generator_.ExtCoreStateToPathMsg(latest_state.timestamp_.get_seconds(), latest_core_state));
   }
 }
 
@@ -306,6 +307,6 @@ void MarsWrapperPosition::PositionMeasurementUpdate(std::shared_ptr<mars::Positi
 
   mars::PositionSensorStateType position_sensor_state = sensor_sptr.get()->get_state(latest_result.data_.sensor_);
 
-  pub_position1_state_.publish(
-      MarsMsgConv::PositionStateToPoseWithCovMsg(latest_result.timestamp_.get_seconds(), position_sensor_state));
+  pub_position1_state_.publish(MarsMsgConv::PositionStateToPoseWithCovMsg(
+      latest_result.timestamp_.get_seconds(), position_sensor_state, sensor_sptr.get()->name_));
 }

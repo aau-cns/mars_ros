@@ -49,10 +49,13 @@
     <remap from="~position_cal_state_out" to="$(arg position_cal_state_out_topic)"/>
   </node>
 
-  <include file="$(find mars_ros)/launch/rviz/mars_rviz.launch" if="$(arg rviz)">
-    <arg name="topic_path_in"   value="$(arg path_states_out_topic)" />
-    <arg name="topic_pose_in"   value="$(arg pose_state_out_topic)" />
-    <arg name="namespace_mars"  value="mars_position_node" />
-  </include>
+  <!-- launch rviz -->
+  <group if="$(arg rviz)">
+    <include file="$(find mars_ros)/launch/rviz/mars_rviz.launch">
+      <arg name="topic_path_in"   value="$(arg path_states_out_topic)" />
+      <arg name="topic_pose_in"   value="$(arg pose_state_out_topic)" />
+      <arg name="namespace_mars"  value="mars_position_node" />
+    </include>
+  </group>
 
 </launch>

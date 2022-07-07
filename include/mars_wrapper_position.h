@@ -21,6 +21,7 @@
 #include <mars/sensors/imu/imu_sensor_class.h>
 #include <mars/sensors/position/position_measurement_type.h>
 #include <mars/sensors/position/position_sensor_class.h>
+#include <mars_msg_conv.h>
 #include <mars_ros/marsConfig.h>
 #include <nav_msgs/Odometry.h>
 #include <ros/ros.h>
@@ -252,6 +253,7 @@ public:
   ros::Publisher pub_core_odom_state_;      ///< Publisher for the Core-State odom stamped message
   ros::Publisher pub_core_path_;            ///< Publisher for all Core-States in buffer as path message
   ros::Publisher pub_position1_state_;      ///< Publisher for the position sensor calibration state
+  MarsPathGen path_generator_;              ///< Generator and storage for nav_msgs::Path
 
   // Publish groups
   ///

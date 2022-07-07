@@ -532,4 +532,34 @@ public:
   }
 };
 
+///
+/// \brief The MarsPathGen class Conversion and storage between MaRS core state to ROS Path message
+///
+class MarsPathGen
+{
+private:
+  std::vector<geometry_msgs::PoseStamped> path_poses_;
+  const size_t max_path_length_{ 2000 };
+
+public:
+  MarsPathGen() = default;
+
+  inline nav_msgs::Path ExtCoreStateToPathMsg(const double& t, const mars::CoreStateType& core_state,
+                                              const std::string& frame_id = DEFAULT_FRAME_ID)
+  {
+    nav_msgs::Path path_msg;
+    path_msg.header.stamp.fromSec(t);
+    path_msg.header.frame_id = frame_id;
+    path_msg.poses.clear();
+
+    // add pose and check size
+    path_poses_.push_back(MarsMsgConv::ExtCoreStateToPoseMsg(t, core_state, frame_id));
+    if (path_poses_.size() > max_path_length_)
+      path_poses_.erase(path_poses_.begin());
+    path_msg.poses = path_poses_;
+
+    return path_msg;
+  }
+};
+
 #endif  // MARS_MSG_CONV_H
