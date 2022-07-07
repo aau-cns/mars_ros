@@ -13,12 +13,14 @@
   <arg name="full_state_lite_out_topic" default="~full_state_lite_out" />
   <arg name="pose_state_out_topic" default="~pose_state_out" />
   <arg name="odom_state_out_topic" default="~odom_state_out" />
+  <arg name="path_states_out_topic" default="~path_states_out" />
 
   <!-- Output Calibration State -->
   <arg name="position_cal_state_out_topic" default="~position_cal_state_out" />
 
   <!-- Node Options -->
   <arg name="respawn" default="false" />
+  <arg name="rviz"    default="false" />
 
   <!-- Config File -->
   <arg name="config_file" default="$(find mars_ros)/launch/config/position_config.yaml" />
@@ -41,9 +43,16 @@
     <remap from="~core_ext_state_lite_out" to="$(arg full_state_lite_out_topic)"/>
     <remap from="~core_pose_state_out" to="$(arg pose_state_out_topic)"/>
     <remap from="~core_odom_state_out" to="$(arg odom_state_out_topic)"/>
+    <remap from="~core_states_path" to="$(arg path_states_out_topic)"/>
 
     <!-- Output Calibration State -->
     <remap from="~position_cal_state_out" to="$(arg position_cal_state_out_topic)"/>
   </node>
+
+  <include file="$(find mars_ros)/launch/rviz/mars_rviz.launch" if="$(arg rviz)">
+    <arg name="topic_path_in"   value="$(arg path_states_out_topic)" />
+    <arg name="topic_pose_in"   value="$(arg pose_state_out_topic)" />
+    <arg name="namespace_mars"  value="mars_position_node" />
+  </include>
 
 </launch>
