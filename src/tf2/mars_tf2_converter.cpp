@@ -12,25 +12,33 @@ private:
 
   std::string parent_id_{ "child" };
 
+  double t_newest_meas_{ 0.0 };
+
 private:
   void PoseCallback(const geometry_msgs::PoseStamped::ConstPtr& msg)
   {
-    geometry_msgs::TransformStamped transformStamped;
+    // only publish in-order poses to avoid this issue:
+    // https://github.com/ros/geometry2/issues/467
+    if (msg->header.stamp.toSec() > t_newest_meas_)
+    {
+      geometry_msgs::TransformStamped transformStamped;
 
-    transformStamped.header.stamp = msg->header.stamp;/*
-    transformStamped.header.frame_id = parent_id_;
-    transformStamped.child_frame_id = msg->header.frame_id;*/
-    transformStamped.header.frame_id = msg->header.frame_id;
-    transformStamped.child_frame_id = parent_id_; //msg->header.frame_id;
-    transformStamped.transform.translation.x = msg->pose.position.x;
-    transformStamped.transform.translation.y = msg->pose.position.y;
-    transformStamped.transform.translation.z = msg->pose.position.z;
-    transformStamped.transform.rotation.x = msg->pose.orientation.x;
-    transformStamped.transform.rotation.y = msg->pose.orientation.y;
-    transformStamped.transform.rotation.z = msg->pose.orientation.z;
-    transformStamped.transform.rotation.w = msg->pose.orientation.w;
+      transformStamped.header.stamp = msg->header.stamp; /*
+       transformStamped.header.frame_id = parent_id_;
+       transformStamped.child_frame_id = msg->header.frame_id;*/
+      transformStamped.header.frame_id = msg->header.frame_id;
+      transformStamped.child_frame_id = parent_id_;  // msg->header.frame_id;
+      transformStamped.transform.translation.x = msg->pose.position.x;
+      transformStamped.transform.translation.y = msg->pose.position.y;
+      transformStamped.transform.translation.z = msg->pose.position.z;
+      transformStamped.transform.rotation.x = msg->pose.orientation.x;
+      transformStamped.transform.rotation.y = msg->pose.orientation.y;
+      transformStamped.transform.rotation.z = msg->pose.orientation.z;
+      transformStamped.transform.rotation.w = msg->pose.orientation.w;
 
-    br_tf2_.sendTransform(transformStamped);
+      br_tf2_.sendTransform(transformStamped);
+      t_newest_meas_ = msg->header.stamp.toSec();
+    }
   }
 
 public:
