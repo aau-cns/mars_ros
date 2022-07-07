@@ -52,7 +52,7 @@
 
 #include <Eigen/Dense>
 
-#define DEFAULT_FRAME_ID "map"
+#define DEFAULT_FRAME_ID "world"
 
 ///
 /// \brief The MarsMsgConv class Conversion between MaRS types and ROS messages

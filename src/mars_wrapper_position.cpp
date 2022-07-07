@@ -308,5 +308,5 @@ void MarsWrapperPosition::PositionMeasurementUpdate(std::shared_ptr<mars::Positi
   mars::PositionSensorStateType position_sensor_state = sensor_sptr.get()->get_state(latest_result.data_.sensor_);
 
   pub_position1_state_.publish(MarsMsgConv::PositionStateToPoseWithCovMsg(
-      latest_result.timestamp_.get_seconds(), position_sensor_state, sensor_sptr.get()->name_));
+      latest_result.timestamp_.get_seconds(), position_sensor_state, "imu"));
 }
