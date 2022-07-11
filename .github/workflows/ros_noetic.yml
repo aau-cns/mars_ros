@@ -1,0 +1,39 @@
+name: ROS-Noetic
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  container:
+    runs-on: ubuntu-latest
+    container: ros:noetic-ros-core
+    steps:
+    - name: Install Dependencies
+      run: >
+           apt-get update && apt-get install --no-install-recommends -y
+           git
+           doxygen
+           graphviz
+           build-essential
+           libeigen3-dev
+           python3-catkin-tools
+           ros-noetic-dynamic-reconfigure
+    
+    - name: Create Catkin Workspace
+      run: mkdir -p ${{github.workspace}}/catkin_ws/src
+
+    - uses: actions/checkout@v3
+      with:
+        path: ${{github.workspace}}/catkin_ws/src
+        submodules: recursive
+
+    - name: Build
+      working-directory: ${{github.workspace}}/catkin_ws
+      run: /bin/bash -c '. /opt/ros/noetic/setup.bash; catkin build -DCMAKE_BUILD_TYPE=Release;'
+      
