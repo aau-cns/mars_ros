@@ -2,6 +2,7 @@
 
 # Introduction
 
+[![ROS-Noetic](https://github.com/aau-cns/mars_ros/actions/workflows/ros_noetic.yml/badge.svg)](https://github.com/aau-cns/mars_ros/actions/workflows/ros_noetic.yml) [![ROS-Melodic](https://github.com/aau-cns/mars_ros/actions/workflows/ros_melodic.yml/badge.svg)](https://github.com/aau-cns/mars_ros/actions/workflows/ros_melodic.yml) [![ROS-Kinetic](https://github.com/aau-cns/mars_ros/actions/workflows/ros_kinetic.yml/badge.svg)](https://github.com/aau-cns/mars_ros/actions/workflows/ros_kinetic.yml)<br/>
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5185909.svg)](https://doi.org/10.5281/zenodo.5185909) [![IEEE](https://img.shields.io/badge/IEEE-10.1109/LRA.2020.3043195-00498d.svg)](https://ieeexplore.ieee.org/document/9286578) [![License](https://img.shields.io/badge/License-AAUCNS-green.svg)](./LICENSE)
 
 This package is a ROS Wrapper for the Modular and Robust State-Estimation (MaRS) Library, which can be found [here](https://github.com/aau-cns/mars_lib), with the technology described by this [publication](https://ieeexplore.ieee.org/document/9286578). The wrapper defines simple nodes for direct use. Additional sensors can be added to pre-existing nodes, or a dedicated ROS node can be designed for a specific application.
