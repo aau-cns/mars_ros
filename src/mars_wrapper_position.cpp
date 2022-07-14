@@ -34,6 +34,7 @@ MarsWrapperPosition::MarsWrapperPosition(ros::NodeHandle nh)
   , p_wi_init_(0, 0, 0)
   , q_wi_init_(Eigen::Quaterniond::Identity())
   , m_sett_(nh)
+  , path_generator_(m_sett_.path_buffer_size_)
 {
   reconfigure_srv_.setCallback(reconfigure_cb_);
 
@@ -307,6 +308,6 @@ void MarsWrapperPosition::PositionMeasurementUpdate(std::shared_ptr<mars::Positi
 
   mars::PositionSensorStateType position_sensor_state = sensor_sptr.get()->get_state(latest_result.data_.sensor_);
 
-  pub_position1_state_.publish(MarsMsgConv::PositionStateToPoseWithCovMsg(
-      latest_result.timestamp_.get_seconds(), position_sensor_state, "imu"));
+  pub_position1_state_.publish(
+      MarsMsgConv::PositionStateToPoseWithCovMsg(latest_result.timestamp_.get_seconds(), position_sensor_state, "imu"));
 }

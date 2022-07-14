@@ -546,7 +546,6 @@ private:
 
 public:
   MarsPathGen() = default;
-
   MarsPathGen(const size_t& max_path_length) : max_path_length_(max_path_length){};
 
   inline nav_msgs::Path ExtCoreStateToPathMsg(const double& t, const mars::CoreStateType& core_state,

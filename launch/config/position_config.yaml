@@ -9,6 +9,7 @@ discard_ooo_prop_meas: false
 pub_cov: true
 pub_path: false
 buffer_size: 2000
+path_buffer_size: 10000
 
 # Ros Settings
 use_tcpnodelay: true
