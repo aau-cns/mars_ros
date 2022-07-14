@@ -251,7 +251,7 @@ target_link_libraries(gpsvel_vision_node
 set_property(TARGET gpsvel_vision_node PROPERTY COMPILE_DEFINITIONS GPS_VISION GPS_W_VEL)
 
 ## TF2 Converter
-add_executable(mars_tf2_converter src/tf2/mars_tf2_converter.cpp)
+add_executable(mars_tf2_converter src/tf2_mars/mars_tf2_converter.cpp)
 add_dependencies(mars_tf2_converter ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(mars_tf2_converter
  ${catkin_LIBRARIES}
