@@ -253,7 +253,7 @@ void MarsWrapperGpsMag::Gps1MeasurementCallback(const sensor_msgs::NavSatFixCons
   }
 
   // Map the coordinate and velocity measurements to the mars sensor type
-  GpsVelMeasurementType gps_meas(MarsMsgConv::NavSatTwistMsgToGpsVelMeas(*coord_meas, *vel_meas));
+  GpsVelMeasurementType gps_meas(MarsMsgConv::NavSatTwistWithCovMsgToGpsVelMeas(*coord_meas, *vel_meas));
 
   set_common_gps_reference(gps_meas.coordinates_);
 

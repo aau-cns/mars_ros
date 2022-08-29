@@ -1,4 +1,4 @@
-pub_on_prop: true
+pub_on_prop: false
 use_ros_time_now: false
 verbose: false
 verbose_out_of_order: false

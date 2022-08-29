@@ -12,6 +12,7 @@
   <arg name="full_state_out_topic" default="~full_state_out" />
   <arg name="full_state_lite_out_topic" default="~full_state_lite_out" />
   <arg name="pose_state_out_topic" default="~pose_state_out" />
+  <arg name="odom_state_out_topic" default="~odom_state_out" />
 
   <!-- Output Calibration State -->
   <arg name="pose_cal_state_out_topic" default="~pose_cal_state_out" />
@@ -39,6 +40,7 @@
     <remap from="~core_ext_state_out" to="$(arg full_state_out_topic)"/>
     <remap from="~core_ext_state_lite_out" to="$(arg full_state_lite_out_topic)"/>
     <remap from="~core_pose_state_out" to="$(arg pose_state_out_topic)"/>
+    <remap from="~core_odom_state_out" to="$(arg odom_state_out_topic)"/>
 
     <!-- Output Calibration State -->
     <remap from="~pose_cal_state_out" to="$(arg pose_cal_state_out_topic)"/>

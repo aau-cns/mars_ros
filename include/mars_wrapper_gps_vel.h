@@ -126,8 +126,8 @@ public:
   double yaw_init_deg_{ 0 };
   uint32_t auto_mag_init_samples_{ 30 };
 
-  bool use_tcpnodelay_{false};
-  bool bypass_init_service_{false};
+  bool use_tcpnodelay_{ false };
+  bool bypass_init_service_{ false };
 
   uint32_t pub_cb_buffer_size_{ 1 };         ///< Callback buffersize for all outgoing topics
   uint32_t sub_imu_cb_buffer_size_{ 200 };   ///< Callback buffersize for propagation sensor measurements

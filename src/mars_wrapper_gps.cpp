@@ -70,7 +70,7 @@ MarsWrapperGps::MarsWrapperGps(ros::NodeHandle nh)
 
   {  // Limit scope of temp variables
     Eigen::Matrix<double, 3, 1> gps_meas_std;
-    gps_meas_std << 2.0, 2.0, 2.0;
+    gps_meas_std << 0.5, 0.5, 1.0;
     gps1_sensor_sptr_->R_ = gps_meas_std.cwiseProduct(gps_meas_std);
 
     GpsSensorData gps_calibration;

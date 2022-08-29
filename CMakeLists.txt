@@ -98,6 +98,7 @@ message(" * Boost: ${Boost_INCLUDE_DIRS}")
    FILES
    ExtCoreState.msg
    ExtCoreStateLite.msg
+   VisionSensorState.msg
  )
 
 ## Generate services in the 'srv' folder
@@ -223,6 +224,30 @@ target_link_libraries(gps_mag_node
   ${catkin_LIBRARIES} ${MARS_LIBRARY}
 )
 set_property(TARGET gps_mag_node PROPERTY COMPILE_DEFINITIONS GPS_MAG)
+
+## DUAL POSE FULL (GPS, BARO, MAG)
+add_executable(dualpose_full_node src/mars_node.cpp src/mars_wrapper_dualpose_full.cpp)
+add_dependencies(dualpose_full_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} mars_lib)
+target_link_libraries(dualpose_full_node
+  ${catkin_LIBRARIES} ${MARS_LIBRARY}
+)
+set_property(TARGET dualpose_full_node PROPERTY COMPILE_DEFINITIONS DUALPOSE_FULL)
+
+## DUAL POSE FULL (GPS, BARO, MAG)
+add_executable(dualpose_gpsvel_node src/mars_node.cpp src/mars_wrapper_dualpose_full.cpp)
+add_dependencies(dualpose_gpsvel_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} mars_lib)
+target_link_libraries(dualpose_gpsvel_node
+  ${catkin_LIBRARIES} ${MARS_LIBRARY}
+)
+set_property(TARGET dualpose_gpsvel_node PROPERTY COMPILE_DEFINITIONS DUALPOSE_FULL GPS_W_VEL)
+
+## GPS Vision (GPS, BARO, Vision)
+add_executable(gps_vision_node src/mars_node.cpp src/mars_wrapper_gps_vision.cpp)
+add_dependencies(gps_vision_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} mars_lib)
+target_link_libraries(gps_vision_node
+  ${catkin_LIBRARIES} ${MARS_LIBRARY}
+)
+set_property(TARGET gps_vision_node PROPERTY COMPILE_DEFINITIONS GPS_VISION)
 
 
 #############
