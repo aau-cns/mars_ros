@@ -112,12 +112,12 @@ bool MarsWrapperPose::init()
 }
 
 bool MarsWrapperPose::initServiceCallback(std_srvs::SetBool::Request& /*request*/,
-                                          std_srvs::SetBool::Response& res)
+                                          std_srvs::SetBool::Response& response)
 {
   init();
-  res.success = true;
   ROS_INFO_STREAM("Initialized filter trough ROS Service");
 
+  response.success = true;
   return true;
 }
 
@@ -254,7 +254,13 @@ void MarsWrapperPose::PoseMeasurementUpdate(std::shared_ptr<mars::PoseSensorClas
 
   // Publish the latest sensor state
   mars::BufferEntryType latest_result;
-  core_logic_.buffer_.get_latest_sensor_handle_state(sensor_sptr, &latest_result);
+  const bool valid_state = core_logic_.buffer_.get_latest_sensor_handle_state(sensor_sptr, &latest_result);
+
+  if (!valid_state)
+  {
+    return;
+  }
+
   mars::PoseSensorStateType pose_sensor_state = sensor_sptr.get()->get_state(latest_result.data_.sensor_);
 
   pub_pose1_state_.publish(MarsMsgConv::PoseStateToPoseMsg(latest_result.timestamp_.get_seconds(), pose_sensor_state));

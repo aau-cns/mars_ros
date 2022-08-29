@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<launch>
+  <arg name="launchprefix0" default=""/>
+  <arg name="launchprefix1" default="gdbserver localhost:10000"/>
+  <arg name="launchprefix2" default="taskset -c 1 chrt -r 99 "/>
+
+  <arg name="launchprefix" value="$(arg launchprefix0)"/>
+
+  <!-- Input -->
+  <arg name="imu_in_topic" default="~imu_in" />
+  <arg name="mag1_in" default="~mag1_in" />
+  <arg name="gps1_coord_in" default="~gps1_coord_in" />
+  <arg name="gps1_vel_in" default="~gps1_vel_in" />
+
+  <!-- Output Core State -->
+  <arg name="full_state_out_topic" default="~full_state_out" />
+  <arg name="full_state_lite_out_topic" default="~full_state_lite_out"/>
+  <arg name="odom_state_out_topic" default="~odom_state_out" />
+  <arg name="pose_state_out_topic" default="~pose_state_out" />
+
+  <!-- Output Calibration State -->
+  <arg name="gps1_cal_state_out_topic" default="~gps1_cal_state_out" />
+
+  <!-- Node Options -->
+  <arg name="respawn" default="false" />
+
+  <!-- Config File -->
+  <arg name="config_file" default="$(find mars_ros)/launch/config/gps_vel_config.yaml" />
+
+  <!-- Launching the mars_ros multi_gps_node -->
+  <node name="mars_gps_vel_node" pkg="mars_ros" type="gps_vel_node" clear_params="true" output="screen" respawn="$(arg respawn)" launch-prefix="$(arg launchprefix)">
+
+    <!-- Config File -->
+    <rosparam command="load" file="$(arg config_file)" />
+
+    <!-- Input -->
+    <remap from="~imu_in" to="$(arg imu_in_topic)"/>
+    <remap from="~gps1_coord_in" to="$(arg gps1_coord_in)"/>
+    <remap from="~gps1_vel_in" to="$(arg gps1_vel_in)"/>
+    <remap from="~mag1_in" to="$(arg mag1_in)"/>
+
+    <!-- Output Core State -->
+    <remap from="~core_ext_state_out" to="$(arg full_state_out_topic)"/>
+    <remap from="~core_pose_state_out" to="$(arg pose_state_out_topic)"/>
+    <remap from="~core_ext_state_lite_out" to="$(arg full_state_lite_out_topic)"/>
+    <remap from="~core_odom_state_out" to="$(arg odom_state_out_topic)"/>
+
+    <!-- Output Calibration State -->
+    <remap from="~gps1_cal_state_out" to="$(arg gps1_cal_state_out_topic)"/>
+
+  </node>
+</launch>

@@ -15,12 +15,16 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/TransformStamped.h>
+#include <geometry_msgs/TwistWithCovarianceStamped.h>
 #include <mars/core_state.h>
 #include <mars/sensors/gps/gps_conversion.h>
 #include <mars/sensors/gps/gps_measurement_type.h>
 #include <mars/sensors/gps/gps_sensor_state_type.h>
-
+#include <mars/sensors/gps_w_vel/gps_w_vel_measurement_type.h>
+#include <mars/sensors/gps_w_vel/gps_w_vel_sensor_state_type.h>
 #include <mars/sensors/imu/imu_measurement_type.h>
+#include <mars/sensors/mag/mag_measurement_type.h>
+#include <mars/sensors/mag/mag_sensor_state_type.h>
 #include <mars/sensors/pose/pose_measurement_type.h>
 #include <mars/sensors/pose/pose_sensor_state_type.h>
 #include <mars/sensors/position/position_measurement_type.h>
@@ -30,7 +34,9 @@
 #include <mars_ros/ExtCoreStateLite.h>
 #include <nav_msgs/Odometry.h>
 #include <sensor_msgs/Imu.h>
+#include <sensor_msgs/MagneticField.h>
 #include <sensor_msgs/NavSatFix.h>
+#include <Eigen/Dense>
 
 ///
 /// \brief The MarsMsgConv class Conversion between MaRS types and ROS messages
@@ -81,6 +87,17 @@ public:
     return state_msg;
   }
 
+  static inline mars_ros::ExtCoreState ExtCoreStateToMsgCov(const double& t, const mars::CoreStateType& core_state,
+                                                            const mars::CoreStateMatrix state_cov)
+  {
+    // Map States
+    mars_ros::ExtCoreState state_msg(ExtCoreStateToMsg(t, core_state));
+
+    // Map Covariance
+    std::copy(state_cov.data(), state_cov.data() + state_cov.size(), state_msg.cov.begin());
+    return state_msg;
+  }
+
   static inline mars_ros::ExtCoreStateLite ExtCoreStateLiteToMsg(const double& t, const mars::CoreStateType& core_state)
   {
     mars_ros::ExtCoreStateLite state_msg;
@@ -111,6 +128,8 @@ public:
     geometry_msgs::PoseStamped pose_msg;
     pose_msg.header.stamp.fromSec(t);
 
+    pose_msg.header.frame_id = "map";
+
     pose_msg.pose.position.x = core_state.p_wi_(0);
     pose_msg.pose.position.y = core_state.p_wi_(1);
     pose_msg.pose.position.z = core_state.p_wi_(2);
@@ -121,6 +140,48 @@ public:
     pose_msg.pose.orientation.z = q_wi(2);
     pose_msg.pose.orientation.w = q_wi(3);
     return pose_msg;
+  }
+
+  static inline nav_msgs::Odometry ExtCoreStateToOdomMsg(const double& t, const mars::CoreStateType& core_state)
+  {
+    nav_msgs::Odometry odom_msg;
+
+    odom_msg.header.stamp.fromSec(t);
+    odom_msg.header.frame_id = "map";
+    odom_msg.child_frame_id = "map";
+    odom_msg.pose.pose.position.x = core_state.p_wi_.x();
+    odom_msg.pose.pose.position.y = core_state.p_wi_.y();
+    odom_msg.pose.pose.position.z = core_state.p_wi_.z();
+
+    odom_msg.pose.pose.orientation.w = core_state.q_wi_.w();
+    odom_msg.pose.pose.orientation.x = core_state.q_wi_.x();
+    odom_msg.pose.pose.orientation.y = core_state.q_wi_.y();
+    odom_msg.pose.pose.orientation.z = core_state.q_wi_.z();
+
+    odom_msg.twist.twist.linear.x = core_state.v_wi_.x();
+    odom_msg.twist.twist.linear.y = core_state.v_wi_.y();
+    odom_msg.twist.twist.linear.z = core_state.v_wi_.z();
+
+    return odom_msg;
+  }
+
+  static inline nav_msgs::Odometry EigenVec3dToOdomMsg(const double& t, const Eigen::Vector3d& position)
+  {
+    nav_msgs::Odometry odom_msg;
+
+    odom_msg.header.stamp.fromSec(t);
+    odom_msg.header.frame_id = "map";
+    odom_msg.child_frame_id = "map";
+    odom_msg.pose.pose.position.x = position[0];
+    odom_msg.pose.pose.position.y = position[1];
+    odom_msg.pose.pose.position.z = position[2];
+
+    odom_msg.pose.pose.orientation.w = 1;
+    odom_msg.pose.pose.orientation.x = 0;
+    odom_msg.pose.pose.orientation.y = 0;
+    odom_msg.pose.pose.orientation.z = 0;
+
+    return odom_msg;
   }
 
   static inline mars::PositionMeasurementType PointMsgToPositionMeas(const geometry_msgs::PointStamped& msg)
@@ -137,7 +198,8 @@ public:
     return mars::PositionMeasurementType(position);
   }
 
-  static inline mars::PositionMeasurementType PoseWithCovMsgToPositionMeas(const geometry_msgs::PoseWithCovarianceStamped& msg)
+  static inline mars::PositionMeasurementType
+  PoseWithCovMsgToPositionMeas(const geometry_msgs::PoseWithCovarianceStamped& msg)
   {
     const Eigen::Vector3d position(msg.pose.pose.position.x, msg.pose.pose.position.y, msg.pose.pose.position.z);
 
@@ -251,6 +313,14 @@ public:
     return mars::GpsMeasurementType(msg.latitude, msg.longitude, msg.altitude);
   }
 
+  static inline mars::GpsVelMeasurementType NavSatTwistMsgToGpsVelMeas(
+      const sensor_msgs::NavSatFix& msg_coord, const geometry_msgs::TwistWithCovarianceStamped& msg_vel)
+  {
+    return mars::GpsVelMeasurementType(msg_coord.latitude, msg_coord.longitude, msg_coord.altitude,
+                                       msg_vel.twist.twist.linear.x, msg_vel.twist.twist.linear.y,
+                                       msg_vel.twist.twist.linear.z);
+  }
+
   static inline geometry_msgs::PoseWithCovarianceStamped GpsStateToMsg(const double& t,
                                                                        const mars::GpsSensorStateType& gps_state)
   {
@@ -266,6 +336,47 @@ public:
     pose_msg.pose.pose.orientation.y = 0;
     pose_msg.pose.pose.orientation.z = 0;
     pose_msg.pose.pose.orientation.w = 1;
+    return pose_msg;
+  }
+
+  static inline geometry_msgs::PoseWithCovarianceStamped GpsVelStateToMsg(const double& t,
+                                                                          const mars::GpsVelSensorStateType& gps_state)
+  {
+    geometry_msgs::PoseWithCovarianceStamped pose_msg;
+    pose_msg.header.stamp.fromSec(t);
+
+    pose_msg.pose.pose.position.x = gps_state.p_ig_(0);
+    pose_msg.pose.pose.position.y = gps_state.p_ig_(1);
+    pose_msg.pose.pose.position.z = gps_state.p_ig_(2);
+
+    // Return unit quaternion
+    pose_msg.pose.pose.orientation.x = 0;
+    pose_msg.pose.pose.orientation.y = 0;
+    pose_msg.pose.pose.orientation.z = 0;
+    pose_msg.pose.pose.orientation.w = 1;
+    return pose_msg;
+  }
+
+  static inline mars::MagMeasurementType MagMsgToMagMeas(const sensor_msgs::MagneticField& msg)
+  {
+    const Eigen::Vector3d mag_vector(msg.magnetic_field.x, msg.magnetic_field.y, msg.magnetic_field.z);
+    return mars::MagMeasurementType(mag_vector);
+  }
+
+  static inline geometry_msgs::PoseWithCovarianceStamped MagStateToMsg(const double& t,
+                                                                       const mars::MagSensorStateType& mag_state)
+  {
+    geometry_msgs::PoseWithCovarianceStamped pose_msg;
+    pose_msg.header.stamp.fromSec(t);
+
+    pose_msg.pose.pose.position.x = mag_state.mag_(0);
+    pose_msg.pose.pose.position.y = mag_state.mag_(1);
+    pose_msg.pose.pose.position.z = mag_state.mag_(2);
+
+    pose_msg.pose.pose.orientation.x = mag_state.q_im_.x();
+    pose_msg.pose.pose.orientation.y = mag_state.q_im_.y();
+    pose_msg.pose.pose.orientation.z = mag_state.q_im_.z();
+    pose_msg.pose.pose.orientation.w = mag_state.q_im_.w();
     return pose_msg;
   }
 };

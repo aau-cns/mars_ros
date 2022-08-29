@@ -17,6 +17,7 @@
 #include <mars/type_definitions/buffer_data_type.h>
 #include <mars/type_definitions/buffer_entry_type.h>
 #include <mars_msg_conv.h>
+#include <nav_msgs/Odometry.h>
 #include <ros/ros.h>
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/NavSatFix.h>
@@ -60,8 +61,9 @@ MarsWrapperGps::MarsWrapperGps(ros::NodeHandle nh)
   core_logic_.verbose_out_of_order_ = verbose_ooo_;
   core_logic_.discard_ooo_prop_meas_ = discard_ooo_prop_meas_;
 
-  core_states_sptr_->set_noise_std(Eigen::Vector3d(0.013, 0.013, 0.013), Eigen::Vector3d(0.0013, 0.0013, 0.0013),
-                                   Eigen::Vector3d(0.083, 0.083, 0.083), Eigen::Vector3d(0.0083, 0.0083, 0.0083));
+  core_states_sptr_->set_noise_std(
+      Eigen::Vector3d(0.0024, 0.0024, 0.0024), Eigen::Vector3d(1.319e-5, 1.319e-5, 1.319e-5),
+      Eigen::Vector3d(0.1071, 0.1071, 0.1071), Eigen::Vector3d(2.2246e-4, 2.2246e-4, 2.2246e-4));
 
   // Sensors
   gps1_sensor_sptr_ = std::make_shared<mars::GpsSensorClass>("Gps1", core_states_sptr_);
@@ -72,10 +74,10 @@ MarsWrapperGps::MarsWrapperGps(ros::NodeHandle nh)
     gps1_sensor_sptr_->R_ = gps_meas_std.cwiseProduct(gps_meas_std);
 
     GpsSensorData gps_calibration;
-    gps_calibration.state_.p_ig_ = Eigen::Vector3d(0, 0, 0.10);
+    gps_calibration.state_.p_ig_ = Eigen::Vector3d(0, 0, 0);
     Eigen::Matrix<double, 9, 9> gps_cov;
     gps_cov.setZero();
-    gps_cov.diagonal() << 1e-2, 1e-2, 1e-2, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001;
+    gps_cov.diagonal() << 1e-2, 1e-2, 1e-2, 1e-16, 1e-16, 1e-16, 1e-16, 1e-16, 1e-16;
     gps_calibration.sensor_cov_ = gps_cov;
     gps1_sensor_sptr_->set_initial_calib(std::make_shared<GpsSensorData>(gps_calibration));
 
@@ -92,6 +94,7 @@ MarsWrapperGps::MarsWrapperGps(ros::NodeHandle nh)
   pub_ext_core_state_ = nh.advertise<mars_ros::ExtCoreState>("core_ext_state_out", pub_cb_buffer_size_);
   pub_ext_core_state_lite_ = nh.advertise<mars_ros::ExtCoreStateLite>("core_ext_state_lite_out", pub_cb_buffer_size_);
   pub_core_pose_state_ = nh.advertise<geometry_msgs::PoseStamped>("core_pose_state_out", pub_cb_buffer_size_);
+  pub_core_odom_state_ = nh.advertise<nav_msgs::Odometry>("core_odom_state_out", pub_cb_buffer_size_);
   pub_gps_state_ = nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("gps_cal_state_out", pub_cb_buffer_size_);
 }
 
@@ -105,12 +108,12 @@ bool MarsWrapperGps::init()
   return true;
 }
 
-bool MarsWrapperGps::initServiceCallback(std_srvs::SetBool::Request& /*request*/,
-                                         std_srvs::SetBool::Response& /*response*/)
+bool MarsWrapperGps::initServiceCallback(std_srvs::SetBool::Request& /*request*/, std_srvs::SetBool::Response& response)
 {
   init();
   ROS_INFO_STREAM("Initialized filter trough ROS Service");
 
+  response.success = true;
   return true;
 }
 
@@ -146,7 +149,17 @@ void MarsWrapperGps::set_common_gps_reference(const GpsCoordinates& reference)
 void MarsWrapperGps::ImuMeasurementCallback(const sensor_msgs::ImuConstPtr& meas)
 {
   // Map the measutement to the mars type
-  Time timestamp(meas->header.stamp.toSec());
+
+  Time timestamp;
+
+  if (use_ros_time_now_)
+  {
+    timestamp = Time(ros::Time::now().toSec());
+  }
+  else
+  {
+    timestamp = Time(meas->header.stamp.toSec());
+  }
 
   // Generate a measurement data block
   BufferDataType data;
@@ -204,6 +217,9 @@ void MarsWrapperGps::RunCoreStatePublisher()
 
   pub_core_pose_state_.publish(
       MarsMsgConv::ExtCoreStateToPoseMsg(latest_state.timestamp_.get_seconds(), latest_core_state));
+
+  pub_core_odom_state_.publish(
+      MarsMsgConv::ExtCoreStateToOdomMsg(latest_state.timestamp_.get_seconds(), latest_core_state));
 }
 
 void MarsWrapperGps::GpsMeasurementUpdate(std::shared_ptr<mars::GpsSensorClass> sensor_sptr,
@@ -228,7 +244,12 @@ void MarsWrapperGps::GpsMeasurementUpdate(std::shared_ptr<mars::GpsSensorClass> 
 
   // Publish latest sensor state
   mars::BufferEntryType latest_sensor_state;
-  core_logic_.buffer_.get_latest_sensor_handle_state(sensor_sptr, &latest_sensor_state);
+  const bool valid_state = core_logic_.buffer_.get_latest_sensor_handle_state(sensor_sptr, &latest_sensor_state);
+
+  if (!valid_state)
+  {
+    return;
+  }
 
   mars::GpsSensorStateType gps_sensor_state = sensor_sptr.get()->get_state(latest_sensor_state.data_.sensor_);
   pub_gps_state_.publish(MarsMsgConv::GpsStateToMsg(latest_sensor_state.timestamp_.get_seconds(), gps_sensor_state));
