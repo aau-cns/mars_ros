@@ -34,7 +34,7 @@ public:
   bool use_magnetometer_{ false };
   bool enable_manual_yaw_init_{ false };
   double yaw_init_deg_{ 0 };
-  uint32_t auto_mag_init_samples_{ 30 };
+  int auto_mag_init_samples_{ 30 };
 
   bool use_tcpnodelay_{ false };
   bool bypass_init_service_{ false };
@@ -139,7 +139,7 @@ public:
   bool mag_normalize_{ true };
   double mag_declination_{ 0.0 };
   Eigen::Vector3d mag_meas_noise_;
-  Eigen::Vector3d mag_cal_im_;
+  Eigen::Quaterniond mag_cal_q_im_;
   Eigen::Matrix<double, 6, 1> mag_state_init_cov_;
 
   void printMag()
@@ -147,7 +147,7 @@ public:
     PARAM_PRINTER("mag_normalize_:          " << mag_normalize_ << "\n");
     PARAM_PRINTER("mag_declination_:        " << mag_declination_ << "\n");
     PARAM_PRINTER("mag_meas_noise_:         " << mag_meas_noise_.transpose() << "\n");
-    PARAM_PRINTER("mag_cal_im_:             " << mag_cal_im_.transpose() << "\n");
+    PARAM_PRINTER("mag_cal_q_im_:           " << mag_cal_q_im_.coeffs() << "\n");
     PARAM_PRINTER("mag_state_init_cov_:     " << mag_state_init_cov_.transpose() << "\n");
   }
 
@@ -161,6 +161,15 @@ public:
     printBaro();
     printMag();
     std::cout << std::endl;
+  }
+
+  void check_size(const int& size_in, const int& size_comp)
+  {
+    if (size_comp != size_in)
+    {
+      std::cerr << "YAML array with wrong size" << std::endl;
+      exit(EXIT_FAILURE);
+    }
   }
 
   template <int _Rows>
@@ -197,7 +206,7 @@ public:
     pub_cov_ = nh.param<bool>("pub_cov", pub_cov_);
     buffer_size_ = nh.param<int>("buffer_size", buffer_size_);
 
-    //    // Yaw initialization
+    // Yaw initialization
     use_pressure_ = nh.param<bool>("use_pressure", use_pressure_);
     use_magnetometer_ = nh.param<bool>("use_magnetometer", use_magnetometer_);
     enable_manual_yaw_init_ = nh.param<bool>("enable_manual_yaw_init", enable_manual_yaw_init_);
@@ -292,7 +301,12 @@ public:
     nh.param("mag_declination", mag_declination_, double());
 
     check_and_load<3>(mag_meas_noise_, nh, "mag_meas_noise");
-    check_and_load<3>(mag_cal_im_, nh, "mag_cal_im");
+
+    std::vector<double> mag_cal_q_im;
+    nh.param("mag_cal_q_im", mag_cal_q_im, std::vector<double>());
+    check_size(mag_cal_q_im.size(), 4);
+    mag_cal_q_im_ = Eigen::Quaterniond(mag_cal_q_im[0], mag_cal_q_im[1], mag_cal_q_im[2], mag_cal_q_im[3]);
+
     check_and_load<6>(mag_state_init_cov_, nh, "mag_state_init_cov");
     printAll();
   }
