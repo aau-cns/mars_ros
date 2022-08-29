@@ -2,8 +2,8 @@
 
 <launch>
   <!-- Input -->
-  <arg name="imu_in_topic" default="~imu_in_topic" />
-  <arg name="transform_in_topic" default="~transform_in_topic" />
+  <arg name="imu_in_topic" default="~imu_in" />
+  <arg name="point_in_topic" default="~point_in" />
   <arg name="pose_in_topic" default="~pose_in" />
   <arg name="pose_with_cov_in_topic" default="~pose_with_cov_in" />
   <arg name="odom_in_topic" default="~odom_in" />
@@ -19,14 +19,18 @@
   <!-- Node Options -->
   <arg name="respawn" default="false" />
 
+  <!-- Config File -->
+  <arg name="config_file" default="$(find mars_ros)/launch/config/position_config.yaml" />
+
   <!-- Launching the mars_ros pose_node -->
   <node name="mars_position_node" pkg="mars_ros" type="position_node" clear_params="true" output="screen" respawn="$(arg respawn)">
 
-    <rosparam command="load" file="$(find mars_ros)/launch/config/position_config.yaml" />
+    <!-- Config File -->
+    <rosparam command="load" file="$(arg config_file)" />
 
     <!-- Input -->
     <remap from="~imu_in" to="$(arg imu_in_topic)"/>
-    <remap from="~transform_in" to="$(arg transform_in_topic)"/>
+    <remap from="~point_in" to="$(arg point_in_topic)"/>
     <remap from="~pose_in" to="$(arg pose_in_topic)"/>
     <remap from="~pose_with_cov_in" to="$(arg pose_with_cov_in_topic)"/>
     <remap from="~odom_in" to="$(arg odom_in_topic)"/>
