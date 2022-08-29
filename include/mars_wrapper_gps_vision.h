@@ -32,6 +32,8 @@
 #include <mars/sensors/mag/mag_measurement_type.h>
 #include <mars/sensors/mag/mag_sensor_class.h>
 #include <mars/sensors/mag/mag_utils.h>
+#include <mars/sensors/pose/pose_measurement_type.h>
+#include <mars/sensors/pose/pose_sensor_class.h>
 #include <mars/sensors/pressure/pressure_measurement_type.h>
 #include <mars/sensors/pressure/pressure_sensor_class.h>
 #include <mars/sensors/pressure/pressure_utils.h>
