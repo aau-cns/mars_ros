@@ -51,6 +51,12 @@ find_package(
 set(mars_lib_DIR ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 find_package(mars_lib REQUIRED)
 
+if (CMAKE_BUILD_TYPE STREQUAL "Release")
+  set(MARS_LIBRARY ${MARS_LIBRARY_RELEASE})
+elseif (CMAKE_BUILD_TYPE STREQUAL "Debug")
+  set(MARS_LIBRARY ${MARS_LIBRARY_DEBUG})
+endif ()
+
 message(" * Eigen: ${EIGEN3_INCLUDE_DIR}")
 message(" * Mars:  ${MARS_INCLUDE_DIR}")
 message(" * Boost: ${Boost_INCLUDE_DIRS}")
@@ -182,7 +188,7 @@ include_directories(
 add_executable(pose_node src/mars_node.cpp src/mars_wrapper_pose.cpp)
 add_dependencies(pose_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} mars_lib)
 target_link_libraries(pose_node
-  ${catkin_LIBRARIES} ${MARS_LIBRARIE}
+  ${catkin_LIBRARIES} ${MARS_LIBRARY}
 )
 set_property(TARGET pose_node PROPERTY COMPILE_DEFINITIONS POSE)
 
@@ -190,7 +196,7 @@ set_property(TARGET pose_node PROPERTY COMPILE_DEFINITIONS POSE)
 add_executable(position_node src/mars_node.cpp src/mars_wrapper_position.cpp)
 add_dependencies(position_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} mars_lib)
 target_link_libraries(position_node
-  ${catkin_LIBRARIES} ${MARS_LIBRARIE}
+  ${catkin_LIBRARIES} ${MARS_LIBRARY}
 )
 set_property(TARGET position_node PROPERTY COMPILE_DEFINITIONS POSITION)
 
@@ -198,7 +204,7 @@ set_property(TARGET position_node PROPERTY COMPILE_DEFINITIONS POSITION)
 add_executable(gps_node src/mars_node.cpp src/mars_wrapper_gps.cpp)
 add_dependencies(gps_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} mars_lib)
 target_link_libraries(gps_node
-  ${catkin_LIBRARIES} ${MARS_LIBRARIE}
+  ${catkin_LIBRARIES} ${MARS_LIBRARY}
 )
 set_property(TARGET gps_node PROPERTY COMPILE_DEFINITIONS GPS)
 
@@ -206,7 +212,7 @@ set_property(TARGET gps_node PROPERTY COMPILE_DEFINITIONS GPS)
 add_executable(gps_vel_node src/mars_node.cpp src/mars_wrapper_gps_vel.cpp)
 add_dependencies(gps_vel_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} mars_lib)
 target_link_libraries(gps_vel_node
-  ${catkin_LIBRARIES} ${MARS_LIBRARIE}
+  ${catkin_LIBRARIES} ${MARS_LIBRARY}
 )
 set_property(TARGET gps_vel_node PROPERTY COMPILE_DEFINITIONS GPS_VEL)
 
@@ -214,7 +220,7 @@ set_property(TARGET gps_vel_node PROPERTY COMPILE_DEFINITIONS GPS_VEL)
 add_executable(gps_mag_node src/mars_node.cpp src/mars_wrapper_gps_mag.cpp)
 add_dependencies(gps_mag_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} mars_lib)
 target_link_libraries(gps_mag_node
-  ${catkin_LIBRARIES} ${MARS_LIBRARIE}
+  ${catkin_LIBRARIES} ${MARS_LIBRARY}
 )
 set_property(TARGET gps_mag_node PROPERTY COMPILE_DEFINITIONS GPS_MAG)
 
