@@ -10,8 +10,8 @@
 // You can contact the author at <martin.scheiber@ieee.org>
 // and <christian.brommer@ieee.org>.
 
-#ifndef MARSDUALPOSE_LOADER_H
-#define MARSDUALPOSE_LOADER_H
+#ifndef MARSGPSVISION_LOADER_H
+#define MARSGPSVISION_LOADER_H
 
 #include <ros/node_handle.h>
 
@@ -22,32 +22,47 @@
 class ParamLoad
 {
 public:
-  bool publish_on_propagation_{ false };   ///< Set true to publish the core state on propagation
-  bool use_ros_time_now_{ false };         ///< Set to true to use rostime now for all sensor updates
-  bool gps_ros_time_now_{ false };         ///< Set to true to use rostime now for all sensor updates
-  bool verbose_output_{ false };           ///< If true, all verbose infos are printed
-  bool verbose_ooo_{ false };              ///< If true, only out of order verbose msgs are printed
-  bool discard_ooo_prop_meas_{ false };    ///< If true, all out of order propagation sensor meas are discarded
-  bool use_common_gps_reference_{ true };  ///< Use a common GPS reference for all sensors
-  bool pub_cov_{ true };                   ///< Publish covariances in the ext core state message if true
-  uint32_t buffer_size_{ 2000 };           ///< Set mars buffersize
+  //  bool publish_on_propagation_{ false };   ///< Set true to publish the core state on propagation
+  //  bool use_ros_time_now_{ false };         ///< Set to true to use rostime now for all sensor updates
+  //  bool gps_ros_time_now_{ false };         ///< Set to true to use rostime now for all sensor updates
+  //  bool verbose_output_{ false };           ///< If true, all verbose infos are printed
+  //  bool verbose_ooo_{ false };              ///< If true, only out of order verbose msgs are printed
+  //  bool discard_ooo_prop_meas_{ false };    ///< If true, all out of order propagation sensor meas are discarded
+  //  bool use_common_gps_reference_{ true };  ///< Use a common GPS reference for all sensors
+  //  bool pub_cov_{ true };                   ///< Publish covariances in the ext core state message if true
+  //  uint32_t buffer_size_{ 2000 };           ///< Set mars buffersize
+  bool publish_on_propagation_{ true };  ///< Set true to publish the core state on propagation
+  bool use_ros_time_now_{ false };       ///< Set to true to use rostime now for all sensor updates
+  bool gps_ros_time_now_{ false };       ///< Set to true to use rostime now for GPS sensor updates
+  bool verbose_output_{ false };         ///< If true, all verbose infos are printed
+  bool verbose_ooo_{ true };             ///< If true, only out of order verbose msgs are printed
+  bool discard_ooo_prop_meas_{ false };  ///< If true, all out of order propagation sensor meas are discarded
+  bool pub_cov_{ true };                 ///< Publish covariances in the ext core state message if true
+  uint32_t buffer_size_{ 2000 };         ///< Set mars buffersize
 
-  bool use_pressure_{ true };
-  bool use_magnetometer_{ false };
-  bool enable_manual_yaw_init_{ false };
-  double yaw_init_deg_{ 0 };
-  int auto_mag_init_samples_{ 30 };
-
-  bool use_tcpnodelay_{ false };
+  bool use_tcpnodelay_{ true };  ///< Use tcp no delay for the ROS msg. system
   bool bypass_init_service_{ false };
 
+  // enablers
+  bool use_pressure_{ true };       ///< Determines if the pressure sensor is used
+  bool use_magnetometer_{ false };  ///< Determines if the magnetometer is used
+
+  // initializers
+  bool use_common_gps_reference_{ true };  ///< Use a common GPS reference for all sensors
+  bool enable_manual_yaw_init_{ false };   ///< Initialize the yaw based on 'yaw_init_deg_'
+  double yaw_init_deg_{ 0 };               ///< Yaw for core state init if 'enable_manual_yaw_init_' is true
+  int auto_mag_init_samples_{ 30 };        ///< Number if meas. sample if auto init is used
+                                           ///(enable_manual_yaw_init_=false)
+
+  // ros interface
   uint32_t pub_cb_buffer_size_{ 1 };         ///< Callback buffersize for all outgoing topics
   uint32_t sub_imu_cb_buffer_size_{ 200 };   ///< Callback buffersize for propagation sensor measurements
   uint32_t sub_sensor_cb_buffer_size_{ 1 };  ///< Callback buffersize for all non-propagation sensor measurements
   uint32_t pub_prop_divider_{ 4 };           ///< Divider of propagation rate for publishing
 
-  bool publish_gps_enu_{ true };
-  bool publish_baro_height_{ true };
+  // publishers
+  bool publish_gps_enu_{ false };     ///< Publish GPS as ENU in the ref. frame used by the filter
+  bool publish_baro_height_{ true };  ///< Publish pressure-based height as vector in the ref. frame used by the filter
 
   // IMU noise
   double g_rate_noise_;
@@ -128,14 +143,21 @@ public:
   double pressure1_temp_K_{ 293.15 };
   double pressure1_init_duration_{ 1.0 };
 
-  void printBaro()
+  void printPressure1()
   {
-    PARAM_PRINTER("pressure1_meas_noise_:      " << pressure1_meas_noise_ << "\n");
-    PARAM_PRINTER("pressure1_cal_ip_:         " << pressure1_cal_ip_.transpose() << "\n");
-    PARAM_PRINTER("pressure1_state_init_cov_: " << pressure1_state_init_cov_.transpose() << "\n");
-    PARAM_PRINTER("pressure1_const_temp_:     " << pressure1_const_temp_ << "\n");
-    PARAM_PRINTER("pressure1_temp_K_:         " << pressure1_temp_K_ << "\n");
-    PARAM_PRINTER("pressure1_init_duration_:  " << pressure1_init_duration_ << "\n");
+    if (use_pressure_)
+    {
+      PARAM_PRINTER("pressure1_meas_noise_:     " << pressure1_meas_noise_ << "\n");
+      PARAM_PRINTER("pressure1_cal_ip_:         " << pressure1_cal_ip_.transpose() << "\n");
+      PARAM_PRINTER("pressure1_state_init_cov_: " << pressure1_state_init_cov_.transpose() << "\n");
+      PARAM_PRINTER("pressure1_const_temp_:     " << pressure1_const_temp_ << "\n");
+      PARAM_PRINTER("pressure1_temp_K_:         " << pressure1_temp_K_ << "\n");
+      PARAM_PRINTER("pressure1_init_duration_:  " << pressure1_init_duration_ << "\n");
+    }
+    else
+    {
+      PARAM_PRINTER("use_pressure_:             false");
+    }
   }
 
   // Magnetometer calibration
@@ -147,12 +169,18 @@ public:
 
   void printMag()
   {
-    PARAM_PRINTER("mag1_normalize_:           " << mag1_normalize_ << "\n");
-    PARAM_PRINTER("mag1_declination_:         " << mag1_declination_ << "\n");
-    PARAM_PRINTER("mag1_meas_noise_:          " << mag1_meas_noise_.transpose() << "\n");
-    PARAM_PRINTER("mag1_cal_q_im_:            " << mag1_cal_q_im_.w() << " " << mag1_cal_q_im_.vec().transpose()
-                                                << "\n");
-    PARAM_PRINTER("mag1_state_init_cov_:      " << mag1_state_init_cov_.transpose() << "\n");
+    if (use_magnetometer_)
+    {
+      PARAM_PRINTER("mag1_normalize_:           " << mag1_normalize_ << "\n");
+      PARAM_PRINTER("mag1_declination_:         " << mag1_declination_ << "\n");
+      PARAM_PRINTER("mag1_meas_noise_:          " << mag1_meas_noise_.transpose() << "\n");
+      PARAM_PRINTER("mag1_cal_q_im_:            " << mag1_cal_q_im_.coeffs() << "\n");
+      PARAM_PRINTER("mag1_state_init_cov_:      " << mag1_state_init_cov_.transpose() << "\n");
+    }
+    else
+    {
+      PARAM_PRINTER("use_magnetometer_:         false");
+    }
   }
 
   void printAll()
@@ -162,7 +190,7 @@ public:
     printPose1();
     printPose2();
     printGps1();
-    printBaro();
+    printPressure1();
     printMag();
     std::cout << std::endl;
   }
@@ -277,14 +305,14 @@ public:
     check_and_load<6>(pose2_state_init_cov_, nh, "pose2_state_init_cov");
 
     // GPS Settings
-    check_and_load<3>(gps1_pos_meas_noise_, nh, "gps1_pos_meas_noise");
-#ifndef GPS_W_VEL
-    check_and_load<3>(gps1_vel_meas_noise_, nh, "gps1_vel_meas_noise");
+    check_and_load<3>(gps1_pos_meas_noise_, nh, "gps_pos_meas_noise");
+#ifdef GPS_W_VEL
+    check_and_load<3>(gps1_vel_meas_noise_, nh, "gps_vel_meas_noise");
 #endif
-    check_and_load<3>(gps1_cal_ig_, nh, "gps1_cal_ig");
-    check_and_load<3>(gps1_state_init_cov_, nh, "gps1_state_init_cov");
+    check_and_load<3>(gps1_cal_ig_, nh, "gps_cal_ig");
+    check_and_load<3>(gps1_state_init_cov_, nh, "gps_state_init_cov");
 
-    // Baro Settings
+    // Pressure Settings
     pressure1_meas_noise_ = nh.param<double>("pressure1_meas_noise", 1.0);
     pressure1_const_temp_ = nh.param<bool>("pressure1_const_temp", pressure1_const_temp_);
     pressure1_temp_K_ = nh.param<double>("pressure1_temp_K", pressure1_temp_K_);
@@ -295,14 +323,18 @@ public:
     // Magnetometer Settings
     mag1_normalize_ = nh.param<bool>("mag1_normalize", mag1_normalize_);
     nh.param("mag1_declination", mag1_declination_, double());
+
     check_and_load<3>(mag1_meas_noise_, nh, "mag1_meas_noise");
-    std::vector<double> mag_cal_q_im;
-    nh.param("mag1_cal_q_im", mag_cal_q_im, std::vector<double>());
-    check_size(mag_cal_q_im.size(), 4);
-    mag1_cal_q_im_ = Eigen::Quaterniond(mag_cal_q_im[0], mag_cal_q_im[1], mag_cal_q_im[2], mag_cal_q_im[3]);
+
+    std::vector<double> mag1_cal_q_im;
+    nh.param("mag1_cal_q_im", mag1_cal_q_im, std::vector<double>());
+    check_size(mag1_cal_q_im.size(), 4);
+    mag1_cal_q_im_ = Eigen::Quaterniond(mag1_cal_q_im[0], mag1_cal_q_im[1], mag1_cal_q_im[2], mag1_cal_q_im[3]);
+
     check_and_load<6>(mag1_state_init_cov_, nh, "mag1_state_init_cov");
+    printAll();
   }
 
 };  // class ParamLoad
 
-#endif  // MARSDUALPOSE_LOADER_H
+#endif  // MARSGPSVISION_LOADER_H

@@ -225,7 +225,7 @@ target_link_libraries(dualpose_full_node
 )
 set_property(TARGET dualpose_full_node PROPERTY COMPILE_DEFINITIONS DUALPOSE_FULL)
 
-## DUAL POSE FULL (GPS, BARO, MAG)
+## DUAL POSE FULL (GPS+VEL, BARO, MAG)
 add_executable(dualpose_gpsvel_node src/mars_node.cpp src/mars_wrapper_dualpose_full.cpp)
 add_dependencies(dualpose_gpsvel_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} mars_lib)
 target_link_libraries(dualpose_gpsvel_node
@@ -241,6 +241,13 @@ target_link_libraries(gps_vision_node
 )
 set_property(TARGET gps_vision_node PROPERTY COMPILE_DEFINITIONS GPS_VISION)
 
+## GPS Vision (GPS, BARO, Vision)
+add_executable(gpsvel_vision_node src/mars_node.cpp src/mars_wrapper_gps_vision.cpp)
+add_dependencies(gpsvel_vision_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} mars_lib)
+target_link_libraries(gpsvel_vision_node
+  ${catkin_LIBRARIES} ${MARS_LIBRARY}
+)
+set_property(TARGET gpsvel_vision_node PROPERTY COMPILE_DEFINITIONS GPS_VISION GPS_W_VEL)
 
 #############
 ## Install ##

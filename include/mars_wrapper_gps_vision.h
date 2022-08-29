@@ -52,7 +52,7 @@
 
 #include <boost/bind/bind.hpp>
 
-#include "params/mars_dualpose_paramloader.h"
+#include "params/mars_gps_vision_paramloader.h"
 
 #define APPROX_TIME_SYNC
 
@@ -103,7 +103,6 @@ public:
   bool common_gps_ref_is_set_{ false };       ///< Indicator that the common reference was set
   bool common_pressure_ref_is_set_{ false };  ///< Indicator that the common reference was set
   bool have_pose1_{ false };                  //!< Indicator that a pose from sensor one (initial state) was received
-  bool have_pose2_{ false };                  //!< Indicator that a pose from sensor one (initial state) was received
   Eigen::Vector3d p_wi_init_;                 ///< Latest position which will be used to initialize the filter
   Eigen::Quaterniond q_wi_init_;              ///< Latest orientation to initialize the filter
   mars::Buffer gps_meas_buffer_{ 100 };       ///!< Bufffer for GPS measurements to average reference frame
@@ -134,9 +133,9 @@ public:
   mars::CoreLogic core_logic_;                             ///< Core Logic instance
 
   // Sensor instances
-  std::shared_ptr<mars::VisionSensorClass> vision1_sensor_sptr_;     /// Pose1 update sensor instance
-  std::shared_ptr<mars::PressureSensorClass> pressure_sensor_sptr_;  /// Pressure update sensor instance
-  std::shared_ptr<mars::MagSensorClass> mag1_sensor_sptr_;           ///< MAG 1 sensor instance
+  std::shared_ptr<mars::VisionSensorClass> vision1_sensor_sptr_;      /// Pose1 update sensor instance
+  std::shared_ptr<mars::PressureSensorClass> pressure1_sensor_sptr_;  /// Pressure update sensor instance
+  std::shared_ptr<mars::MagSensorClass> mag1_sensor_sptr_;            ///< MAG 1 sensor instance
 
 #ifndef GPS_W_VEL
   std::shared_ptr<mars::GpsSensorClass> gps1_sensor_sptr_;  /// GPS 1 sensor instance
@@ -145,10 +144,10 @@ public:
 #endif
 
   // Subscriber
-  ros::Subscriber sub_imu_measurement_;       ///< IMU measurement subscriber
-  ros::Subscriber sub_pose1_measurement_;     ///< Pose stamped measurement subscriber
-  ros::Subscriber sub_pressure_measurement_;  ///< Pressure stamped measurement subscriber
-  ros::Subscriber sub_mag1_measurement_;      ///< MAG 1 MagneticField measurement subscriber
+  ros::Subscriber sub_imu_measurement_;        ///< IMU measurement subscriber
+  ros::Subscriber sub_pose1_measurement_;      ///< Pose stamped measurement subscriber
+  ros::Subscriber sub_pressure1_measurement_;  ///< Pressure stamped measurement subscriber
+  ros::Subscriber sub_mag1_measurement_;       ///< MAG 1 MagneticField measurement subscriber
 
 #ifndef GPS_W_VEL
   ros::Subscriber sub_gps1_measurement_;  ///< GPS 1 NavSatFixConstPtr measurement subscriber
@@ -157,7 +156,7 @@ public:
   GpsVelMsgFilter sub_gps1_vel_meas_;  ///< GPS 1 TwistWithCovarianceStamped measurement subscriber
 
 #ifndef APPROX_TIME_SYNC
-  GpsMeasSyncFilter sync_gps1_meas_;  ///< GPS 1 Measurement Synchronizer exact time
+  GpsMeasSyncFilter sync_gps1_meas_;   ///< GPS 1 Measurement Synchronizer exact time
 #else
   GpsMeasApproxSyncFilter sync_gps1_meas_;  ///< GPS 1 Measurement Synchronizer Approximate time
 #endif  // APPROX_TIME_SYNC
@@ -207,7 +206,7 @@ public:
   ///
   /// Converting the ROS message to MaRS data type and running a PressureMeasurementUpdate routine
   ///
-  void PressureMeasurementCallback(const sensor_msgs::FluidPressureConstPtr& meas);
+  void Pressure1MeasurementCallback(const sensor_msgs::FluidPressureConstPtr& meas);
 
   ///
   /// \brief Mag1MeasurementCallback MAG 1 measurement callback
@@ -225,8 +224,8 @@ public:
   ros::Publisher pub_gps1_state_;           ///< Publisher for the GPS 1 sensor calibration state
   ros::Publisher pub_press_state_;          ///< Publisher for the pressure sensor calibration state
 
-  ros::Publisher pub_gps1_enu_odom_;      ///< Publisher for the GPS1 ENU position Odometry message
-  ros::Publisher pub_baro1_height_vec3_;  ///< Publisher for the GPS1 ENU position Odometry message
+  ros::Publisher pub_gps1_enu_odom_;          ///< Publisher for the GPS1 ENU position Odometry message
+  ros::Publisher pub_pressure1_height_vec3_;  ///< Publisher for the GPS1 ENU position Odometry message
 
   uint32_t pub_prob_cnt{ 0 };
 

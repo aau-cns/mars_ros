@@ -45,13 +45,6 @@ pose1_cal_p_ip: [0,0,0]
 pose1_cal_q_ip: [1,0,0,0]
 pose1_state_init_cov: [0.00001,0.00001,0.00001,0.00001,0.00001,0.00001]
 
-# Pose2 Settings
-pose2_pos_meas_noise: [0.0,0.0,0.0]
-pose2_att_meas_noise: [0,0,0]
-pose2_cal_p_ip: [0,0,0]
-pose2_cal_q_ip: [1,0,0,0]
-pose2_state_init_cov: [0.00001,0.00001,0.00001,0.00001,0.00001,0.00001]
-
 # GPS Settings
 gps1_pos_meas_noise: [1.0,1.0,1.0]
 gps1_vel_meas_noise: [2,2,2]

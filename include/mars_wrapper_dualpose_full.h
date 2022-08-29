@@ -131,7 +131,7 @@ public:
   // Sensor instances
   std::shared_ptr<mars::PoseSensorClass> pose1_sensor_sptr_;         /// Pose1 update sensor instance
   std::shared_ptr<mars::PoseSensorClass> pose2_sensor_sptr_;         /// Pose2 update sensor instance
-  std::shared_ptr<mars::PressureSensorClass> pressure_sensor_sptr_;  /// Pressure update sensor instance
+  std::shared_ptr<mars::PressureSensorClass> pressure1_sensor_sptr_;  /// Pressure update sensor instance
 
 #ifndef GPS_W_VEL
   std::shared_ptr<mars::GpsSensorClass> gps1_sensor_sptr_;  /// GPS 1 sensor instance
@@ -149,7 +149,7 @@ public:
   ros::Subscriber sub_pose2_with_cov_measurement_;  ///< Pose with covariance stamped subscriber
   ros::Subscriber sub_odom2_measurement_;           ///< Odometry measurement subscriber
   ros::Subscriber sub_transform2_measurement_;      ///< Transform stamped measurement subscriber
-  ros::Subscriber sub_pressure_measurement_;        ///< Pressure stamped measurement subscriber
+  ros::Subscriber sub_pressure1_measurement_;        ///< Pressure stamped measurement subscriber
 
 #ifndef GPS_W_VEL
   ros::Subscriber sub_gps1_measurement_;  ///< GPS 1 NavSatFixConstPtr measurement subscriber
