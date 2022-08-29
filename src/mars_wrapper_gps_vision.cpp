@@ -35,7 +35,7 @@ using namespace mars;
 
 MarsWrapperGpsVision::MarsWrapperGpsVision(ros::NodeHandle nh)
   : reconfigure_cb_(boost::bind(&MarsWrapperGpsVision::configCallback, this, _1, _2))
-  , m_sett(nh)
+  , m_sett_(nh)
 #ifdef GPS_W_VEL
 #if NOT APPROX_TIME_SYNC
   , sync_gps1_meas_(sub_gps1_coord_meas_, sub_gps1_vel_meas_, sub_sensor_cb_buffer_size_)
@@ -46,7 +46,7 @@ MarsWrapperGpsVision::MarsWrapperGpsVision(ros::NodeHandle nh)
   , p_wi_init_(0, 0, 0)
   , q_wi_init_(Eigen::Quaterniond::Identity())
 {
-  m_sett.printAll();
+  m_sett_.printAll();
 
   reconfigure_srv_.setCallback(reconfigure_cb_);
 
@@ -57,30 +57,31 @@ MarsWrapperGpsVision::MarsWrapperGpsVision(ros::NodeHandle nh)
   // Framework components
   imu_sensor_sptr_ = std::make_shared<mars::ImuSensorClass>("IMU");
   core_states_sptr_ = std::make_shared<mars::CoreState>();
-  core_states_sptr_.get()->set_initial_covariance(m_sett.core_init_cov_p_, m_sett.core_init_cov_v_,
-                                                  m_sett.core_init_cov_q_, m_sett.core_init_cov_bw_,
-                                                  m_sett.core_init_cov_ba_);
+  core_states_sptr_.get()->set_initial_covariance(m_sett_.core_init_cov_p_, m_sett_.core_init_cov_v_,
+                                                  m_sett_.core_init_cov_q_, m_sett_.core_init_cov_bw_,
+                                                  m_sett_.core_init_cov_ba_);
 
   core_states_sptr_.get()->set_propagation_sensor(imu_sensor_sptr_);
   core_logic_ = mars::CoreLogic(core_states_sptr_);
   core_logic_.buffer_.set_max_buffer_size(2000);                 /// \todo TODO(scm): make this a param
   core_logic_.buffer_prior_core_init_.set_max_buffer_size(800);  /// \todo TODO(scm): make this a param
 
-  core_logic_.verbose_ = m_sett.verbose_output_;
-  core_logic_.verbose_out_of_order_ = m_sett.verbose_ooo_;
-  core_logic_.discard_ooo_prop_meas_ = m_sett.discard_ooo_prop_meas_;
+  core_logic_.verbose_ = m_sett_.verbose_output_;
+  core_logic_.verbose_out_of_order_ = m_sett_.verbose_ooo_;
+  core_logic_.discard_ooo_prop_meas_ = m_sett_.discard_ooo_prop_meas_;
 
-  core_states_sptr_->set_noise_std(Eigen::Vector3d(m_sett.g_rate_noise_, m_sett.g_rate_noise_, m_sett.g_rate_noise_),
-                                   Eigen::Vector3d(m_sett.g_bias_noise_, m_sett.g_bias_noise_, m_sett.g_bias_noise_),
-                                   Eigen::Vector3d(m_sett.a_noise_, m_sett.a_noise_, m_sett.a_noise_),
-                                   Eigen::Vector3d(m_sett.a_bias_noise_, m_sett.a_bias_noise_, m_sett.a_bias_noise_));
+  core_states_sptr_->set_noise_std(
+      Eigen::Vector3d(m_sett_.g_rate_noise_, m_sett_.g_rate_noise_, m_sett_.g_rate_noise_),
+      Eigen::Vector3d(m_sett_.g_bias_noise_, m_sett_.g_bias_noise_, m_sett_.g_bias_noise_),
+      Eigen::Vector3d(m_sett_.a_noise_, m_sett_.a_noise_, m_sett_.a_noise_),
+      Eigen::Vector3d(m_sett_.a_bias_noise_, m_sett_.a_bias_noise_, m_sett_.a_bias_noise_));
 
   // Sensors
   // Vision1
   vision1_sensor_sptr_ = std::make_shared<mars::VisionSensorClass>("Vision1", core_states_sptr_, false);
   {  // Limit scope of temp variables
     Eigen::Matrix<double, 6, 1> vision_meas_std;
-    vision_meas_std << m_sett.pose1_pos_meas_noise_, m_sett.pose1_att_meas_noise_;
+    vision_meas_std << m_sett_.pose1_pos_meas_noise_, m_sett_.pose1_att_meas_noise_;
     vision1_sensor_sptr_->R_ = vision_meas_std.cwiseProduct(vision_meas_std);
 
     // TODO is set here for now, but will be managed by core logic in later versions
@@ -92,7 +93,7 @@ MarsWrapperGpsVision::MarsWrapperGpsVision(ros::NodeHandle nh)
   {
     // Limit scope of temp variables
     Eigen::Matrix<double, 3, 1> mag_meas_std;
-    mag_meas_std << m_sett.mag_meas_noise_;
+    mag_meas_std << m_sett_.mag_meas_noise_;
     mag1_sensor_sptr_->R_ = mag_meas_std.cwiseProduct(mag_meas_std);
 
     MagSensorData mag_calibration;
@@ -101,7 +102,7 @@ MarsWrapperGpsVision::MarsWrapperGpsVision(ros::NodeHandle nh)
     mag_calibration.state_.q_im_ = Eigen::Quaterniond::Identity();
     Eigen::Matrix<double, 6, 6> mag_cov;
     mag_cov.setZero();
-    mag_cov.diagonal() << m_sett.mag_state_init_cov_;
+    mag_cov.diagonal() << m_sett_.mag_state_init_cov_;
     mag_calibration.sensor_cov_ = mag_cov;
 
     mag1_sensor_sptr_->set_initial_calib(std::make_shared<MagSensorData>(mag_calibration));
@@ -115,15 +116,15 @@ MarsWrapperGpsVision::MarsWrapperGpsVision(ros::NodeHandle nh)
   gps1_sensor_sptr_ = std::make_shared<mars::GpsSensorClass>("Gps1", core_states_sptr_);
   {  // Limit scope of temp variables
     Eigen::Matrix<double, 3, 1> gps_meas_std;
-    gps_meas_std << m_sett.gps_pos_meas_noise_;
+    gps_meas_std << m_sett_.gps_pos_meas_noise_;
     gps1_sensor_sptr_->R_ = gps_meas_std.cwiseProduct(gps_meas_std);
 
     GpsSensorData gps_calibration;
-    gps_calibration.state_.p_ig_ = Eigen::Vector3d(m_sett.gps_cal_ig_);
+    gps_calibration.state_.p_ig_ = Eigen::Vector3d(m_sett_.gps_cal_ig_);
     Eigen::Matrix<double, 9, 9> gps_cov;
     gps_cov.setZero();
     //    gps_cov.diagonal() << 1e-3, 1e-3, 1e-3, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001;
-    gps_cov.diagonal() << m_sett.gps_state_init_cov_, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001;
+    gps_cov.diagonal() << m_sett_.gps_state_init_cov_, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001;
     gps_calibration.sensor_cov_ = gps_cov;
 
     gps1_sensor_sptr_->set_initial_calib(std::make_shared<GpsSensorData>(gps_calibration));
@@ -163,41 +164,41 @@ MarsWrapperGpsVision::MarsWrapperGpsVision(ros::NodeHandle nh)
   pressure_sensor_sptr_ = std::make_shared<mars::PressureSensorClass>("Pressure", core_states_sptr_);
   {  // Limit scope of temp variables
     Eigen::Matrix<double, 1, 1> pressure_meas_std;
-    pressure_meas_std << m_sett.baro_meas_noise_;
+    pressure_meas_std << m_sett_.baro_meas_noise_;
     pressure_sensor_sptr_->R_ = pressure_meas_std.cwiseProduct(pressure_meas_std);
 
     PressureSensorData pressure_calibration;
-    pressure_calibration.state_.p_ip_ = Eigen::Vector3d(m_sett.baro_cal_ip_);
+    pressure_calibration.state_.p_ip_ = Eigen::Vector3d(m_sett_.baro_cal_ip_);
     Eigen::Matrix<double, 3, 3> pressure_cov;
     pressure_cov.setZero();
-    pressure_cov.diagonal() << m_sett.baro_state_init_cov_;
+    pressure_cov.diagonal() << m_sett_.baro_state_init_cov_;
     pressure_calibration.sensor_cov_ = pressure_cov;
     pressure_sensor_sptr_->set_initial_calib(std::make_shared<PressureSensorData>(pressure_calibration));
     // TODO is set here for now, but will be managed by core logic in later versions
     pressure_sensor_sptr_->const_ref_to_nav_ = true;
 
-    press_init_ = mars::PressureInit(m_sett.pressure_init_duration_);
+    press_init_ = mars::PressureInit(m_sett_.pressure_init_duration_);
   }
 
   // Subscriber
   sub_imu_measurement_ =
-      nh.subscribe("imu_in", m_sett.sub_imu_cb_buffer_size_, &MarsWrapperGpsVision::ImuMeasurementCallback, this);
+      nh.subscribe("imu_in", m_sett_.sub_imu_cb_buffer_size_, &MarsWrapperGpsVision::ImuMeasurementCallback, this);
 
-  sub_pose1_measurement_ = nh.subscribe("pose1_in", m_sett.sub_sensor_cb_buffer_size_,
+  sub_pose1_measurement_ = nh.subscribe("pose1_in", m_sett_.sub_sensor_cb_buffer_size_,
                                         &MarsWrapperGpsVision::Pose1MeasurementCallback, this);
 
 #ifndef GPS_W_VEL
   sub_gps1_measurement_ =
-      nh.subscribe("gps1_in", m_sett.sub_sensor_cb_buffer_size_, &MarsWrapperGpsVision::Gps1MeasurementCallback, this);
+      nh.subscribe("gps1_in", m_sett_.sub_sensor_cb_buffer_size_, &MarsWrapperGpsVision::Gps1MeasurementCallback, this);
 #else
   sub_gps1_coord_meas_.subscribe(nh, "gps1_coord_in", m_sett.sub_sensor_cb_buffer_size_);
   sub_gps1_vel_meas_.subscribe(nh, "gps1_vel_in", m_sett.sub_sensor_cb_buffer_size_);
   sync_gps1_meas_.registerCallback(boost::bind(&MarsWrapperDualPoseFull::Gps1MeasurementCallback, this, _1, _2));
 #endif
 
-  if (m_sett.use_pressure_ && m_sett.pressure_const_temp_)
+  if (m_sett_.use_pressure_ && m_sett_.pressure_const_temp_)
   {
-    sub_pressure_measurement_ = nh.subscribe("pressure_in", m_sett.sub_sensor_cb_buffer_size_,
+    sub_pressure_measurement_ = nh.subscribe("pressure_in", m_sett_.sub_sensor_cb_buffer_size_,
                                              &MarsWrapperGpsVision::PressureMeasurementCallback, this);
   }
   else
@@ -205,24 +206,24 @@ MarsWrapperGpsVision::MarsWrapperGpsVision(ros::NodeHandle nh)
     // TODO
   }
 
-  if (m_sett.use_magnetometer_)
+  if (m_sett_.use_magnetometer_)
   {
-    sub_mag1_measurement_ = nh.subscribe("mag1_in", m_sett.sub_sensor_cb_buffer_size_,
+    sub_mag1_measurement_ = nh.subscribe("mag1_in", m_sett_.sub_sensor_cb_buffer_size_,
                                          &MarsWrapperGpsVision::Mag1MeasurementCallback, this);
   }
 
   // Publisher
-  pub_ext_core_state_ = nh.advertise<mars_ros::ExtCoreState>("core_ext_state_out", m_sett.pub_cb_buffer_size_);
+  pub_ext_core_state_ = nh.advertise<mars_ros::ExtCoreState>("core_ext_state_out", m_sett_.pub_cb_buffer_size_);
   pub_ext_core_state_lite_ =
-      nh.advertise<mars_ros::ExtCoreStateLite>("core_ext_state_lite_out", m_sett.pub_cb_buffer_size_);
-  pub_core_pose_state_ = nh.advertise<geometry_msgs::PoseStamped>("core_pose_state_out", m_sett.pub_cb_buffer_size_);
-  pub_core_odom_state_ = nh.advertise<nav_msgs::Odometry>("core_odom_state_out", m_sett.pub_cb_buffer_size_);
-  pub_pose1_state_ = nh.advertise<geometry_msgs::PoseStamped>("pose1_cal_state_out", m_sett.pub_cb_buffer_size_);
-  pub_pose2_state_ = nh.advertise<geometry_msgs::PoseStamped>("pose2_cal_state_out", m_sett.pub_cb_buffer_size_);
+      nh.advertise<mars_ros::ExtCoreStateLite>("core_ext_state_lite_out", m_sett_.pub_cb_buffer_size_);
+  pub_core_pose_state_ = nh.advertise<geometry_msgs::PoseStamped>("core_pose_state_out", m_sett_.pub_cb_buffer_size_);
+  pub_core_odom_state_ = nh.advertise<nav_msgs::Odometry>("core_odom_state_out", m_sett_.pub_cb_buffer_size_);
+  pub_pose1_state_ = nh.advertise<geometry_msgs::PoseStamped>("pose1_cal_state_out", m_sett_.pub_cb_buffer_size_);
+  pub_pose2_state_ = nh.advertise<geometry_msgs::PoseStamped>("pose2_cal_state_out", m_sett_.pub_cb_buffer_size_);
   pub_gps1_state_ =
-      nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("gps1_cal_state_out", m_sett.pub_cb_buffer_size_);
-  pub_gps1_enu_odom_ = nh.advertise<nav_msgs::Odometry>("gps1_enu", m_sett.pub_cb_buffer_size_);
-  pub_baro1_height_vec3_ = nh.advertise<geometry_msgs::Vector3Stamped>("baro1_height", m_sett.pub_cb_buffer_size_);
+      nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("gps1_cal_state_out", m_sett_.pub_cb_buffer_size_);
+  pub_gps1_enu_odom_ = nh.advertise<nav_msgs::Odometry>("gps1_enu", m_sett_.pub_cb_buffer_size_);
+  pub_baro1_height_vec3_ = nh.advertise<geometry_msgs::Vector3Stamped>("baro1_height", m_sett_.pub_cb_buffer_size_);
 }
 
 bool MarsWrapperGpsVision::init()
@@ -257,10 +258,10 @@ bool MarsWrapperGpsVision::initServiceCallback(std_srvs::SetBool::Request& /*req
 void MarsWrapperGpsVision::configCallback(mars_ros::marsConfig& config, uint32_t /*level*/)
 {
   // Config parameter overwrite
-  m_sett.publish_on_propagation_ = config.pub_on_prop;
+  m_sett_.publish_on_propagation_ = config.pub_on_prop;
   core_logic_.verbose_ = config.verbose;
-  m_sett.verbose_output_ = config.verbose;
-  m_sett.use_ros_time_now_ = config.use_ros_time_now;
+  m_sett_.verbose_output_ = config.verbose;
+  m_sett_.use_ros_time_now_ = config.use_ros_time_now;
 
   if (config.initialize)
   {
@@ -306,7 +307,7 @@ void MarsWrapperGpsVision::set_common_gps_reference(const GpsCoordinates& refere
         avg_ref.latitude_ /= (cnt_avgs + 1);
         avg_ref.longitude_ /= (cnt_avgs + 1);
 
-        if (m_sett.verbose_output_)
+        if (m_sett_.verbose_output_)
           std::cout << "Setting the common average GPS reference to: \n" << avg_ref << std::endl;
 
         gps1_sensor_sptr_->set_gps_reference_coordinates(avg_ref);
@@ -330,7 +331,7 @@ void MarsWrapperGpsVision::set_common_pressure_reference(const mars::Pressure& r
 
     if (press_init_.IsDone())
     {
-      if (m_sett.verbose_output_)
+      if (m_sett_.verbose_output_)
         std::cout << "Setting the common pressure reference to: \n" << mean << std::endl;
       pressure_sensor_sptr_->set_pressure_reference(mean.data_, mean.temperature_K_);
     }
@@ -342,7 +343,7 @@ void MarsWrapperGpsVision::ImuMeasurementCallback(const sensor_msgs::ImuConstPtr
   // Map the measutement to the mars type
   Time timestamp;
 
-  if (m_sett.use_ros_time_now_)
+  if (m_sett_.use_ros_time_now_)
   {
     timestamp = Time(ros::Time::now().toSec());
   }
@@ -361,13 +362,13 @@ void MarsWrapperGpsVision::ImuMeasurementCallback(const sensor_msgs::ImuConstPtr
   // Initialize the first time at which the propagation sensor occures
   if (!core_logic_.core_is_initialized_)
   {
-    if (common_gps_ref_is_set_ && (press_init_.IsDone() || !m_sett.use_pressure_) &&
-        (mag_init_.IsDone() || !m_sett.use_magnetometer_))
+    if (common_gps_ref_is_set_ && (press_init_.IsDone() || !m_sett_.use_pressure_) &&
+        (mag_init_.IsDone() || !m_sett_.use_magnetometer_))
       core_logic_.Initialize(p_wi_init_, q_wi_init_);
   }
   else
   {
-    if (m_sett.publish_on_propagation_ && ++pub_prob_cnt % m_sett.pub_prop_divider_ == 0)
+    if (m_sett_.publish_on_propagation_ && ++pub_prob_cnt % m_sett_.pub_prop_divider_ == 0)
     {
       this->RunCoreStatePublisher();
       pub_prob_cnt = 0;
@@ -390,7 +391,7 @@ void MarsWrapperGpsVision::Gps1MeasurementCallback(const sensor_msgs::NavSatFixC
   Time timestamp;
 
   // use ros time for GPS regardless (due to uncertainty of timestamp from mavros GPS measurements)
-  if (m_sett.gps_ros_time_now_)
+  if (m_sett_.gps_ros_time_now_)
   {
     timestamp = Time(ros::Time::now().toSec());
   }
@@ -407,7 +408,7 @@ void MarsWrapperGpsVision::Gps1MeasurementCallback(const sensor_msgs::NavSatFixC
   if (GpsMeasurementUpdate(gps1_sensor_sptr_, gps_meas, timestamp))
   {
     // Publish GPS ENU as Odometry
-    if (m_sett.publish_gps_enu_)
+    if (m_sett_.publish_gps_enu_)
     {
       Eigen::Vector3d gps_enu(gps1_sensor_sptr_->gps_conversion_.get_enu(gps_meas.coordinates_));
       pub_gps1_enu_odom_.publish(MarsMsgConv::EigenVec3dToOdomMsg(timestamp.get_seconds(), gps_enu));
@@ -465,7 +466,7 @@ void MarsWrapperGpsVision::PressureMeasurementCallback(const sensor_msgs::FluidP
 {
   Time timestamp;
 
-  if (m_sett.use_ros_time_now_)
+  if (m_sett_.use_ros_time_now_)
   {
     timestamp = Time(ros::Time::now().toSec());
   }
@@ -474,14 +475,14 @@ void MarsWrapperGpsVision::PressureMeasurementCallback(const sensor_msgs::FluidP
     timestamp = Time(meas->header.stamp.toSec());
   }
 
-  PressureMeasurementType press_meas(MarsMsgConv::FluidPressureMsgtoPressureMeas(*meas, m_sett.pressure_temp_K_));
+  PressureMeasurementType press_meas(MarsMsgConv::FluidPressureMsgtoPressureMeas(*meas, m_sett_.pressure_temp_K_));
   set_common_pressure_reference(press_meas.pressure_, timestamp);
 
   // perform update
   if (PressureMeasurementUpdate(pressure_sensor_sptr_, press_meas, timestamp))
   {
     // Publish pressure as vector
-    if (m_sett.publish_baro_height_)
+    if (m_sett_.publish_baro_height_)
     {
       Eigen::Vector3d baro_height;
       baro_height << 0, 0, pressure_sensor_sptr_->pressure_conversion_.get_height(press_meas.pressure_);
@@ -492,11 +493,11 @@ void MarsWrapperGpsVision::PressureMeasurementCallback(const sensor_msgs::FluidP
 
 void MarsWrapperGpsVision::Mag1MeasurementCallback(const sensor_msgs::MagneticFieldConstPtr& meas)
 {
-  if (!mag_init_.IsDone() && !m_sett.enable_manual_yaw_init_)
+  if (!mag_init_.IsDone() && !m_sett_.enable_manual_yaw_init_)
   {
     mag_init_.AddElement(meas->magnetic_field.x, meas->magnetic_field.y, meas->magnetic_field.z);
 
-    if (mag_init_.get_size() >= m_sett.auto_mag_init_samples_)
+    if (mag_init_.get_size() >= m_sett_.auto_mag_init_samples_)
     {
       mag_init_.get_quat(q_wi_init_);
       std::cout << "Magnetometer yaw initialization: " << mag_init_.get_yaw() * (180 / M_PI) << std::endl;
@@ -509,7 +510,7 @@ void MarsWrapperGpsVision::Mag1MeasurementCallback(const sensor_msgs::MagneticFi
 
   Time timestamp;
 
-  if (m_sett.use_ros_time_now_)
+  if (m_sett_.use_ros_time_now_)
   {
     timestamp = Time(ros::Time::now().toSec());
   }
@@ -521,7 +522,7 @@ void MarsWrapperGpsVision::Mag1MeasurementCallback(const sensor_msgs::MagneticFi
   // Map the magnetometer measurement to the mars sensor type
   MagMeasurementType mag_meas(MarsMsgConv::MagMsgToMagMeas(*meas));
 
-  if (m_sett.mag_normalize_)
+  if (m_sett_.mag_normalize_)
   {
     mag_meas.mag_vector_ = mag_meas.mag_vector_ / mag_meas.mag_vector_.norm();
   }
@@ -568,7 +569,7 @@ bool MarsWrapperGpsVision::VisionMeasurementUpdate(std::shared_ptr<mars::VisionS
 {
   Time timestamp_corr;
 
-  if (m_sett.use_ros_time_now_)
+  if (m_sett_.use_ros_time_now_)
   {
     timestamp_corr = Time(ros::Time::now().toSec());
   }
@@ -602,17 +603,17 @@ bool MarsWrapperGpsVision::VisionMeasurementUpdate(std::shared_ptr<mars::VisionS
     vision_calibration.state_.lambda_ = 1;
 
     // cam imu calibration from params
-    vision_calibration.state_.p_ic_ = m_sett.pose1_cal_p_ip_;
-    vision_calibration.state_.q_ic_ = m_sett.pose1_cal_q_ip_;
+    vision_calibration.state_.p_ic_ = m_sett_.pose1_cal_p_ip_;
+    vision_calibration.state_.q_ic_ = m_sett_.pose1_cal_q_ip_;
 
     // calculate initial vision to world transform
-    Eigen::Quaterniond q_vw_ = q_vc * m_sett.pose1_cal_q_ip_.conjugate() * q_wi.conjugate();
+    Eigen::Quaterniond q_vw_ = q_vc * m_sett_.pose1_cal_q_ip_.conjugate() * q_wi.conjugate();
     vision_calibration.state_.q_vw_ = q_vw_;
-    vision_calibration.state_.p_vw_ = p_vc - q_vw_.toRotationMatrix() * (p_wi + r_wi * m_sett.pose1_cal_p_ip_);
+    vision_calibration.state_.p_vw_ = p_vc - q_vw_.toRotationMatrix() * (p_wi + r_wi * m_sett_.pose1_cal_p_ip_);
 
     Eigen::Matrix<double, 13, 13> pose_cov;
     pose_cov.setZero();
-    pose_cov.diagonal() << 1e-15, 1e-15, 1e-15, 1e-15, 1e-15, 1e-15, m_sett.pose1_state_init_cov_,
+    pose_cov.diagonal() << 1e-15, 1e-15, 1e-15, 1e-15, 1e-15, 1e-15, m_sett_.pose1_state_init_cov_,
         1e-20;  // no calibration update
     vision_calibration.sensor_cov_ = pose_cov;
     vision1_sensor_sptr_->set_initial_calib(std::make_shared<VisionSensorData>(vision_calibration));

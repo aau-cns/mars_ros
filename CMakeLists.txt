@@ -209,14 +209,6 @@ target_link_libraries(gps_node
 )
 set_property(TARGET gps_node PROPERTY COMPILE_DEFINITIONS GPS)
 
-## GPS Vel
-add_executable(gps_vel_node src/mars_node.cpp src/mars_wrapper_gps_vel.cpp)
-add_dependencies(gps_vel_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} mars_lib)
-target_link_libraries(gps_vel_node
-  ${catkin_LIBRARIES} ${MARS_LIBRARY}
-)
-set_property(TARGET gps_vel_node PROPERTY COMPILE_DEFINITIONS GPS_VEL)
-
 ## GPS Mag
 add_executable(gps_mag_node src/mars_node.cpp src/mars_wrapper_gps_mag.cpp)
 add_dependencies(gps_mag_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} mars_lib)

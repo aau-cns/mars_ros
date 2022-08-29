@@ -31,31 +31,25 @@
 class ParamLoad
 {
 public:
-  bool publish_on_propagation_{ false };   ///< Set true to publish the core state on propagation
-  bool use_ros_time_now_{ false };         ///< Set to true to use rostime now for all sensor updates
-  bool verbose_output_{ false };           ///< If true, all verbose infos are printed
-  bool verbose_ooo_{ false };              ///< If true, only out of order verbose msgs are printed
-  bool discard_ooo_prop_meas_{ false };    ///< If true, all out of order propagation sensor meas are discarded
-  bool use_common_gps_reference_{ true };  ///< Use a common GPS reference for all sensors
-  bool cov_debug_{ false };       ///< Print covariance matrices in each publication step
-  bool pub_cov_{ true };          ///< Publish covariances in the ext core state message if true
-  uint32_t buffer_size_{ 1000 };  ///< Set mars buffersize
+  bool publish_on_propagation_{ true };  ///< Set true to publish the core state on propagation
+  bool use_ros_time_now_{ false };       ///< Set to true to use rostime now for all sensor updates
+  bool verbose_output_{ false };         ///< If true, all verbose infos are printed
+  bool verbose_ooo_{ true };             ///< If true, only out of order verbose msgs are printed
+  bool discard_ooo_prop_meas_{ false };  ///< If true, all out of order propagation sensor meas are discarded
+  bool pub_cov_{ true };                 ///< Publish covariances in the ext core state message if true
+  uint32_t buffer_size_{ 2000 };         ///< Set mars buffersize
 
-  bool use_tcpnodelay_{ false };
+  bool use_tcpnodelay_{ true };  ///< Use tcp no delay for the ROS msg. system
   bool bypass_init_service_{ false };
 
   uint32_t pub_cb_buffer_size_{ 1 };         ///< Callback buffersize for all outgoing topics
   uint32_t sub_imu_cb_buffer_size_{ 200 };   ///< Callback buffersize for propagation sensor measurements
   uint32_t sub_sensor_cb_buffer_size_{ 1 };  ///< Callback buffersize for all non-propagation sensor measurements
 
-  bool publish_gps_enu_{ false };
-
   double g_rate_noise_;
   double g_bias_noise_;
   double a_noise_;
   double a_bias_noise_;
-
-  int imu_every_nth_{ 1 };
 
   Eigen::Vector3d core_init_cov_p_;
   Eigen::Vector3d core_init_cov_v_;
@@ -68,7 +62,6 @@ public:
   Eigen::Vector3d pose1_cal_p_ip_;
   Eigen::Quaterniond pose1_cal_q_ip_;
   Eigen::Matrix<double, 6, 1> pose1_state_init_cov_;
-  int pose1_every_nth_{ 1 };
 
   void check_size(const int& size_in, const int& size_comp)
   {
@@ -86,7 +79,6 @@ public:
     verbose_output_ = nh.param<bool>("verbose", verbose_output_);
     verbose_ooo_ = nh.param<bool>("verbose_out_of_order", verbose_ooo_);
     discard_ooo_prop_meas_ = nh.param<bool>("discard_ooo_prop_meas", discard_ooo_prop_meas_);
-    cov_debug_ = nh.param<bool>("cov_debug", cov_debug_);
     pub_cov_ = nh.param<bool>("pub_cov", pub_cov_);
     buffer_size_ = nh.param<int>("buffer_size", buffer_size_);
 
@@ -164,7 +156,7 @@ public:
   MarsWrapperPose(ros::NodeHandle nh);
 
   // Settings
-  ParamLoad m_sett;
+  ParamLoad m_sett_;
 
   // Node services
   ros::ServiceServer initialization_service_;  ///< Service handle for filter initialization

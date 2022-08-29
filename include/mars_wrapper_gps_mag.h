@@ -19,6 +19,7 @@
 #include <mars/sensors/imu/imu_sensor_class.h>
 #include <mars/sensors/mag/mag_measurement_type.h>
 #include <mars/sensors/mag/mag_sensor_class.h>
+#include <mars/sensors/mag/mag_utils.h>
 #include <ros/ros.h>
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/MagneticField.h>
@@ -32,110 +33,30 @@
 #include <message_filters/time_synchronizer.h>
 #include <boost/bind/bind.hpp>
 
-class MagnetometerInit
-{
-public:
-  MagnetometerInit()
-  {
-  }
-
-  void add_element(const Eigen::Vector3d& mag_vector)
-  {
-    m_vec_.push_back(mag_vector);
-  }
-
-  void add_element(const double& x, const double& y, const double& z)
-  {
-    const Eigen::Vector3d m(x, y, z);
-    m_vec_.push_back(m);
-  }
-
-  int get_size()
-  {
-    return int(m_vec_.size());
-  }
-
-  void set_done()
-  {
-    once_ = true;
-  }
-
-  bool is_done()
-  {
-    return once_;
-  }
-
-  void reset()
-  {
-    once_ = false;
-    m_vec_.clear();
-  }
-
-  void get_vec_mean(Eigen::Vector3d& mean_res)
-  {
-    double x, y, z;
-    const int v_size = int(m_vec_.size());
-
-    for (int i = 0; i < v_size; i++)
-    {
-      x += m_vec_[i](0);
-      y += m_vec_[i](1);
-      z += m_vec_[i](2);
-    }
-
-    mean_res = Eigen::Vector3d(x / v_size, y / v_size, z / v_size);
-  }
-
-  void get_quat(Eigen::Quaterniond& q_mag)
-  {
-    Eigen::Vector3d m;
-    get_vec_mean(m);
-
-    const double r = m.norm();
-    const double az = atan2(m(1), m(0));
-    const double el = atan2(m(1), sqrt(m(0) * m(0) + m(1) * m(1)));
-
-    yaw_ = (M_PI / 2) - az;
-
-    Eigen::Matrix3d r_z;
-    r_z << cos(yaw_), -sin(yaw_), 0, sin(yaw_), cos(yaw_), 0, 0, 0, 1;
-
-    q_mag = Eigen::Quaterniond(r_z);
-  }
-
-  double yaw_;
-
-private:
-  int size_;
-  std::deque<Eigen::Vector3d> m_vec_;
-  bool once_{ false };
-};
-
 class ParamLoad
 {
 public:
-  bool publish_on_propagation_{ false };   ///< Set true to publish the core state on propagation
-  bool use_ros_time_now_{ false };         ///< Set to true to use rostime now for all sensor updates
-  bool verbose_output_{ false };           ///< If true, all verbose infos are printed
-  bool verbose_ooo_{ false };              ///< If true, only out of order verbose msgs are printed
-  bool discard_ooo_prop_meas_{ false };    ///< If true, all out of order propagation sensor meas are discarded
-  bool use_common_gps_reference_{ true };  ///< Use a common GPS reference for all sensors
-  bool cov_debug_{ false };
-  bool pub_cov_{ true };
+  bool publish_on_propagation_{ true };  ///< Set true to publish the core state on propagation
+  bool use_ros_time_now_{ false };       ///< Set to true to use rostime now for all sensor updates
+  bool verbose_output_{ false };         ///< If true, all verbose infos are printed
+  bool verbose_ooo_{ true };             ///< If true, only out of order verbose msgs are printed
+  bool discard_ooo_prop_meas_{ false };  ///< If true, all out of order propagation sensor meas are discarded
+  bool pub_cov_{ true };                 ///< Publish covariances in the ext core state message if true
+  uint32_t buffer_size_{ 2000 };         ///< Set mars buffersize
 
-  bool enable_manual_yaw_init_{ false };  ///< Initialize the yaw based on 'yaw_init_deg_'
-  double yaw_init_deg_{ 0 };              ///< Yaw for core state init if 'enable_manual_yaw_init_' is true
-  uint32_t auto_mag_init_samples_{ 30 };  ///< Number if meas. sample if auto init is used
-                                          ///(enable_manual_yaw_init_=false)
-
-  bool use_tcpnodelay_{ false };  ///< Use tcp no delay for the ROS msg. system
+  bool use_tcpnodelay_{ true };  ///< Use tcp no delay for the ROS msg. system
   bool bypass_init_service_{ false };
 
   uint32_t pub_cb_buffer_size_{ 1 };         ///< Callback buffersize for all outgoing topics
   uint32_t sub_imu_cb_buffer_size_{ 200 };   ///< Callback buffersize for propagation sensor measurements
   uint32_t sub_sensor_cb_buffer_size_{ 1 };  ///< Callback buffersize for all non-propagation sensor measurements
 
-  bool publish_gps_enu_{ false };  ///< Publish GPS as ENU in the ref. frame used by the filter
+  bool use_common_gps_reference_{ true };  ///< Use a common GPS reference for all sensors
+  bool publish_gps_enu_{ false };          ///< Publish GPS as ENU in the ref. frame used by the filter
+  bool enable_manual_yaw_init_{ false };   ///< Initialize the yaw based on 'yaw_init_deg_'
+  double yaw_init_deg_{ 0 };               ///< Yaw for core state init if 'enable_manual_yaw_init_' is true
+  uint32_t auto_mag_init_samples_{ 30 };   ///< Number if meas. sample if auto init is used
+                                           ///(enable_manual_yaw_init_=false)
 
   double g_rate_noise_;
   double g_bias_noise_;
@@ -148,29 +69,20 @@ public:
   Eigen::Vector3d core_init_cov_bw_;
   Eigen::Vector3d core_init_cov_ba_;
 
-  Eigen::Vector3d gps_pos_meas_noise_;
-  Eigen::Vector3d gps_vel_meas_noise_;
-  Eigen::Vector3d gps_cal_ig_;
-  Eigen::Vector3d gps_state_init_cov_;
+  Eigen::Vector3d gps1_pos_meas_noise_;
+  Eigen::Vector3d gps1_vel_meas_noise_;
+  Eigen::Vector3d gps1_cal_ig_;
+  Eigen::Vector3d gps1_state_init_cov_;
 
-  bool mag_normalize_{ true };
-  double mag_declination_{ 0.0 };
-  Eigen::Vector3d mag_meas_noise_;
-  Eigen::Vector3d mag_cal_im_;
-  Eigen::Matrix<double, 6, 1> mag_state_init_cov_;
+  bool mag1_normalize_{ true };
+  double mag1_declination_{ 0.0 };
+  Eigen::Vector3d mag1_meas_noise_;
+  Eigen::Vector3d mag1_cal_im_;
+  Eigen::Matrix<double, 6, 1> mag1_state_init_cov_;
 
-  void check_size_3(const int& size)
+  void check_size(const int& size_in, const int& size_comp)
   {
-    if (size != 3)
-    {
-      std::cerr << "YAML array with wrong size" << std::endl;
-      exit(EXIT_FAILURE);
-    }
-  }
-
-  void check_size_6(const int& size)
-  {
-    if (size != 6)
+    if (size_comp != size_in)
     {
       std::cerr << "YAML array with wrong size" << std::endl;
       exit(EXIT_FAILURE);
@@ -185,26 +97,25 @@ public:
     verbose_output_ = nh.param<bool>("verbose", verbose_output_);
     verbose_ooo_ = nh.param<bool>("verbose_out_of_order", verbose_ooo_);
     discard_ooo_prop_meas_ = nh.param<bool>("discard_ooo_prop_meas", discard_ooo_prop_meas_);
-    cov_debug_ = nh.param<bool>("cov_debug", cov_debug_);
     pub_cov_ = nh.param<bool>("pub_cov", pub_cov_);
-
-    // Yaw initialization
-    enable_manual_yaw_init_ = nh.param<bool>("enable_manual_yaw_init", enable_manual_yaw_init_);
-    nh.param("yaw_init_deg", yaw_init_deg_, double());
-    auto_mag_init_samples_ = uint32_t(nh.param<int>("auto_mag_init_samples", int(auto_mag_init_samples_)));
+    buffer_size_ = nh.param<int>("buffer_size", buffer_size_);
 
     // ROS Settings
     use_tcpnodelay_ = nh.param<bool>("use_tcpnodelay", use_tcpnodelay_);
     bypass_init_service_ = nh.param<bool>("bypass_init_service", bypass_init_service_);
 
-    use_common_gps_reference_ = nh.param<bool>("use_common_gps_reference", use_common_gps_reference_);
-
     pub_cb_buffer_size_ = uint32_t(nh.param<int>("pub_cb_buffer_size", int(pub_cb_buffer_size_)));
     sub_imu_cb_buffer_size_ = uint32_t(nh.param<int>("sub_imu_cb_buffer_size", int(sub_imu_cb_buffer_size_)));
     sub_sensor_cb_buffer_size_ = uint32_t(nh.param<int>("sub_sensor_cb_buffer_size", int(sub_sensor_cb_buffer_size_)));
 
-    // Publisher
+    // Node specific settings
     publish_gps_enu_ = nh.param<bool>("publish_gps_enu", publish_gps_enu_);
+    use_common_gps_reference_ = nh.param<bool>("use_common_gps_reference", use_common_gps_reference_);
+
+    // Yaw initialization
+    enable_manual_yaw_init_ = nh.param<bool>("enable_manual_yaw_init", enable_manual_yaw_init_);
+    nh.param("yaw_init_deg", yaw_init_deg_, double());
+    auto_mag_init_samples_ = uint32_t(nh.param<int>("auto_mag_init_samples", int(auto_mag_init_samples_)));
 
     // IMU parameter
     nh.param("gyro_rate_noise", g_rate_noise_, double());
@@ -215,68 +126,68 @@ public:
     // Core state covariance
     std::vector<double> core_init_cov_p;
     nh.param("core_init_cov_p", core_init_cov_p, std::vector<double>());
-    check_size_3(core_init_cov_p.size());
+    check_size(core_init_cov_p.size(), 3);
     core_init_cov_p_ = Eigen::Map<Eigen::Matrix<double, 3, 1> >(core_init_cov_p.data());
 
     std::vector<double> core_init_cov_v;
     nh.param("core_init_cov_v", core_init_cov_v, std::vector<double>());
-    check_size_3(core_init_cov_v.size());
+    check_size(core_init_cov_v.size(), 3);
     core_init_cov_v_ = Eigen::Map<Eigen::Matrix<double, 3, 1> >(core_init_cov_v.data());
 
     std::vector<double> core_init_cov_q;
     nh.param("core_init_cov_q", core_init_cov_q, std::vector<double>());
-    check_size_3(core_init_cov_q.size());
+    check_size(core_init_cov_q.size(), 3);
     core_init_cov_q_ = Eigen::Map<Eigen::Matrix<double, 3, 1> >(core_init_cov_q.data());
 
     std::vector<double> core_init_cov_bw;
     nh.param("core_init_cov_bw", core_init_cov_bw, std::vector<double>());
-    check_size_3(core_init_cov_bw.size());
+    check_size(core_init_cov_bw.size(), 3);
     core_init_cov_bw_ = Eigen::Map<Eigen::Matrix<double, 3, 1> >(core_init_cov_bw.data());
 
     std::vector<double> core_init_cov_ba;
     nh.param("core_init_cov_ba", core_init_cov_ba, std::vector<double>());
-    check_size_3(core_init_cov_ba.size());
+    check_size(core_init_cov_ba.size(), 3);
     core_init_cov_ba_ = Eigen::Map<Eigen::Matrix<double, 3, 1> >(core_init_cov_ba.data());
 
     // GPS Settings
-    std::vector<double> gps_pos_meas_noise;
-    nh.param("gps_pos_meas_noise", gps_pos_meas_noise, std::vector<double>());
-    check_size_3(gps_pos_meas_noise.size());
-    gps_pos_meas_noise_ = Eigen::Map<Eigen::Matrix<double, 3, 1> >(gps_pos_meas_noise.data());
+    std::vector<double> gps1_pos_meas_noise;
+    nh.param("gps1_pos_meas_noise", gps1_pos_meas_noise, std::vector<double>());
+    check_size(gps1_pos_meas_noise.size(), 3);
+    gps1_pos_meas_noise_ = Eigen::Map<Eigen::Matrix<double, 3, 1> >(gps1_pos_meas_noise.data());
 
-    std::vector<double> gps_vel_meas_noise;
-    nh.param("gps_vel_meas_noise", gps_vel_meas_noise, std::vector<double>());
-    check_size_3(gps_vel_meas_noise.size());
-    gps_vel_meas_noise_ = Eigen::Map<Eigen::Matrix<double, 3, 1> >(gps_vel_meas_noise.data());
+    std::vector<double> gps1_vel_meas_noise;
+    nh.param("gps1_vel_meas_noise", gps1_vel_meas_noise, std::vector<double>());
+    check_size(gps1_vel_meas_noise.size(), 3);
+    gps1_vel_meas_noise_ = Eigen::Map<Eigen::Matrix<double, 3, 1> >(gps1_vel_meas_noise.data());
 
-    std::vector<double> gps_cal_ig;
-    nh.param("gps_cal_ig", gps_cal_ig, std::vector<double>());
-    check_size_3(gps_cal_ig.size());
-    gps_cal_ig_ = Eigen::Map<Eigen::Matrix<double, 3, 1> >(gps_cal_ig.data());
+    std::vector<double> gps1_cal_ig;
+    nh.param("gps1_cal_ig", gps1_cal_ig, std::vector<double>());
+    check_size(gps1_cal_ig.size(), 3);
+    gps1_cal_ig_ = Eigen::Map<Eigen::Matrix<double, 3, 1> >(gps1_cal_ig.data());
 
-    std::vector<double> gps_state_init_cov;
-    nh.param("gps_state_init_cov", gps_state_init_cov, std::vector<double>());
-    check_size_3(gps_state_init_cov.size());
-    gps_state_init_cov_ = Eigen::Map<Eigen::Matrix<double, 3, 1> >(gps_state_init_cov.data());
+    std::vector<double> gps1_state_init_cov;
+    nh.param("gps1_state_init_cov", gps1_state_init_cov, std::vector<double>());
+    check_size(gps1_state_init_cov.size(), 3);
+    gps1_state_init_cov_ = Eigen::Map<Eigen::Matrix<double, 3, 1> >(gps1_state_init_cov.data());
 
     // Magnetometer Settings
-    mag_normalize_ = nh.param<bool>("mag_normalize", mag_normalize_);
-    nh.param("mag_declination", mag_declination_, double());
+    mag1_normalize_ = nh.param<bool>("mag1_normalize", mag1_normalize_);
+    nh.param("mag1_declination", mag1_declination_, double());
 
-    std::vector<double> mag_meas_noise;
-    nh.param("mag_meas_noise", mag_meas_noise, std::vector<double>());
-    check_size_3(mag_meas_noise.size());
-    mag_meas_noise_ = Eigen::Map<Eigen::Matrix<double, 3, 1> >(mag_meas_noise.data());
+    std::vector<double> mag1_meas_noise;
+    nh.param("mag1_meas_noise", mag1_meas_noise, std::vector<double>());
+    check_size(mag1_meas_noise.size(), 3);
+    mag1_meas_noise_ = Eigen::Map<Eigen::Matrix<double, 3, 1> >(mag1_meas_noise.data());
 
-    std::vector<double> mag_cal_im;
-    nh.param("mag_cal_im", mag_cal_im, std::vector<double>());
-    check_size_3(mag_cal_im.size());
-    mag_cal_im_ = Eigen::Map<Eigen::Matrix<double, 3, 1> >(mag_cal_im.data());
+    std::vector<double> mag1_cal_im;
+    nh.param("mag1_cal_im", mag1_cal_im, std::vector<double>());
+    check_size(mag1_cal_im.size(), 3);
+    mag1_cal_im_ = Eigen::Map<Eigen::Matrix<double, 3, 1> >(mag1_cal_im.data());
 
-    std::vector<double> mag_state_init_cov;
-    nh.param("mag_state_init_cov", mag_state_init_cov, std::vector<double>());
-    check_size_6(mag_state_init_cov.size());
-    mag_state_init_cov_ = Eigen::Map<Eigen::Matrix<double, 6, 1> >(mag_state_init_cov.data());
+    std::vector<double> mag1_state_init_cov;
+    nh.param("mag1_state_init_cov", mag1_state_init_cov, std::vector<double>());
+    check_size(mag1_state_init_cov.size(), 6);
+    mag1_state_init_cov_ = Eigen::Map<Eigen::Matrix<double, 6, 1> >(mag1_state_init_cov.data());
   }
 };
 
@@ -299,7 +210,7 @@ public:
   // Node services
   ros::ServiceServer initialization_service_;  ///< Service handle for filter initialization
 
-  ParamLoad m_sett;
+  ParamLoad m_sett_;
 
   ///
   /// \brief initServiceCallback Service to initialize / re-initialize the filter
@@ -321,6 +232,7 @@ public:
   bool common_gps_ref_is_set_{ false };  ///< Indicator that the common reference was set
   Eigen::Vector3d p_wi_init_;            ///< Latest position which will be used to initialize the filter
   Eigen::Quaterniond q_wi_init_;         ///< Latest orientation to initialize the filter
+  bool do_state_init_{ false };          ///< Trigger if the filter should be initialized
 
   ///
   /// \brief init used by the reconfigure GUI to reset the the buffer and sensors
@@ -352,7 +264,7 @@ public:
   GpsVelMsgFilter sub_gps1_vel_meas_;       ///< GPS 1 TwistWithCovarianceStamped measurement subscriber
   GpsMeasApproxSyncFilter sync_gps1_meas_;  ///< GPS 1 Measurement Synchronizer Approximate time
 
-  MagnetometerInit mag_init_;
+  mars::MagnetometerInit mag_init_;
 
   // Sensor Callbacks
   ///
@@ -386,9 +298,9 @@ public:
   ros::Publisher pub_ext_core_state_lite_;  ///< Publisher for the Core-State mars_ros::ExtCoreStateLite message
   ros::Publisher pub_core_odom_state_;      ///< Publisher for the Core-State as Odometry message
   ros::Publisher pub_gps1_state_;           ///< Publisher for the GPS 1 sensor calibration state
-  ros::Publisher pub_mag1_state_;           ///< Publisher for the MAG 1 sensor calibration state
+  ros::Publisher pub_gps1_enu_odom_;        ///< Publisher for the GPS1 ENU position Odometry message
 
-  ros::Publisher pub_gps1_enu_odom_;  ///< Publisher for the GPS1 ENU position Odometry message
+  ros::Publisher pub_mag1_state_;  ///< Publisher for the MAG 1 sensor calibration state
 
   // Publish groups
   ///
