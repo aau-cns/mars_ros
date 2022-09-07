@@ -46,6 +46,38 @@ void PoseConverter::PoseCallback(const geometry_msgs::PoseStamped::ConstPtr& msg
   }
 }
 
+PoseCovConverter::PoseCovConverter(ros::NodeHandle& nh) : Converter(nh)
+{
+  sub_msg_ = nh_.subscribe("pose_in", 1, &PoseCovConverter::PoseCovCallback, this);
+
+  ROS_DEBUG_STREAM("Created PoseConverter");
+}
+
+void PoseCovConverter::PoseCovCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg)
+{
+  ROS_DEBUG_STREAM("* PoseCovConverter::PoseCovCallback");
+  // only publish in-order poses to avoid this issue:
+  // https://github.com/ros/geometry2/issues/467
+  if (msg->header.stamp.toSec() > t_newest_meas_)
+  {
+    geometry_msgs::TransformStamped transformStamped;
+
+    transformStamped.header.stamp = msg->header.stamp;
+    transformStamped.header.frame_id = b_override_parent_ ? parent_id_ : msg->header.frame_id;
+    transformStamped.child_frame_id = child_id_;
+    transformStamped.transform.translation.x = msg->pose.pose.position.x;
+    transformStamped.transform.translation.y = msg->pose.pose.position.y;
+    transformStamped.transform.translation.z = msg->pose.pose.position.z;
+    transformStamped.transform.rotation.x = msg->pose.pose.orientation.x;
+    transformStamped.transform.rotation.y = msg->pose.pose.orientation.y;
+    transformStamped.transform.rotation.z = msg->pose.pose.orientation.z;
+    transformStamped.transform.rotation.w = msg->pose.pose.orientation.w;
+
+    br_tf2_.sendTransform(transformStamped);
+    t_newest_meas_ = msg->header.stamp.toSec();
+  }
+}
+
 VisionSensorStateConverter::VisionSensorStateConverter(ros::NodeHandle& nh) : Converter(nh)
 {
   sub_msg_ = nh_.subscribe("state_in", 1, &VisionSensorStateConverter::StateCallback, this);
@@ -96,7 +128,7 @@ static void PrintHelp()
   std::string str = "";
   str += "  Usage: rosrun mars_ros mars_tf2_converter -t [TYPE]\n\n";
   str += "                                   -t [TYPE]  type of converter to use\n";
-  str += "                                              currently supported: 'pose' or 'vision'\n\n";
+  str += "                                              currently supported: 'pose', 'posecov', or 'vision'\n\n";
   str += "                                   -h print this help\n\n";
   ROS_WARN_STREAM(str);
 }
@@ -156,6 +188,11 @@ int main(int argc, char** argv)
     {
       ROS_DEBUG_STREAM("creating PoseConverter");
       conv = new mars_tf2::PoseConverter(nh);
+    }
+    else if (!std::strcmp(argv[2], "posecov"))
+    {
+      ROS_DEBUG_STREAM("creating PoseCovConverter");
+      conv = new mars_tf2::PoseCovConverter(nh);
     }
     else if (!std::strcmp(argv[2], "vision"))
     {

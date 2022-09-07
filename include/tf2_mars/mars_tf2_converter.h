@@ -14,6 +14,7 @@
 #define MARS_TF2_CONVERTER_H
 
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <mars_ros/VisionSensorState.h>
 #include <ros/ros.h>
@@ -69,6 +70,18 @@ private:
 
 public:
   PoseConverter(ros::NodeHandle& nh);
+};
+
+///
+/// \brief The PoseCovConverter class for converting PoseWithCovarianceStamped messages to TF2.
+///
+class PoseCovConverter : public Converter
+{
+private:
+  void PoseCovCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg);
+
+public:
+  PoseCovConverter(ros::NodeHandle& nh);
 };
 
 ///
