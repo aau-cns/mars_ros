@@ -87,20 +87,32 @@ public:
   }
 
   // Pose1 calibration
-  Eigen::Vector3d pose1_pos_meas_noise_;
-  Eigen::Vector3d pose1_att_meas_noise_;
-  Eigen::Vector3d pose1_cal_p_ip_;
-  Eigen::Quaterniond pose1_cal_q_ip_;
-  Eigen::Matrix<double, 6, 1> pose1_state_init_cov_;
+  bool vision1_fixed_scale_;
+  Eigen::Vector3d vision1_pos_meas_noise_;
+  Eigen::Vector3d vision1_att_meas_noise_;
+  Eigen::Vector3d vision1_cal_p_ip_;
+  Eigen::Quaterniond vision1_cal_q_ip_;
+  Eigen::Matrix<double, 6, 1> vision1_cal_ip_init_cov_;
+  Eigen::Matrix<double, 1, 1> vision1_scale_init_cov_;
 
   void printPose1()
   {
-    PARAM_PRINTER("pose1_pos_meas_noise_:     " << pose1_pos_meas_noise_.transpose() << "\n");
-    PARAM_PRINTER("pose1_att_meas_noise_:     " << pose1_att_meas_noise_.transpose() << "\n");
-    PARAM_PRINTER("pose1_cal_p_ip_:           " << pose1_cal_p_ip_.transpose() << "\n");
-    PARAM_PRINTER("pose1_cal_q_ip_:           " << pose1_cal_q_ip_.w() << " " << pose1_cal_q_ip_.vec().transpose()
+    PARAM_PRINTER("pose1_pos_meas_noise_:     " << vision1_pos_meas_noise_.transpose() << "\n");
+    PARAM_PRINTER("pose1_att_meas_noise_:     " << vision1_att_meas_noise_.transpose() << "\n");
+    PARAM_PRINTER("pose1_cal_p_ip_:           " << vision1_cal_p_ip_.transpose() << "\n");
+    PARAM_PRINTER("pose1_cal_q_ip_:           " << vision1_cal_q_ip_.w() << " " << vision1_cal_q_ip_.vec().transpose()
                                                 << "\n");
-    PARAM_PRINTER("pose1_state_init_cov_:     " << pose1_state_init_cov_.transpose() << "\n");
+    PARAM_PRINTER("pose1_state_init_cov_:     " << vision1_cal_ip_init_cov_.transpose() << "\n");
+
+    if (vision1_fixed_scale_)
+    {
+      PARAM_PRINTER("vision1_fixed_scale_:      True\n");
+    }
+    else
+    {
+      PARAM_PRINTER("vision1_fixed_scale_:      False\n");
+      PARAM_PRINTER("vision1_scale_init_cov_:   " << vision1_scale_init_cov_.transpose() << "\n");
+    }
   }
 
   // GPS1 calibration
@@ -255,20 +267,24 @@ public:
     check_and_load<3>(core_init_cov_bw_, nh, "core_init_cov_bw");
     check_and_load<3>(core_init_cov_ba_, nh, "core_init_cov_ba");
 
-    // Pose1 Settings
-    check_and_load<3>(pose1_pos_meas_noise_, nh, "pose1_pos_meas_noise");
-    check_and_load<3>(pose1_att_meas_noise_, nh, "pose1_att_meas_noise");
-    check_and_load<3>(pose1_cal_p_ip_, nh, "pose1_cal_p_ip");
+    // Vision1 Settings
+    nh.param("vision1_fixed_scale", vision1_fixed_scale_, true);
+    check_and_load<3>(vision1_pos_meas_noise_, nh, "vision1_pos_meas_noise");
+    check_and_load<3>(vision1_att_meas_noise_, nh, "vision1_att_meas_noise");
+    check_and_load<3>(vision1_cal_p_ip_, nh, "vision1_cal_p_ip");
 
-    std::vector<double> pose1_cal_q_ip;
-    nh.param("pose1_cal_q_ip", pose1_cal_q_ip, std::vector<double>());
-    check_size_4(pose1_cal_q_ip.size());
-    pose1_cal_q_ip_.w() = pose1_cal_q_ip.at(0);
-    pose1_cal_q_ip_.x() = pose1_cal_q_ip.at(1);
-    pose1_cal_q_ip_.y() = pose1_cal_q_ip.at(2);
-    pose1_cal_q_ip_.z() = pose1_cal_q_ip.at(3);
-    //    check_and_load<4>(pose1_cal_q_ip_, nh, "pose1_cal_q_ip");
-    check_and_load<6>(pose1_state_init_cov_, nh, "pose1_state_init_cov");
+    std::vector<double> vision1_cal_q_ip;
+    nh.param("vision1_cal_q_ip", vision1_cal_q_ip, std::vector<double>());
+    check_size_4(vision1_cal_q_ip.size());
+    vision1_cal_q_ip_.w() = vision1_cal_q_ip.at(0);
+    vision1_cal_q_ip_.x() = vision1_cal_q_ip.at(1);
+    vision1_cal_q_ip_.y() = vision1_cal_q_ip.at(2);
+    vision1_cal_q_ip_.z() = vision1_cal_q_ip.at(3);
+    check_and_load<6>(vision1_cal_ip_init_cov_, nh, "vision1_cal_ip_init_cov");
+    if (!vision1_fixed_scale_)
+      check_and_load<1>(vision1_scale_init_cov_, nh, "vision1_scale_init_cov");
+    else
+      vision1_scale_init_cov_ = Eigen::Matrix<double, 1, 1>(1e-15);
 
     // GPS Settings
     check_and_load<3>(gps1_pos_meas_noise_, nh, "gps1_pos_meas_noise");
