@@ -103,23 +103,6 @@ public:
     PARAM_PRINTER("pose1_state_init_cov_:     " << pose1_state_init_cov_.transpose() << "\n");
   }
 
-  // Pose2 calibration
-  Eigen::Vector3d pose2_pos_meas_noise_;
-  Eigen::Vector3d pose2_att_meas_noise_;
-  Eigen::Vector3d pose2_cal_p_ip_;
-  Eigen::Quaterniond pose2_cal_q_ip_;
-  Eigen::Matrix<double, 6, 1> pose2_state_init_cov_;
-
-  void printPose2()
-  {
-    PARAM_PRINTER("pose2_pos_meas_noise_:     " << pose2_pos_meas_noise_.transpose() << "\n");
-    PARAM_PRINTER("pose2_att_meas_noise_:     " << pose2_att_meas_noise_.transpose() << "\n");
-    PARAM_PRINTER("pose2_cal_p_ip_:           " << pose2_cal_p_ip_.transpose() << "\n");
-    PARAM_PRINTER("pose2_cal_q_ip_:           " << pose2_cal_q_ip_.w() << " " << pose2_cal_q_ip_.vec().transpose()
-                                                << "\n");
-    PARAM_PRINTER("pose2_state_init_cov_:     " << pose2_state_init_cov_.transpose() << "\n");
-  }
-
   // GPS1 calibration
   Eigen::Vector3d gps1_pos_meas_noise_;
   Eigen::Vector3d gps1_vel_meas_noise_;
@@ -188,7 +171,6 @@ public:
     std::cout << "[ParamLoader] printing full parameter list:" << std::endl;
     printCore();
     printPose1();
-    printPose2();
     printGps1();
     printPressure1();
     printMag();
@@ -288,29 +270,13 @@ public:
     //    check_and_load<4>(pose1_cal_q_ip_, nh, "pose1_cal_q_ip");
     check_and_load<6>(pose1_state_init_cov_, nh, "pose1_state_init_cov");
 
-    // Pose2 Settings
-    check_and_load<3>(pose2_pos_meas_noise_, nh, "pose2_pos_meas_noise");
-    check_and_load<3>(pose2_att_meas_noise_, nh, "pose2_att_meas_noise");
-    check_and_load<3>(pose2_cal_p_ip_, nh, "pose2_cal_p_ip");
-
-    std::vector<double> pose2_cal_q_ip;
-    nh.param("pose2_cal_q_ip", pose2_cal_q_ip, std::vector<double>());
-    check_size_4(pose2_cal_q_ip.size());
-    pose2_cal_q_ip_.w() = pose2_cal_q_ip.at(0);
-    pose2_cal_q_ip_.x() = pose2_cal_q_ip.at(1);
-    pose2_cal_q_ip_.y() = pose2_cal_q_ip.at(2);
-    pose2_cal_q_ip_.z() = pose2_cal_q_ip.at(3);
-    //    check_and_load<4>(pose2_cal_q_ip_, nh, "pose2_cal_q_ip");
-
-    check_and_load<6>(pose2_state_init_cov_, nh, "pose2_state_init_cov");
-
     // GPS Settings
-    check_and_load<3>(gps1_pos_meas_noise_, nh, "gps_pos_meas_noise");
+    check_and_load<3>(gps1_pos_meas_noise_, nh, "gps1_pos_meas_noise");
 #ifdef GPS_W_VEL
-    check_and_load<3>(gps1_vel_meas_noise_, nh, "gps_vel_meas_noise");
+    check_and_load<3>(gps1_vel_meas_noise_, nh, "gps1_vel_meas_noise");
 #endif
-    check_and_load<3>(gps1_cal_ig_, nh, "gps_cal_ig");
-    check_and_load<3>(gps1_state_init_cov_, nh, "gps_state_init_cov");
+    check_and_load<3>(gps1_cal_ig_, nh, "gps1_cal_ig");
+    check_and_load<3>(gps1_state_init_cov_, nh, "gps1_state_init_cov");
 
     // Pressure Settings
     pressure1_meas_noise_ = nh.param<double>("pressure1_meas_noise", 1.0);

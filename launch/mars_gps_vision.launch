@@ -40,7 +40,7 @@
     <remap from="~pose1_in"     to="$(arg pose1_in_topic)"/>
     <remap from="~gps1_in"      to="$(arg gps1_pos_in)"/>
     <remap from="~pressure1_in" to="$(arg pressure1_in)"/>
-    <remap from="~mag1_in"      to="$(arg mag_in)"/>
+    <remap from="~mag1_in"      to="$(arg mag1_in)"/>
 
     <!-- Output Core State -->
     <remap from="~core_ext_state_out"       to="$(arg full_state_out_topic)"/>
@@ -65,7 +65,7 @@
     <remap from="~gps1_coord_in"  to="$(arg gps1_pos_in)"/>
     <remap from="~gps1_vel_in"    to="$(arg gps1_vel_in)"/>
     <remap from="~pressure1_in"   to="$(arg pressure1_in)"/>
-    <remap from="~mag1_in"        to="$(arg mag_in)"/>
+    <remap from="~mag1_in"        to="$(arg mag1_in)"/>
 
     <!-- Output Core State -->
     <remap from="~core_ext_state_out"       to="$(arg full_state_out_topic)"/>
