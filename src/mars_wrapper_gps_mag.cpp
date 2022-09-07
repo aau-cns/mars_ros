@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Christian Brommer, Control of Networked Systems, University of Klagenfurt, Austria.
+// Copyright (C) 2022 Christian Brommer, Control of Networked Systems, University of Klagenfurt, Austria.
 //
 // All rights reserved.
 //
@@ -404,7 +404,7 @@ void MarsWrapperGpsMag::RunCoreStatePublisher()
   if (m_sett_.pub_path_)
   {
     pub_core_path_.publish(
-        MarsMsgConv::BufferCoreStateToPathMsg(latest_state.timestamp_.get_seconds(), core_logic_.buffer_));
+        path_generator_.ExtCoreStateToPathMsg(latest_state.timestamp_.get_seconds(), latest_core_state));
   }
 }
 

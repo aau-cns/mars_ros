@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Christian Brommer, Control of Networked Systems, University of Klagenfurt, Austria.
+// Copyright (C) 2022 Christian Brommer, Control of Networked Systems, University of Klagenfurt, Austria.
 //
 // All rights reserved.
 //
@@ -18,7 +18,6 @@
 #include <mars/sensors/pose/pose_measurement_type.h>
 #include <mars/type_definitions/buffer_data_type.h>
 #include <mars/type_definitions/buffer_entry_type.h>
-#include <mars_msg_conv.h>
 #include <mars_ros/ExtCoreState.h>
 #include <mars_ros/ExtCoreStateLite.h>
 #include <nav_msgs/Odometry.h>
@@ -250,7 +249,7 @@ void MarsWrapperPose::RunCoreStatePublisher()
   if (m_sett_.pub_path_)
   {
     pub_core_path_.publish(
-        MarsMsgConv::BufferCoreStateToPathMsg(latest_state.timestamp_.get_seconds(), core_logic_.buffer_));
+        path_generator_.ExtCoreStateToPathMsg(latest_state.timestamp_.get_seconds(), latest_core_state));
   }
 }
 

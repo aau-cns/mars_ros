@@ -1,4 +1,5 @@
-// Copyright (C) 2021 Christian Brommer, Control of Networked Systems, University of Klagenfurt, Austria.
+// Copyright (C) 2022 Christian Brommer and Martin Scheiber,
+// Control of Networked Systems, University of Klagenfurt, Austria.
 //
 // All rights reserved.
 //
@@ -7,6 +8,7 @@
 // in the LICENSE file. No license in patents is granted.
 //
 // You can contact the author at <christian.brommer@ieee.org>
+// and <martin.scheiber@ieee.org>.
 
 #ifndef MARS_MSG_CONV_H
 #define MARS_MSG_CONV_H
@@ -189,6 +191,7 @@ public:
                                                         const std::string& frame_id = DEFAULT_FRAME_ID)
   {
     /// \attention this iterates through the full buffer --> performance loss!
+    /// use the MarsPathGen class instead!
 
     nav_msgs::Path path_msg;
     path_msg.header.stamp.fromSec(t);
@@ -543,6 +546,8 @@ private:
 
 public:
   MarsPathGen() = default;
+
+  MarsPathGen(const size_t& max_path_length) : max_path_length_(max_path_length){};
 
   inline nav_msgs::Path ExtCoreStateToPathMsg(const double& t, const mars::CoreStateType& core_state,
                                               const std::string& frame_id = DEFAULT_FRAME_ID)

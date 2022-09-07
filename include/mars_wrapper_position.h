@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Christian Brommer, Control of Networked Systems, University of Klagenfurt, Austria.
+// Copyright (C) 2022 Christian Brommer, Control of Networked Systems, University of Klagenfurt, Austria.
 //
 // All rights reserved.
 //
@@ -39,7 +39,7 @@ public:
   bool verbose_ooo_{ true };             ///< If true, only out of order verbose msgs are printed
   bool discard_ooo_prop_meas_{ false };  ///< If true, all out of order propagation sensor meas are discarded
   bool pub_cov_{ true };                 ///< Publish covariances in the ext core state message if true
-  bool pub_path_{ true };                ///< Publish all core states as nav_msgs::Path (for rviz)
+  bool pub_path_{ false };               ///< Publish all core states as nav_msgs::Path (for rviz)
   uint32_t buffer_size_{ 2000 };         ///< Set mars buffersize
 
   bool use_tcpnodelay_{ true };  ///< Use tcp no delay for the ROS msg. system

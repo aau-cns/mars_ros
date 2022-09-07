@@ -39,6 +39,7 @@
 #include <mars/sensors/pressure/pressure_utils.h>
 #include <mars/sensors/vision/vision_measurement_type.h>
 #include <mars/sensors/vision/vision_sensor_class.h>
+#include <mars_msg_conv.h>
 #include <mars_ros/marsConfig.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/sync_policies/approximate_time.h>
@@ -221,10 +222,12 @@ public:
   ros::Publisher pub_ext_core_state_lite_;  ///< Publisher for the Core-State mars_ros::ExtCoreStateLite message
   ros::Publisher pub_core_pose_state_;      ///< Publisher for the Core-State pose stamped message
   ros::Publisher pub_core_odom_state_;      ///< Publisher for the Core-State odom stamped message
+  ros::Publisher pub_core_path_;            ///< Publisher for all Core-States in buffer as path message
   ros::Publisher pub_vision1_state_;        ///< Publisher for the vision 1 sensor calibration state
   ros::Publisher pub_gps1_state_;           ///< Publisher for the GPS 1 sensor calibration state
   ros::Publisher pub_pressure1_state_;      ///< Publisher for the pressure 1 sensor calibration state
   ros::Publisher pub_mag1_state_;           ///< Publisher for the magnetometer 1 sensor calibration state
+  MarsPathGen path_generator_;              ///< Generator and storage for nav_msgs::Path
 
   ros::Publisher pub_gps1_enu_odom_;          ///< Publisher for the GPS1 ENU position Odometry message
   ros::Publisher pub_pressure1_height_vec3_;  ///< Publisher for the GPS1 ENU position Odometry message

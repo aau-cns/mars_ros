@@ -20,7 +20,7 @@
 #include <mars/sensors/pose/pose_measurement_type.h>
 #include <mars/type_definitions/buffer_data_type.h>
 #include <mars/type_definitions/buffer_entry_type.h>
-#include <mars_msg_conv.h>
+
 #include <mars_ros/ExtCoreState.h>
 #include <mars_ros/ExtCoreStateLite.h>
 #include <nav_msgs/Odometry.h>
@@ -227,7 +227,7 @@ MarsWrapperDualPoseFull::MarsWrapperDualPoseFull(ros::NodeHandle nh)
   if (m_sett_.pressure1_const_temp_)
   {
     sub_pressure1_measurement_ = nh.subscribe("pressure1_in", m_sett_.sub_sensor_cb_buffer_size_,
-                                             &MarsWrapperDualPoseFull::PressureMeasurementCallback, this);
+                                              &MarsWrapperDualPoseFull::PressureMeasurementCallback, this);
   }
   else
   {
@@ -240,6 +240,11 @@ MarsWrapperDualPoseFull::MarsWrapperDualPoseFull(ros::NodeHandle nh)
       nh.advertise<mars_ros::ExtCoreStateLite>("core_ext_state_lite_out", m_sett_.pub_cb_buffer_size_);
   pub_core_pose_state_ = nh.advertise<geometry_msgs::PoseStamped>("core_pose_state_out", m_sett_.pub_cb_buffer_size_);
   pub_core_odom_state_ = nh.advertise<nav_msgs::Odometry>("core_odom_state_out", m_sett_.pub_cb_buffer_size_);
+  if (m_sett_.pub_path_)
+  {
+    pub_core_path_ = nh.advertise<nav_msgs::Path>("core_states_path", m_sett_.pub_cb_buffer_size_);
+  }
+
   pub_pose1_state_ = nh.advertise<geometry_msgs::PoseStamped>("pose1_cal_state_out", m_sett_.pub_cb_buffer_size_);
   pub_pose2_state_ = nh.advertise<geometry_msgs::PoseStamped>("pose2_cal_state_out", m_sett_.pub_cb_buffer_size_);
   pub_gps1_state_ =
@@ -577,17 +582,30 @@ void MarsWrapperDualPoseFull::PressureMeasurementCallback(const sensor_msgs::Flu
 void MarsWrapperDualPoseFull::RunCoreStatePublisher()
 {
   mars::BufferEntryType latest_state;
-  core_logic_.buffer_.get_latest_state(&latest_state);
-  mars::CoreStateType latest_core_state = static_cast<mars::CoreType*>(latest_state.data_.core_.get())->state_;
 
-  pub_ext_core_state_.publish(MarsMsgConv::ExtCoreStateToMsg(latest_state.timestamp_.get_seconds(), latest_core_state));
-  pub_ext_core_state_lite_.publish(
-      MarsMsgConv::ExtCoreStateLiteToMsg(latest_state.timestamp_.get_seconds(), latest_core_state));
+  // only publish valid states
+  if (core_logic_.buffer_.get_latest_state(&latest_state))
+  {
+    mars::CoreStateType latest_core_state = static_cast<mars::CoreType*>(latest_state.data_.core_.get())->state_;
 
-  pub_core_pose_state_.publish(
-      MarsMsgConv::ExtCoreStateToPoseMsg(latest_state.timestamp_.get_seconds(), latest_core_state));
-  pub_core_odom_state_.publish(
-      MarsMsgConv::ExtCoreStateToOdomMsg(latest_state.timestamp_.get_seconds(), latest_core_state));
+    pub_ext_core_state_.publish(
+        MarsMsgConv::ExtCoreStateToMsg(latest_state.timestamp_.get_seconds(), latest_core_state));
+    pub_ext_core_state_lite_.publish(
+        MarsMsgConv::ExtCoreStateLiteToMsg(latest_state.timestamp_.get_seconds(), latest_core_state));
+
+    pub_core_pose_state_.publish(
+        MarsMsgConv::ExtCoreStateToPoseMsg(latest_state.timestamp_.get_seconds(), latest_core_state));
+    pub_core_odom_state_.publish(
+        MarsMsgConv::ExtCoreStateToOdomMsg(latest_state.timestamp_.get_seconds(), latest_core_state));
+
+    if (m_sett_.pub_path_)
+    {
+      //    pub_core_path_.publish(
+      //        MarsMsgConv::BufferCoreStateToPathMsg(latest_state.timestamp_.get_seconds(), core_logic_.buffer_));
+      pub_core_path_.publish(
+          path_generator_.ExtCoreStateToPathMsg(latest_state.timestamp_.get_seconds(), latest_core_state));
+    }
+  }
 }
 
 bool MarsWrapperDualPoseFull::PoseMeasurementUpdate(std::shared_ptr<mars::PoseSensorClass> sensor_sptr,

@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Christian Brommer, Control of Networked Systems, University of Klagenfurt, Austria.
+// Copyright (C) 2022 Christian Brommer, Control of Networked Systems, University of Klagenfurt, Austria.
 //
 // All rights reserved.
 //
@@ -20,6 +20,7 @@
 #include <mars/sensors/imu/imu_sensor_class.h>
 #include <mars/sensors/pose/pose_measurement_type.h>
 #include <mars/sensors/pose/pose_sensor_class.h>
+#include <mars_msg_conv.h>
 #include <mars_ros/marsConfig.h>
 #include <nav_msgs/Odometry.h>
 #include <ros/ros.h>
@@ -37,7 +38,7 @@ public:
   bool verbose_ooo_{ true };             ///< If true, only out of order verbose msgs are printed
   bool discard_ooo_prop_meas_{ false };  ///< If true, all out of order propagation sensor meas are discarded
   bool pub_cov_{ true };                 ///< Publish covariances in the ext core state message if true
-  bool pub_path_{ true };                ///< Publish all core states as nav_msgs::Path (for rviz)
+  bool pub_path_{ false };               ///< Publish all core states as nav_msgs::Path (for rviz)
   uint32_t buffer_size_{ 2000 };         ///< Set mars buffersize
 
   bool use_tcpnodelay_{ true };  ///< Use tcp no delay for the ROS msg. system
@@ -253,6 +254,7 @@ public:
   ros::Publisher pub_core_odom_state_;      ///< Publisher for the Core-State odom stamped message
   ros::Publisher pub_core_path_;            ///< Publisher for all Core-States in buffer as path message
   ros::Publisher pub_pose1_state_;          ///< Publisher for the pose sensor calibration state
+  MarsPathGen path_generator_;              ///< Generator and storage for nav_msgs::Path
 
   // Publish groups
   ///
