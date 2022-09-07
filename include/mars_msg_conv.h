@@ -1,4 +1,5 @@
-// Copyright (C) 2021 Christian Brommer, Control of Networked Systems, University of Klagenfurt, Austria.
+// Copyright (C) 2022 Christian Brommer and Martin Scheiber,
+// Control of Networked Systems, University of Klagenfurt, Austria.
 //
 // All rights reserved.
 //
@@ -7,6 +8,7 @@
 // in the LICENSE file. No license in patents is granted.
 //
 // You can contact the author at <christian.brommer@ieee.org>
+// and <martin.scheiber@ieee.org>.
 
 #ifndef MARS_MSG_CONV_H
 #define MARS_MSG_CONV_H
@@ -18,6 +20,7 @@
 #include <geometry_msgs/TwistStamped.h>
 #include <geometry_msgs/TwistWithCovarianceStamped.h>
 #include <geometry_msgs/Vector3Stamped.h>
+#include <mars/buffer.h>
 #include <mars/core_state.h>
 #include <mars/sensors/gps/gps_conversion.h>
 #include <mars/sensors/gps/gps_measurement_type.h>
@@ -40,6 +43,7 @@
 #include <mars_ros/ExtCoreStateLite.h>
 #include <mars_ros/VisionSensorState.h>
 #include <nav_msgs/Odometry.h>
+#include <nav_msgs/Path.h>
 #include <sensor_msgs/FluidPressure.h>
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/MagneticField.h>
@@ -47,6 +51,8 @@
 #include <sensor_msgs/Temperature.h>
 
 #include <Eigen/Dense>
+
+#define DEFAULT_FRAME_ID "map"
 
 ///
 /// \brief The MarsMsgConv class Conversion between MaRS types and ROS messages
@@ -64,10 +70,12 @@ public:
     return mars::IMUMeasurementType(lin_acc, ang_vel);
   }
 
-  static inline mars_ros::ExtCoreState ExtCoreStateToMsg(const double& t, const mars::CoreStateType& core_state)
+  static inline mars_ros::ExtCoreState ExtCoreStateToMsg(const double& t, const mars::CoreStateType& core_state,
+                                                         const std::string& frame_id = DEFAULT_FRAME_ID)
   {
     mars_ros::ExtCoreState state_msg;
     state_msg.header.stamp.fromSec(t);
+    state_msg.header.frame_id = frame_id;
 
     state_msg.p_wi.x = core_state.p_wi_(0);
     state_msg.p_wi.y = core_state.p_wi_(1);
@@ -98,20 +106,23 @@ public:
   }
 
   static inline mars_ros::ExtCoreState ExtCoreStateToMsgCov(const double& t, const mars::CoreStateType& core_state,
-                                                            const mars::CoreStateMatrix state_cov)
+                                                            const mars::CoreStateMatrix state_cov,
+                                                            const std::string& frame_id = DEFAULT_FRAME_ID)
   {
     // Map States
-    mars_ros::ExtCoreState state_msg(ExtCoreStateToMsg(t, core_state));
+    mars_ros::ExtCoreState state_msg(ExtCoreStateToMsg(t, core_state, frame_id));
 
     // Map Covariance
     std::copy(state_cov.data(), state_cov.data() + state_cov.size(), state_msg.cov.begin());
     return state_msg;
   }
 
-  static inline mars_ros::ExtCoreStateLite ExtCoreStateLiteToMsg(const double& t, const mars::CoreStateType& core_state)
+  static inline mars_ros::ExtCoreStateLite ExtCoreStateLiteToMsg(const double& t, const mars::CoreStateType& core_state,
+                                                                 const std::string& frame_id = DEFAULT_FRAME_ID)
   {
     mars_ros::ExtCoreStateLite state_msg;
     state_msg.header.stamp.fromSec(t);
+    state_msg.header.frame_id = frame_id;
 
     state_msg.p_wi.x = core_state.p_wi_(0);
     state_msg.p_wi.y = core_state.p_wi_(1);
@@ -133,12 +144,12 @@ public:
     return state_msg;
   }
 
-  static inline geometry_msgs::PoseStamped ExtCoreStateToPoseMsg(const double& t, const mars::CoreStateType& core_state)
+  static inline geometry_msgs::PoseStamped ExtCoreStateToPoseMsg(const double& t, const mars::CoreStateType& core_state,
+                                                                 const std::string& frame_id = DEFAULT_FRAME_ID)
   {
     geometry_msgs::PoseStamped pose_msg;
     pose_msg.header.stamp.fromSec(t);
-
-    pose_msg.header.frame_id = "map";
+    pose_msg.header.frame_id = frame_id;
 
     pose_msg.pose.position.x = core_state.p_wi_(0);
     pose_msg.pose.position.y = core_state.p_wi_(1);
@@ -152,12 +163,13 @@ public:
     return pose_msg;
   }
 
-  static inline nav_msgs::Odometry ExtCoreStateToOdomMsg(const double& t, const mars::CoreStateType& core_state)
+  static inline nav_msgs::Odometry ExtCoreStateToOdomMsg(const double& t, const mars::CoreStateType& core_state,
+                                                         const std::string& frame_id = DEFAULT_FRAME_ID)
   {
     nav_msgs::Odometry odom_msg;
 
     odom_msg.header.stamp.fromSec(t);
-    odom_msg.header.frame_id = "map";
+    odom_msg.header.frame_id = frame_id;
     odom_msg.child_frame_id = "map";
     odom_msg.pose.pose.position.x = core_state.p_wi_.x();
     odom_msg.pose.pose.position.y = core_state.p_wi_.y();
@@ -175,12 +187,45 @@ public:
     return odom_msg;
   }
 
-  static inline nav_msgs::Odometry EigenVec3dToOdomMsg(const double& t, const Eigen::Vector3d& position)
+  static inline nav_msgs::Path BufferCoreStateToPathMsg(const double& t, const mars::Buffer& buffer,
+                                                        const std::string& frame_id = DEFAULT_FRAME_ID)
+  {
+    /// \attention this iterates through the full buffer --> performance loss!
+    /// use the MarsPathGen class instead!
+
+    nav_msgs::Path path_msg;
+    path_msg.header.stamp.fromSec(t);
+    path_msg.header.frame_id = frame_id;
+    path_msg.poses.clear();
+
+    /// \todo(scm): this functionality to get all states could be part of the buffer
+    for (int idx = 0; idx < buffer.get_length(); ++idx)
+    {
+      mars::BufferEntryType buffer_entry;
+      if (!buffer.get_entry_at_idx(idx, &buffer_entry))
+      {
+        break;
+      }
+
+      // add core state to path msg if vaild
+      if (buffer_entry.IsState())
+      {
+        mars::CoreStateType buffer_core_state = static_cast<mars::CoreType*>(buffer_entry.data_.core_.get())->state_;
+        path_msg.poses.push_back(
+            ExtCoreStateToPoseMsg(buffer_entry.timestamp_.get_seconds(), buffer_core_state, frame_id));
+      }
+    }
+
+    return path_msg;
+  }
+
+  static inline nav_msgs::Odometry EigenVec3dToOdomMsg(const double& t, const Eigen::Vector3d& position,
+                                                       const std::string& frame_id = DEFAULT_FRAME_ID)
   {
     nav_msgs::Odometry odom_msg;
 
     odom_msg.header.stamp.fromSec(t);
-    odom_msg.header.frame_id = "map";
+    odom_msg.header.frame_id = frame_id;
     odom_msg.child_frame_id = "map";
     odom_msg.pose.pose.position.x = position[0];
     odom_msg.pose.pose.position.y = position[1];
@@ -232,10 +277,12 @@ public:
   }
 
   static inline geometry_msgs::PoseWithCovarianceStamped
-  PositionStateToPoseWithCovMsg(const double& t, const mars::PositionSensorStateType& position_state)
+  PositionStateToPoseWithCovMsg(const double& t, const mars::PositionSensorStateType& position_state,
+                                const std::string& frame_id = DEFAULT_FRAME_ID)
   {
     geometry_msgs::PoseWithCovarianceStamped pose_msg;
     pose_msg.header.stamp.fromSec(t);
+    pose_msg.header.frame_id = frame_id;
 
     pose_msg.pose.pose.position.x = position_state.p_ip_(0);
     pose_msg.pose.pose.position.y = position_state.p_ip_(1);
@@ -249,11 +296,12 @@ public:
     return pose_msg;
   }
 
-  static inline geometry_msgs::PoseWithCovarianceStamped
-  PoseStateToPoseWithCovMsg(const double& t, const mars::PoseSensorStateType& pose_state)
+  static inline geometry_msgs::PoseWithCovarianceStamped PoseStateToPoseWithCovMsg(
+      const double& t, const mars::PoseSensorStateType& pose_state, const std::string& frame_id = DEFAULT_FRAME_ID)
   {
     geometry_msgs::PoseWithCovarianceStamped pose_msg;
     pose_msg.header.stamp.fromSec(t);
+    pose_msg.header.frame_id = frame_id;
 
     pose_msg.pose.pose.position.x = pose_state.p_ip_(0);
     pose_msg.pose.pose.position.y = pose_state.p_ip_(1);
@@ -268,10 +316,12 @@ public:
   }
 
   static inline geometry_msgs::PoseStamped PoseStateToPoseMsg(const double& t,
-                                                              const mars::PoseSensorStateType& pose_state)
+                                                              const mars::PoseSensorStateType& pose_state,
+                                                              const std::string& frame_id = DEFAULT_FRAME_ID)
   {
     geometry_msgs::PoseStamped pose_msg;
     pose_msg.header.stamp.fromSec(t);
+    pose_msg.header.frame_id = frame_id;
 
     pose_msg.pose.position.x = pose_state.p_ip_(0);
     pose_msg.pose.position.y = pose_state.p_ip_(1);
@@ -347,10 +397,12 @@ public:
   }
 
   static inline geometry_msgs::PoseWithCovarianceStamped GpsStateToMsg(const double& t,
-                                                                       const mars::GpsSensorStateType& gps_state)
+                                                                       const mars::GpsSensorStateType& gps_state,
+                                                                       const std::string& frame_id = DEFAULT_FRAME_ID)
   {
     geometry_msgs::PoseWithCovarianceStamped pose_msg;
     pose_msg.header.stamp.fromSec(t);
+    pose_msg.header.frame_id = frame_id;
 
     pose_msg.pose.pose.position.x = gps_state.p_ig_(0);
     pose_msg.pose.pose.position.y = gps_state.p_ig_(1);
@@ -364,11 +416,12 @@ public:
     return pose_msg;
   }
 
-  static inline geometry_msgs::PoseWithCovarianceStamped GpsVelStateToMsg(const double& t,
-                                                                          const mars::GpsVelSensorStateType& gps_state)
+  static inline geometry_msgs::PoseWithCovarianceStamped GpsVelStateToMsg(
+      const double& t, const mars::GpsVelSensorStateType& gps_state, const std::string& frame_id = DEFAULT_FRAME_ID)
   {
     geometry_msgs::PoseWithCovarianceStamped pose_msg;
     pose_msg.header.stamp.fromSec(t);
+    pose_msg.header.frame_id = frame_id;
 
     pose_msg.pose.pose.position.x = gps_state.p_ig_(0);
     pose_msg.pose.pose.position.y = gps_state.p_ig_(1);
@@ -389,10 +442,12 @@ public:
   }
 
   static inline geometry_msgs::PoseWithCovarianceStamped MagStateToMsg(const double& t,
-                                                                       const mars::MagSensorStateType& mag_state)
+                                                                       const mars::MagSensorStateType& mag_state,
+                                                                       const std::string& frame_id = DEFAULT_FRAME_ID)
   {
     geometry_msgs::PoseWithCovarianceStamped pose_msg;
     pose_msg.header.stamp.fromSec(t);
+    pose_msg.header.frame_id = frame_id;
 
     pose_msg.pose.pose.position.x = mag_state.mag_(0);
     pose_msg.pose.pose.position.y = mag_state.mag_(1);
@@ -418,10 +473,12 @@ public:
   }
 
   static inline geometry_msgs::PoseStamped PressureStateToMsg(const double& t,
-                                                              const mars::PressureSensorStateType& pressure_state)
+                                                              const mars::PressureSensorStateType& pressure_state,
+                                                              const std::string& frame_id = DEFAULT_FRAME_ID)
   {
     geometry_msgs::PoseStamped pose_msg;
     pose_msg.header.stamp.fromSec(t);
+    pose_msg.header.frame_id = frame_id;
 
     pose_msg.pose.position.x = pressure_state.p_ip_(0);
     pose_msg.pose.position.y = pressure_state.p_ip_(1);
@@ -435,10 +492,12 @@ public:
     return pose_msg;
   }
 
-  static inline geometry_msgs::Vector3Stamped EigenVec3dToVec3Msg(const double& t, const Eigen::Vector3d& vec)
+  static inline geometry_msgs::Vector3Stamped EigenVec3dToVec3Msg(const double& t, const Eigen::Vector3d& vec,
+                                                                  const std::string& frame_id = DEFAULT_FRAME_ID)
   {
     geometry_msgs::Vector3Stamped vec_msg;
     vec_msg.header.stamp.fromSec(t);
+    vec_msg.header.frame_id = frame_id;
 
     vec_msg.vector.x = vec(0);
     vec_msg.vector.y = vec(1);
@@ -447,11 +506,12 @@ public:
   }
 
   static inline mars_ros::VisionSensorState VisionStateToMsg(const double& t,
-                                                             const mars::VisionSensorStateType& vision_state)
+                                                             const mars::VisionSensorStateType& vision_state,
+                                                             const std::string& frame_id = DEFAULT_FRAME_ID)
   {
     mars_ros::VisionSensorState vision_msg;
     vision_msg.header.stamp.fromSec(t);
-    vision_msg.header.frame_id = "map";
+    vision_msg.header.frame_id = frame_id;
 
     vision_msg.p_ic.x = vision_state.p_ic_(0);
     vision_msg.p_ic.y = vision_state.p_ic_(1);
@@ -472,6 +532,38 @@ public:
     vision_msg.lambda = vision_state.lambda_;
 
     return vision_msg;
+  }
+};
+
+///
+/// \brief The MarsPathGen class Conversion and storage between MaRS core state to ROS Path message
+///
+class MarsPathGen
+{
+private:
+  std::vector<geometry_msgs::PoseStamped> path_poses_;
+  const size_t max_path_length_{ 2000 };
+
+public:
+  MarsPathGen() = default;
+
+  MarsPathGen(const size_t& max_path_length) : max_path_length_(max_path_length){};
+
+  inline nav_msgs::Path ExtCoreStateToPathMsg(const double& t, const mars::CoreStateType& core_state,
+                                              const std::string& frame_id = DEFAULT_FRAME_ID)
+  {
+    nav_msgs::Path path_msg;
+    path_msg.header.stamp.fromSec(t);
+    path_msg.header.frame_id = frame_id;
+    path_msg.poses.clear();
+
+    // add pose and check size
+    path_poses_.push_back(MarsMsgConv::ExtCoreStateToPoseMsg(t, core_state, frame_id));
+    if (path_poses_.size() > max_path_length_)
+      path_poses_.erase(path_poses_.begin());
+    path_msg.poses = path_poses_;
+
+    return path_msg;
   }
 };
 

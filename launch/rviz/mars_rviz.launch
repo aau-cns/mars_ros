@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<launch>
+  <arg name="config_file" default="$(find mars_ros)/launch/rviz/mars_default.rviz" />
+
+  <arg name="topic_path_in"   default="/mars/path" />
+  <arg name="topic_pose_in"   default="/mars/pose" />
+  <arg name="namespace_mars"  default="mars" />
+
+  <!-- relay MaRS topic to rviz topic name -->
+  <arg name="cmd1"  value="$(eval eval(compile('topic_path_in.replace(\'~\',\'\')','string','eval')))" />
+  <node
+    type="relay"
+    name="rviz_relay_path"
+    pkg="topic_tools"
+    args="$(arg topic_path_in) /rviz_mars/path"
+    unless="$(eval topic_path_in[0]=='~')"
+  />
+  <node
+    type="relay"
+    name="rviz_relay_path"
+    pkg="topic_tools"
+    args="$(arg namespace_mars)/$(arg cmd1) /rviz_mars/path"
+    if="$(eval topic_path_in[0]=='~')"
+  />
+
+  <arg name="cmd2"  value="$(eval eval(compile('topic_pose_in.replace(\'~\',\'\')','string','eval')))" />
+  <node
+    type="relay"
+    name="rviz_relay_pose"
+    pkg="topic_tools"
+    args="$(arg topic_pose_in) /rviz_mars/pose"
+    unless="$(eval topic_pose_in[0]=='~')"
+  />
+  <node
+    type="relay"
+    name="rviz_relay_pose"
+    pkg="topic_tools"
+    args="$(arg namespace_mars)/$(arg cmd2) /rviz_mars/pose"
+    if="$(eval topic_pose_in[0]=='~')"
+  />
+
+  <node type="rviz" name="rviz_mars" pkg="rviz" args="-d $(arg config_file)" />
+</launch>

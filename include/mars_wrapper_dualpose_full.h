@@ -34,6 +34,7 @@
 #include <mars/sensors/pressure/pressure_measurement_type.h>
 #include <mars/sensors/pressure/pressure_sensor_class.h>
 #include <mars/sensors/pressure/pressure_utils.h>
+#include <mars_msg_conv.h>
 #include <mars_ros/marsConfig.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/sync_policies/approximate_time.h>
@@ -129,8 +130,8 @@ public:
   mars::CoreLogic core_logic_;                             ///< Core Logic instance
 
   // Sensor instances
-  std::shared_ptr<mars::PoseSensorClass> pose1_sensor_sptr_;         /// Pose1 update sensor instance
-  std::shared_ptr<mars::PoseSensorClass> pose2_sensor_sptr_;         /// Pose2 update sensor instance
+  std::shared_ptr<mars::PoseSensorClass> pose1_sensor_sptr_;          /// Pose1 update sensor instance
+  std::shared_ptr<mars::PoseSensorClass> pose2_sensor_sptr_;          /// Pose2 update sensor instance
   std::shared_ptr<mars::PressureSensorClass> pressure1_sensor_sptr_;  /// Pressure update sensor instance
 
 #ifndef GPS_W_VEL
@@ -149,7 +150,7 @@ public:
   ros::Subscriber sub_pose2_with_cov_measurement_;  ///< Pose with covariance stamped subscriber
   ros::Subscriber sub_odom2_measurement_;           ///< Odometry measurement subscriber
   ros::Subscriber sub_transform2_measurement_;      ///< Transform stamped measurement subscriber
-  ros::Subscriber sub_pressure1_measurement_;        ///< Pressure stamped measurement subscriber
+  ros::Subscriber sub_pressure1_measurement_;       ///< Pressure stamped measurement subscriber
 
 #ifndef GPS_W_VEL
   ros::Subscriber sub_gps1_measurement_;  ///< GPS 1 NavSatFixConstPtr measurement subscriber
@@ -158,7 +159,7 @@ public:
   GpsVelMsgFilter sub_gps1_vel_meas_;  ///< GPS 1 TwistWithCovarianceStamped measurement subscriber
 
 #ifndef APPROX_TIME_SYNC
-  GpsMeasSyncFilter sync_gps1_meas_;  ///< GPS 1 Measurement Synchronizer exact time
+  GpsMeasSyncFilter sync_gps1_meas_;   ///< GPS 1 Measurement Synchronizer exact time
 #else
   GpsMeasApproxSyncFilter sync_gps1_meas_;  ///< GPS 1 Measurement Synchronizer Approximate time
 #endif  // APPROX_TIME_SYNC
@@ -243,10 +244,12 @@ public:
   ros::Publisher pub_ext_core_state_lite_;  ///< Publisher for the Core-State mars_ros::ExtCoreStateLite message
   ros::Publisher pub_core_pose_state_;      ///< Publisher for the Core-State pose stamped message
   ros::Publisher pub_core_odom_state_;      ///< Publisher for the Core-State odom stamped message
+  ros::Publisher pub_core_path_;            ///< Publisher for all Core-States in buffer as path message
   ros::Publisher pub_pose1_state_;          ///< Publisher for the pose sensor calibration state
   ros::Publisher pub_pose2_state_;          ///< Publisher for the pose sensor calibration state
   ros::Publisher pub_gps1_state_;           ///< Publisher for the GPS 1 sensor calibration state
   ros::Publisher pub_press_state_;          ///< Publisher for the pressure sensor calibration state
+  MarsPathGen path_generator_;              ///< Generator and storage for nav_msgs::Path
 
   ros::Publisher pub_gps1_enu_odom_;  ///< Publisher for the GPS1 ENU position Odometry message
 

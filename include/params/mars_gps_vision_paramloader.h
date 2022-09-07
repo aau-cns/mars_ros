@@ -29,6 +29,7 @@ public:
   bool verbose_ooo_{ true };             ///< If true, only out of order verbose msgs are printed
   bool discard_ooo_prop_meas_{ false };  ///< If true, all out of order propagation sensor meas are discarded
   bool pub_cov_{ true };                 ///< Publish covariances in the ext core state message if true
+  bool pub_path_{ false };               ///< Publish all core states as nav_msgs::Path (for rviz)
   uint32_t buffer_size_{ 2000 };         ///< Set mars buffersize
 
   bool use_tcpnodelay_{ true };  ///< Use tcp no delay for the ROS msg. system
@@ -88,12 +89,12 @@ public:
 
   void printPose1()
   {
-    PARAM_PRINTER("pose1_pos_meas_noise_:     " << vision1_pos_meas_noise_.transpose() << "\n");
-    PARAM_PRINTER("pose1_att_meas_noise_:     " << vision1_att_meas_noise_.transpose() << "\n");
-    PARAM_PRINTER("pose1_cal_p_ip_:           " << vision1_cal_p_ip_.transpose() << "\n");
-    PARAM_PRINTER("pose1_cal_q_ip_:           " << vision1_cal_q_ip_.w() << " " << vision1_cal_q_ip_.vec().transpose()
+    PARAM_PRINTER("vision1_pos_meas_noise_:   " << vision1_pos_meas_noise_.transpose() << "\n");
+    PARAM_PRINTER("vision1_att_meas_noise_:   " << vision1_att_meas_noise_.transpose() << "\n");
+    PARAM_PRINTER("vision1_cal_p_ip_:         " << vision1_cal_p_ip_.transpose() << "\n");
+    PARAM_PRINTER("vision1_cal_q_ip_:         " << vision1_cal_q_ip_.w() << " " << vision1_cal_q_ip_.vec().transpose()
                                                 << "\n");
-    PARAM_PRINTER("pose1_state_init_cov_:     " << vision1_cal_ip_init_cov_.transpose() << "\n");
+    PARAM_PRINTER("vision1_state_init_cov_:   " << vision1_cal_ip_init_cov_.transpose() << "\n");
 
     if (vision1_fixed_scale_)
     {
@@ -221,6 +222,7 @@ public:
     verbose_ooo_ = nh.param<bool>("verbose_out_of_order", verbose_ooo_);
     discard_ooo_prop_meas_ = nh.param<bool>("discard_ooo_prop_meas", discard_ooo_prop_meas_);
     pub_cov_ = nh.param<bool>("pub_cov", pub_cov_);
+    pub_path_ = nh.param<bool>("pub_path", pub_path_);
     buffer_size_ = nh.param<int>("buffer_size", buffer_size_);
 
     // Yaw initialization

@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Christian Brommer, Control of Networked Systems, University of Klagenfurt, Austria.
+// Copyright (C) 2022 Christian Brommer, Control of Networked Systems, University of Klagenfurt, Austria.
 //
 // All rights reserved.
 //
@@ -17,7 +17,6 @@
 #include <mars/sensors/position/position_measurement_type.h>
 #include <mars/type_definitions/buffer_data_type.h>
 #include <mars/type_definitions/buffer_entry_type.h>
-#include <mars_msg_conv.h>
 #include <mars_ros/ExtCoreState.h>
 #include <mars_ros/ExtCoreStateLite.h>
 #include <nav_msgs/Odometry.h>
@@ -104,6 +103,10 @@ MarsWrapperPosition::MarsWrapperPosition(ros::NodeHandle nh)
   pub_position1_state_ =
       nh.advertise<geometry_msgs::PoseStamped>("position_cal_state_out", m_sett_.pub_cb_buffer_size_);
   pub_core_odom_state_ = nh.advertise<nav_msgs::Odometry>("core_odom_state_out", m_sett_.pub_cb_buffer_size_);
+  if (m_sett_.pub_path_)
+  {
+    pub_core_path_ = nh.advertise<nav_msgs::Path>("core_states_path", m_sett_.pub_cb_buffer_size_);
+  }
 }
 
 bool MarsWrapperPosition::init()
@@ -252,6 +255,14 @@ void MarsWrapperPosition::RunCoreStatePublisher()
 
   pub_core_odom_state_.publish(
       MarsMsgConv::ExtCoreStateToOdomMsg(latest_state.timestamp_.get_seconds(), latest_core_state));
+
+  if (m_sett_.pub_path_)
+  {
+    //    pub_core_path_.publish(
+    //        MarsMsgConv::BufferCoreStateToPathMsg(latest_state.timestamp_.get_seconds(), core_logic_.buffer_));
+    pub_core_path_.publish(
+        path_generator_.ExtCoreStateToPathMsg(latest_state.timestamp_.get_seconds(), latest_core_state));
+  }
 }
 
 void MarsWrapperPosition::PositionMeasurementUpdate(std::shared_ptr<mars::PositionSensorClass> sensor_sptr,
@@ -296,6 +307,6 @@ void MarsWrapperPosition::PositionMeasurementUpdate(std::shared_ptr<mars::Positi
 
   mars::PositionSensorStateType position_sensor_state = sensor_sptr.get()->get_state(latest_result.data_.sensor_);
 
-  pub_position1_state_.publish(
-      MarsMsgConv::PositionStateToPoseWithCovMsg(latest_result.timestamp_.get_seconds(), position_sensor_state));
+  pub_position1_state_.publish(MarsMsgConv::PositionStateToPoseWithCovMsg(
+      latest_result.timestamp_.get_seconds(), position_sensor_state, sensor_sptr.get()->name_));
 }

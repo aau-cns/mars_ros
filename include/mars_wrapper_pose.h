@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Christian Brommer, Control of Networked Systems, University of Klagenfurt, Austria.
+// Copyright (C) 2022 Christian Brommer, Control of Networked Systems, University of Klagenfurt, Austria.
 //
 // All rights reserved.
 //
@@ -11,6 +11,7 @@
 #ifndef MARSWRAPPERPOSE_H
 #define MARSWRAPPERPOSE_H
 
+#include <dynamic_reconfigure/server.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/TransformStamped.h>
@@ -19,13 +20,13 @@
 #include <mars/sensors/imu/imu_sensor_class.h>
 #include <mars/sensors/pose/pose_measurement_type.h>
 #include <mars/sensors/pose/pose_sensor_class.h>
+#include <mars_msg_conv.h>
+#include <mars_ros/marsConfig.h>
 #include <nav_msgs/Odometry.h>
 #include <ros/ros.h>
 #include <sensor_msgs/Imu.h>
 #include <std_srvs/SetBool.h>
 
-#include <dynamic_reconfigure/server.h>
-#include <mars_ros/marsConfig.h>
 #include <boost/bind/bind.hpp>
 
 class ParamLoad
@@ -37,6 +38,7 @@ public:
   bool verbose_ooo_{ true };             ///< If true, only out of order verbose msgs are printed
   bool discard_ooo_prop_meas_{ false };  ///< If true, all out of order propagation sensor meas are discarded
   bool pub_cov_{ true };                 ///< Publish covariances in the ext core state message if true
+  bool pub_path_{ false };               ///< Publish all core states as nav_msgs::Path (for rviz)
   uint32_t buffer_size_{ 2000 };         ///< Set mars buffersize
 
   bool use_tcpnodelay_{ true };  ///< Use tcp no delay for the ROS msg. system
@@ -80,6 +82,7 @@ public:
     verbose_ooo_ = nh.param<bool>("verbose_out_of_order", verbose_ooo_);
     discard_ooo_prop_meas_ = nh.param<bool>("discard_ooo_prop_meas", discard_ooo_prop_meas_);
     pub_cov_ = nh.param<bool>("pub_cov", pub_cov_);
+    pub_path_ = nh.param<bool>("pub_path", pub_path_);
     buffer_size_ = nh.param<int>("buffer_size", buffer_size_);
 
     use_tcpnodelay_ = nh.param<bool>("use_tcpnodelay", use_tcpnodelay_);
@@ -248,8 +251,10 @@ public:
   ros::Publisher pub_ext_core_state_;       ///< Publisher for the Core-State mars_ros::ExtCoreState message
   ros::Publisher pub_ext_core_state_lite_;  ///< Publisher for the Core-State mars_ros::ExtCoreStateLite message
   ros::Publisher pub_core_pose_state_;      ///< Publisher for the Core-State pose stamped message
-  ros::Publisher pub_core_odom_state_;      //!< Publisher for the Core-State odom stamped message
+  ros::Publisher pub_core_odom_state_;      ///< Publisher for the Core-State odom stamped message
+  ros::Publisher pub_core_path_;            ///< Publisher for all Core-States in buffer as path message
   ros::Publisher pub_pose1_state_;          ///< Publisher for the pose sensor calibration state
+  MarsPathGen path_generator_;              ///< Generator and storage for nav_msgs::Path
 
   // Publish groups
   ///

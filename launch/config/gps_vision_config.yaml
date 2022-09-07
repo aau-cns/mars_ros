@@ -6,8 +6,8 @@ use_ros_time_now: true
 verbose: false
 verbose_out_of_order: true
 discard_ooo_prop_meas: true
-cov_debug: false
 pub_cov: false
+pub_path: false
 buffer_size: 2000
 
 # Ros Settings

@@ -30,6 +30,7 @@ public:
   bool discard_ooo_prop_meas_{ false };    ///< If true, all out of order propagation sensor meas are discarded
   bool use_common_gps_reference_{ true };  ///< Use a common GPS reference for all sensors
   bool pub_cov_{ true };                   ///< Publish covariances in the ext core state message if true
+  bool pub_path_{ false };               ///< Publish all core states as nav_msgs::Path (for rviz)
   uint32_t buffer_size_{ 2000 };           ///< Set mars buffersize
 
   bool use_pressure_{ true };
@@ -208,6 +209,7 @@ public:
     verbose_ooo_ = nh.param<bool>("verbose_out_of_order", verbose_ooo_);
     discard_ooo_prop_meas_ = nh.param<bool>("discard_ooo_prop_meas", discard_ooo_prop_meas_);
     pub_cov_ = nh.param<bool>("pub_cov", pub_cov_);
+    pub_path_ = nh.param<bool>("pub_path", pub_path_);
     buffer_size_ = nh.param<int>("buffer_size", buffer_size_);
 
     // Yaw initialization
