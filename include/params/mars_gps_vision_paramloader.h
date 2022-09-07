@@ -22,15 +22,6 @@
 class ParamLoad
 {
 public:
-  //  bool publish_on_propagation_{ false };   ///< Set true to publish the core state on propagation
-  //  bool use_ros_time_now_{ false };         ///< Set to true to use rostime now for all sensor updates
-  //  bool gps_ros_time_now_{ false };         ///< Set to true to use rostime now for all sensor updates
-  //  bool verbose_output_{ false };           ///< If true, all verbose infos are printed
-  //  bool verbose_ooo_{ false };              ///< If true, only out of order verbose msgs are printed
-  //  bool discard_ooo_prop_meas_{ false };    ///< If true, all out of order propagation sensor meas are discarded
-  //  bool use_common_gps_reference_{ true };  ///< Use a common GPS reference for all sensors
-  //  bool pub_cov_{ true };                   ///< Publish covariances in the ext core state message if true
-  //  uint32_t buffer_size_{ 2000 };           ///< Set mars buffersize
   bool publish_on_propagation_{ true };  ///< Set true to publish the core state on propagation
   bool use_ros_time_now_{ false };       ///< Set to true to use rostime now for all sensor updates
   bool gps_ros_time_now_{ false };       ///< Set to true to use rostime now for GPS sensor updates

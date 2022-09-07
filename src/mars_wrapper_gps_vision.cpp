@@ -78,7 +78,8 @@ MarsWrapperGpsVision::MarsWrapperGpsVision(ros::NodeHandle nh)
 
   // Sensors
   // Vision1
-  vision1_sensor_sptr_ = std::make_shared<mars::VisionSensorClass>("Vision1", core_states_sptr_, m_sett_.vision1_fixed_scale_);
+  vision1_sensor_sptr_ =
+      std::make_shared<mars::VisionSensorClass>("Vision1", core_states_sptr_, !m_sett_.vision1_fixed_scale_);
   {  // Limit scope of temp variables
     Eigen::Matrix<double, 6, 1> vision_meas_std;
     vision_meas_std << m_sett_.vision1_pos_meas_noise_, m_sett_.vision1_att_meas_noise_;
@@ -212,6 +213,10 @@ MarsWrapperGpsVision::MarsWrapperGpsVision(ros::NodeHandle nh)
   pub_vision1_state_ = nh.advertise<mars_ros::VisionSensorState>("vision1_cal_state_out", m_sett_.pub_cb_buffer_size_);
   pub_gps1_state_ =
       nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("gps1_cal_state_out", m_sett_.pub_cb_buffer_size_);
+  pub_mag1_state_ =
+      nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("mag1_cal_state_out", m_sett_.pub_cb_buffer_size_);
+  pub_pressure1_state_ =
+      nh.advertise<geometry_msgs::PoseStamped>("pressure1_cal_state_out", m_sett_.pub_cb_buffer_size_);
   pub_gps1_enu_odom_ = nh.advertise<nav_msgs::Odometry>("gps1_enu", m_sett_.pub_cb_buffer_size_);
   pub_pressure1_height_vec3_ =
       nh.advertise<geometry_msgs::Vector3Stamped>("pressure1_height", m_sett_.pub_cb_buffer_size_);
@@ -376,12 +381,14 @@ void MarsWrapperGpsVision::Vision1MeasurementCallback(const geometry_msgs::PoseS
   {
     // Publish the latest sensor state
     mars::BufferEntryType latest_result;
-    core_logic_.buffer_.get_latest_sensor_handle_state(vision1_sensor_sptr_, &latest_result);
-    mars::VisionSensorStateType vision_sensor_state =
-        vision1_sensor_sptr_.get()->get_state(latest_result.data_.sensor_);
+    if (core_logic_.buffer_.get_latest_sensor_handle_state(vision1_sensor_sptr_, &latest_result))
+    {
+      mars::VisionSensorStateType vision_sensor_state =
+          vision1_sensor_sptr_.get()->get_state(latest_result.data_.sensor_);
 
-    pub_vision1_state_.publish(
-        MarsMsgConv::VisionStateToMsg(latest_result.timestamp_.get_seconds(), vision_sensor_state));
+      pub_vision1_state_.publish(
+          MarsMsgConv::VisionStateToMsg(latest_result.timestamp_.get_seconds(), vision_sensor_state));
+    }
   }
 }
 
@@ -481,6 +488,17 @@ void MarsWrapperGpsVision::Pressure1MeasurementCallback(const sensor_msgs::Fluid
   // perform update
   if (PressureMeasurementUpdate(pressure1_sensor_sptr_, press_meas, timestamp))
   {
+    // Publish latest sensor state
+    mars::BufferEntryType latest_sensor_state;
+
+    if (core_logic_.buffer_.get_latest_sensor_handle_state(pressure1_sensor_sptr_, &latest_sensor_state))
+    {
+      mars::PressureSensorStateType pressure_sensor_state =
+          pressure1_sensor_sptr_.get()->get_state(latest_sensor_state.data_.sensor_);
+      pub_pressure1_state_.publish(
+          MarsMsgConv::PressureStateToMsg(latest_sensor_state.timestamp_.get_seconds(), pressure_sensor_state));
+    }
+
     // Publish pressure as vector
     if (m_sett_.publish_baro_height_)
     {
@@ -550,19 +568,13 @@ void MarsWrapperGpsVision::Mag1MeasurementCallback(const sensor_msgs::MagneticFi
   {
     // Publish latest sensor state
     mars::BufferEntryType latest_sensor_state;
-    const bool valid_state =
-        core_logic_.buffer_.get_latest_sensor_handle_state(mag1_sensor_sptr_, &latest_sensor_state);
 
-    if (!valid_state)
+    if (core_logic_.buffer_.get_latest_sensor_handle_state(mag1_sensor_sptr_, &latest_sensor_state))
     {
-      return;
+      mars::MagSensorStateType mag_sensor_state = mag1_sensor_sptr_.get()->get_state(latest_sensor_state.data_.sensor_);
+      pub_mag1_state_.publish(
+          MarsMsgConv::MagStateToMsg(latest_sensor_state.timestamp_.get_seconds(), mag_sensor_state));
     }
-
-    //    mars::MagSensorStateType mag_sensor_state =
-    //    mag1_sensor_sptr_.get()->get_state(latest_sensor_state.data_.sensor_);
-
-    //    pub_mag1_state_.publish(MarsMsgConv::MagStateToMsg(latest_sensor_state.timestamp_.get_seconds(),
-    //    mag_sensor_state));
   }
 }
 

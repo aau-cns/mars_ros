@@ -224,6 +224,7 @@ public:
   ros::Publisher pub_vision1_state_;        ///< Publisher for the vision 1 sensor calibration state
   ros::Publisher pub_gps1_state_;           ///< Publisher for the GPS 1 sensor calibration state
   ros::Publisher pub_pressure1_state_;      ///< Publisher for the pressure 1 sensor calibration state
+  ros::Publisher pub_mag1_state_;           ///< Publisher for the magnetometer 1 sensor calibration state
 
   ros::Publisher pub_gps1_enu_odom_;          ///< Publisher for the GPS1 ENU position Odometry message
   ros::Publisher pub_pressure1_height_vec3_;  ///< Publisher for the GPS1 ENU position Odometry message

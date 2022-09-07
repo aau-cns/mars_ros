@@ -32,6 +32,7 @@
 #include <mars/sensors/position/position_measurement_type.h>
 #include <mars/sensors/position/position_sensor_state_type.h>
 #include <mars/sensors/pressure/pressure_measurement_type.h>
+#include <mars/sensors/pressure/pressure_sensor_state_type.h>
 #include <mars/sensors/vision/vision_measurement_type.h>
 #include <mars/sensors/vision/vision_sensor_state_type.h>
 #include <mars/type_definitions/core_state_type.h>
@@ -414,6 +415,24 @@ public:
   FluidPressureMsgtoPressureMeas(const sensor_msgs::FluidPressure& msg_press, const sensor_msgs::Temperature& msg_temp)
   {
     return mars::PressureMeasurementType(msg_press.fluid_pressure, msg_temp.temperature);
+  }
+
+  static inline geometry_msgs::PoseStamped PressureStateToMsg(const double& t,
+                                                              const mars::PressureSensorStateType& pressure_state)
+  {
+    geometry_msgs::PoseStamped pose_msg;
+    pose_msg.header.stamp.fromSec(t);
+
+    pose_msg.pose.position.x = pressure_state.p_ip_(0);
+    pose_msg.pose.position.y = pressure_state.p_ip_(1);
+    pose_msg.pose.position.z = pressure_state.p_ip_(2);
+
+    // Return unit quaternion
+    pose_msg.pose.orientation.x = 0;
+    pose_msg.pose.orientation.y = 0;
+    pose_msg.pose.orientation.z = 0;
+    pose_msg.pose.orientation.w = 1;
+    return pose_msg;
   }
 
   static inline geometry_msgs::Vector3Stamped EigenVec3dToVec3Msg(const double& t, const Eigen::Vector3d& vec)
