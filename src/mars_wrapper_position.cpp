@@ -68,6 +68,7 @@ MarsWrapperPosition::MarsWrapperPosition(ros::NodeHandle nh)
   Eigen::Matrix<double, 3, 1> position_meas_std;
   position_meas_std << m_sett_.position1_pos_meas_noise_;
   position1_sensor_sptr_->R_ = position_meas_std.cwiseProduct(position_meas_std);
+  position1_sensor_sptr_->use_dynamic_meas_noise_ = false;
 
   PositionSensorData position_calibration;
   position_calibration.state_.p_ip_ = m_sett_.position1_cal_p_ip_;
