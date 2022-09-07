@@ -24,6 +24,7 @@ jobs:
            libeigen3-dev
            python3-catkin-tools
            ros-noetic-dynamic-reconfigure
+           ros-noetic-tf2-ros
     
     - name: Create Catkin Workspace
       run: mkdir -p ${{github.workspace}}/catkin_ws/src
