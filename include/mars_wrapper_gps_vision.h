@@ -147,7 +147,7 @@ public:
 
   // Subscriber
   ros::Subscriber sub_imu_measurement_;        ///< IMU measurement subscriber
-  ros::Subscriber sub_pose1_measurement_;      ///< Pose stamped measurement subscriber
+  ros::Subscriber sub_vision1_measurement_;    ///< Pose stamped measurement subscriber
   ros::Subscriber sub_pressure1_measurement_;  ///< Pressure stamped measurement subscriber
   ros::Subscriber sub_mag1_measurement_;       ///< MAG 1 MagneticField measurement subscriber
 
@@ -179,7 +179,7 @@ public:
   ///
   ///  Converting the ROS message to MaRS data type and running the PoseMeasurementUpdate routine
   ///
-  void Pose1MeasurementCallback(const geometry_msgs::PoseStampedConstPtr& meas);
+  void Vision1MeasurementCallback(const geometry_msgs::PoseStampedConstPtr& meas);
 
 #ifndef GPS_W_VEL
   ///
@@ -221,10 +221,10 @@ public:
   ros::Publisher pub_ext_core_state_lite_;  ///< Publisher for the Core-State mars_ros::ExtCoreStateLite message
   ros::Publisher pub_core_pose_state_;      ///< Publisher for the Core-State pose stamped message
   ros::Publisher pub_core_odom_state_;      ///< Publisher for the Core-State odom stamped message
-  ros::Publisher pub_pose1_state_;          ///< Publisher for the pose sensor calibration state
-  ros::Publisher pub_pose2_state_;          ///< Publisher for the pose sensor calibration state
+  ros::Publisher pub_vision1_state_;        ///< Publisher for the vision 1 sensor calibration state
   ros::Publisher pub_gps1_state_;           ///< Publisher for the GPS 1 sensor calibration state
-  ros::Publisher pub_press_state_;          ///< Publisher for the pressure sensor calibration state
+  ros::Publisher pub_pressure1_state_;      ///< Publisher for the pressure 1 sensor calibration state
+  ros::Publisher pub_mag1_state_;           ///< Publisher for the magnetometer 1 sensor calibration state
 
   ros::Publisher pub_gps1_enu_odom_;          ///< Publisher for the GPS1 ENU position Odometry message
   ros::Publisher pub_pressure1_height_vec3_;  ///< Publisher for the GPS1 ENU position Odometry message

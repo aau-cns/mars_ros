@@ -78,10 +78,11 @@ MarsWrapperGpsVision::MarsWrapperGpsVision(ros::NodeHandle nh)
 
   // Sensors
   // Vision1
-  vision1_sensor_sptr_ = std::make_shared<mars::VisionSensorClass>("Vision1", core_states_sptr_, false);
+  vision1_sensor_sptr_ =
+      std::make_shared<mars::VisionSensorClass>("Vision1", core_states_sptr_, !m_sett_.vision1_fixed_scale_);
   {  // Limit scope of temp variables
     Eigen::Matrix<double, 6, 1> vision_meas_std;
-    vision_meas_std << m_sett_.pose1_pos_meas_noise_, m_sett_.pose1_att_meas_noise_;
+    vision_meas_std << m_sett_.vision1_pos_meas_noise_, m_sett_.vision1_att_meas_noise_;
     vision1_sensor_sptr_->R_ = vision_meas_std.cwiseProduct(vision_meas_std);
 
     // TODO is set here for now, but will be managed by core logic in later versions
@@ -175,8 +176,8 @@ MarsWrapperGpsVision::MarsWrapperGpsVision(ros::NodeHandle nh)
   sub_imu_measurement_ =
       nh.subscribe("imu_in", m_sett_.sub_imu_cb_buffer_size_, &MarsWrapperGpsVision::ImuMeasurementCallback, this);
 
-  sub_pose1_measurement_ = nh.subscribe("pose1_in", m_sett_.sub_sensor_cb_buffer_size_,
-                                        &MarsWrapperGpsVision::Pose1MeasurementCallback, this);
+  sub_vision1_measurement_ = nh.subscribe("vision1_in", m_sett_.sub_sensor_cb_buffer_size_,
+                                          &MarsWrapperGpsVision::Vision1MeasurementCallback, this);
 
 #ifndef GPS_W_VEL
   sub_gps1_measurement_ =
@@ -209,10 +210,13 @@ MarsWrapperGpsVision::MarsWrapperGpsVision(ros::NodeHandle nh)
       nh.advertise<mars_ros::ExtCoreStateLite>("core_ext_state_lite_out", m_sett_.pub_cb_buffer_size_);
   pub_core_pose_state_ = nh.advertise<geometry_msgs::PoseStamped>("core_pose_state_out", m_sett_.pub_cb_buffer_size_);
   pub_core_odom_state_ = nh.advertise<nav_msgs::Odometry>("core_odom_state_out", m_sett_.pub_cb_buffer_size_);
-  pub_pose1_state_ = nh.advertise<geometry_msgs::PoseStamped>("pose1_cal_state_out", m_sett_.pub_cb_buffer_size_);
-  pub_pose2_state_ = nh.advertise<geometry_msgs::PoseStamped>("pose2_cal_state_out", m_sett_.pub_cb_buffer_size_);
+  pub_vision1_state_ = nh.advertise<mars_ros::VisionSensorState>("vision1_cal_state_out", m_sett_.pub_cb_buffer_size_);
   pub_gps1_state_ =
       nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("gps1_cal_state_out", m_sett_.pub_cb_buffer_size_);
+  pub_mag1_state_ =
+      nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("mag1_cal_state_out", m_sett_.pub_cb_buffer_size_);
+  pub_pressure1_state_ =
+      nh.advertise<geometry_msgs::PoseStamped>("pressure1_cal_state_out", m_sett_.pub_cb_buffer_size_);
   pub_gps1_enu_odom_ = nh.advertise<nav_msgs::Odometry>("gps1_enu", m_sett_.pub_cb_buffer_size_);
   pub_pressure1_height_vec3_ =
       nh.advertise<geometry_msgs::Vector3Stamped>("pressure1_height", m_sett_.pub_cb_buffer_size_);
@@ -367,13 +371,25 @@ void MarsWrapperGpsVision::ImuMeasurementCallback(const sensor_msgs::ImuConstPtr
   }
 }
 
-void MarsWrapperGpsVision::Pose1MeasurementCallback(const geometry_msgs::PoseStampedConstPtr& meas)
+void MarsWrapperGpsVision::Vision1MeasurementCallback(const geometry_msgs::PoseStampedConstPtr& meas)
 {
   // Map the measurement to the mars sensor type
   Time timestamp(meas->header.stamp.toSec());
-
   VisionMeasurementType vision_meas = MarsMsgConv::PoseMsgToVisionMeas(*meas);
-  VisionMeasurementUpdate(vision1_sensor_sptr_, vision_meas, timestamp);
+
+  if (VisionMeasurementUpdate(vision1_sensor_sptr_, vision_meas, timestamp))
+  {
+    // Publish the latest sensor state
+    mars::BufferEntryType latest_result;
+    if (core_logic_.buffer_.get_latest_sensor_handle_state(vision1_sensor_sptr_, &latest_result))
+    {
+      mars::VisionSensorStateType vision_sensor_state =
+          vision1_sensor_sptr_.get()->get_state(latest_result.data_.sensor_);
+
+      pub_vision1_state_.publish(
+          MarsMsgConv::VisionStateToMsg(latest_result.timestamp_.get_seconds(), vision_sensor_state));
+    }
+  }
 }
 
 #ifndef GPS_W_VEL
@@ -472,6 +488,17 @@ void MarsWrapperGpsVision::Pressure1MeasurementCallback(const sensor_msgs::Fluid
   // perform update
   if (PressureMeasurementUpdate(pressure1_sensor_sptr_, press_meas, timestamp))
   {
+    // Publish latest sensor state
+    mars::BufferEntryType latest_sensor_state;
+
+    if (core_logic_.buffer_.get_latest_sensor_handle_state(pressure1_sensor_sptr_, &latest_sensor_state))
+    {
+      mars::PressureSensorStateType pressure_sensor_state =
+          pressure1_sensor_sptr_.get()->get_state(latest_sensor_state.data_.sensor_);
+      pub_pressure1_state_.publish(
+          MarsMsgConv::PressureStateToMsg(latest_sensor_state.timestamp_.get_seconds(), pressure_sensor_state));
+    }
+
     // Publish pressure as vector
     if (m_sett_.publish_baro_height_)
     {
@@ -541,19 +568,13 @@ void MarsWrapperGpsVision::Mag1MeasurementCallback(const sensor_msgs::MagneticFi
   {
     // Publish latest sensor state
     mars::BufferEntryType latest_sensor_state;
-    const bool valid_state =
-        core_logic_.buffer_.get_latest_sensor_handle_state(mag1_sensor_sptr_, &latest_sensor_state);
 
-    if (!valid_state)
+    if (core_logic_.buffer_.get_latest_sensor_handle_state(mag1_sensor_sptr_, &latest_sensor_state))
     {
-      return;
+      mars::MagSensorStateType mag_sensor_state = mag1_sensor_sptr_.get()->get_state(latest_sensor_state.data_.sensor_);
+      pub_mag1_state_.publish(
+          MarsMsgConv::MagStateToMsg(latest_sensor_state.timestamp_.get_seconds(), mag_sensor_state));
     }
-
-    //    mars::MagSensorStateType mag_sensor_state =
-    //    mag1_sensor_sptr_.get()->get_state(latest_sensor_state.data_.sensor_);
-
-    //    pub_mag1_state_.publish(MarsMsgConv::MagStateToMsg(latest_sensor_state.timestamp_.get_seconds(),
-    //    mag_sensor_state));
   }
 }
 
@@ -588,6 +609,7 @@ bool MarsWrapperGpsVision::VisionMeasurementUpdate(std::shared_ptr<mars::VisionS
     timestamp_corr = timestamp;
   }
 
+  // initialize vision sensor using world position from GPS
   if (!have_pose1_)
   {
     // check if core is initialized
@@ -613,18 +635,18 @@ bool MarsWrapperGpsVision::VisionMeasurementUpdate(std::shared_ptr<mars::VisionS
     vision_calibration.state_.lambda_ = 1;
 
     // cam imu calibration from params
-    vision_calibration.state_.p_ic_ = m_sett_.pose1_cal_p_ip_;
-    vision_calibration.state_.q_ic_ = m_sett_.pose1_cal_q_ip_;
+    vision_calibration.state_.p_ic_ = m_sett_.vision1_cal_p_ip_;
+    vision_calibration.state_.q_ic_ = m_sett_.vision1_cal_q_ip_;
 
     // calculate initial vision to world transform
-    Eigen::Quaterniond q_vw_ = q_vc * m_sett_.pose1_cal_q_ip_.conjugate() * q_wi.conjugate();
+    Eigen::Quaterniond q_vw_ = q_vc * m_sett_.vision1_cal_q_ip_.conjugate() * q_wi.conjugate();
     vision_calibration.state_.q_vw_ = q_vw_;
-    vision_calibration.state_.p_vw_ = p_vc - q_vw_.toRotationMatrix() * (p_wi + r_wi * m_sett_.pose1_cal_p_ip_);
+    vision_calibration.state_.p_vw_ = p_vc - q_vw_.toRotationMatrix() * (p_wi + r_wi * m_sett_.vision1_cal_p_ip_);
 
     Eigen::Matrix<double, 13, 13> pose_cov;
     pose_cov.setZero();
-    pose_cov.diagonal() << 1e-15, 1e-15, 1e-15, 1e-15, 1e-15, 1e-15, m_sett_.pose1_state_init_cov_,
-        1e-20;  // no calibration update
+    pose_cov.diagonal() << 1e-9, 1e-9, 1e-9, 1e-9, 1e-9, 1e-9, m_sett_.vision1_cal_ip_init_cov_,
+        m_sett_.vision1_scale_init_cov_;  // no calibration update
     vision_calibration.sensor_cov_ = pose_cov;
     vision1_sensor_sptr_->set_initial_calib(std::make_shared<VisionSensorData>(vision_calibration));
 
@@ -661,14 +683,6 @@ bool MarsWrapperGpsVision::VisionMeasurementUpdate(std::shared_ptr<mars::VisionS
 
   // Publish the latest core state
   this->RunCoreStatePublisher();
-
-  // Publish the latest sensor state
-  mars::BufferEntryType latest_result;
-  core_logic_.buffer_.get_latest_sensor_handle_state(sensor_sptr, &latest_result);
-  mars::VisionSensorStateType vision_sensor_state = sensor_sptr.get()->get_state(latest_result.data_.sensor_);
-
-  //  pub_pose1_state_.publish(MarsMsgConv::PoseStateToPoseMsg(latest_result.timestamp_.get_seconds(),
-  //  pose_sensor_state));
 
   return true;
 }
