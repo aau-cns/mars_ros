@@ -52,7 +52,7 @@
 
 #include <Eigen/Dense>
 
-#define DEFAULT_FRAME_ID "map"
+#define DEFAULT_FRAME_ID "world"
 
 ///
 /// \brief The MarsMsgConv class Conversion between MaRS types and ROS messages
@@ -546,7 +546,6 @@ private:
 
 public:
   MarsPathGen() = default;
-
   MarsPathGen(const size_t& max_path_length) : max_path_length_(max_path_length){};
 
   inline nav_msgs::Path ExtCoreStateToPathMsg(const double& t, const mars::CoreStateType& core_state,

@@ -41,6 +41,7 @@ public:
   bool pub_cov_{ true };                 ///< Publish covariances in the ext core state message if true
   bool pub_path_{ false };               ///< Publish all core states as nav_msgs::Path (for rviz)
   uint32_t buffer_size_{ 2000 };         ///< Set mars buffersize
+  uint32_t path_buffer_size_{ 2000 };    ///< Set path_generator buffersize
 
   bool use_tcpnodelay_{ true };  ///< Use tcp no delay for the ROS msg. system
   bool bypass_init_service_{ false };
@@ -84,6 +85,7 @@ public:
     pub_cov_ = nh.param<bool>("pub_cov", pub_cov_);
     pub_path_ = nh.param<bool>("pub_path", pub_path_);
     buffer_size_ = nh.param<int>("buffer_size", buffer_size_);
+    path_buffer_size_ = nh.param<int>("path_buffer_size", path_buffer_size_);
 
     use_tcpnodelay_ = nh.param<bool>("use_tcpnodelay", use_tcpnodelay_);
     bypass_init_service_ = nh.param<bool>("bypass_init_service", bypass_init_service_);

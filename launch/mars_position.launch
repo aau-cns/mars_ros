@@ -56,6 +56,23 @@
       <arg name="topic_pose_in"   value="$(arg pose_state_out_topic)" />
       <arg name="namespace_mars"  value="mars_position_node" />
     </include>
+
+    <arg name="pose_topic"  value="$(eval eval(compile('pose_state_out_topic.replace(\'~\',\'\')','string','eval')))" />
+    <node name="rviz_mars_pose_br" pkg="mars_ros" type="mars_tf2_converter" clear_params="true" output="screen" args="-t pose">
+      <param name="child_id"      value="imu" />
+
+      <remap from="~pose_in" to="$(arg pose_state_out_topic)" unless="$(eval pose_state_out_topic[0]=='~')"/>
+      <remap from="~pose_in" to="/mars_position_node/$(arg pose_topic)" if="$(eval pose_state_out_topic[0]=='~')"/>
+    </node>
+
+    <arg name="pos_cal_topic"  value="$(eval eval(compile('position_cal_state_out_topic.replace(\'~\',\'\')','string','eval')))" />
+    <node name="rviz_mars_pos_cal_br" pkg="mars_ros" type="mars_tf2_converter" clear_params="true" output="screen" args="-t pose">
+      <param name="child_id"      value="pos_sensor" />
+      <param name="parent_id"     value="imu" />
+
+      <remap from="~pose_in" to="$(arg position_cal_state_out_topic)" unless="$(eval position_cal_state_out_topic[0]=='~')"/>
+      <remap from="~pose_in" to="/mars_position_node/$(arg pos_cal_topic)" if="$(eval position_cal_state_out_topic[0]=='~')"/>
+    </node>
   </group>
 
 </launch>
