@@ -20,6 +20,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 RUN apt-get update && apt-get install --no-install-recommends -y \
     python3-catkin-tools \
     ros-noetic-dynamic-reconfigure \
+    ros-noetic-tf2-ros \
     && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p /catkin_ws/src
