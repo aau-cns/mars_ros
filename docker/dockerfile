@@ -23,11 +23,13 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     ros-noetic-tf2-ros \
     && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /catkin_ws/src
-WORKDIR /catkin_ws
+RUN mkdir -p /catkin_build_ws/src
+WORKDIR /catkin_build_ws
 RUN /bin/bash -c '. /opt/ros/noetic/setup.bash; catkin build'
+
+RUN mkdir -p /catkin_make_ws/src
+WORKDIR /catkin_make_ws
+RUN /bin/bash -c '. /opt/ros/noetic/setup.bash; catkin_make'
 
 COPY ./docker_application_test.sh /
 CMD /docker_application_test.sh
-
-#test some changes

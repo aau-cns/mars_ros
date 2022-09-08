@@ -57,6 +57,19 @@ $ cd ../../
 $ catkin build
 ```
 
+## Testing Build with Docker
+
+We auto-build a test environment for the MaRS ROS wrapper which can be used for testing your implementations
+
+```bash
+# The following runs the container, maps the source code (read only)
+# and executes the script in 'docker/docker_application_test.sh'
+$ docker run -it --rm \
+  --network=host \
+  -v "$(pwd)":/source:ro \
+  gitlab.aau.at:5050/aau-cns-docker/docker_registry/mars_ros_test_env:latest
+```
+
 ## Isolated Build with Docker
 
 ```sh
