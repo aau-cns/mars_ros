@@ -22,9 +22,9 @@ jobs:
 
       - name: Login to Registry
         env:
-          DOCKER_USER: ${{secrets.REGISTRY_USER}}
-          DOCKER_PASSWORD: ${{secrets.REGISTRY_PASSWORD}}
-          DOCKER_URL: ${{secrets.REGISTRY_URL}}
+          DOCKER_USER: ${{secrets.GITLAB_REGISTRY_USER}}
+          DOCKER_PASSWORD: ${{secrets.GITLAB_REGISTRY_PASSWORD}}
+          DOCKER_URL: ${{secrets.GITLAB_REGISTRY_URL}}
         run: |
           docker login -u ${DOCKER_USER} -p ${DOCKER_PASSWORD} ${DOCKER_URL}
 
@@ -33,6 +33,6 @@ jobs:
 
       - name: Build Docker Image
         env:
-          IMAGE_URL: ${{secrets.REGISTRY_IMAGE_URL}}
+          IMAGE_URL: ${{secrets.GITLAB_REGISTRY_IMAGE_URL}}
         run: >
              docker buildx build --platform=linux/amd64,linux/arm64 --tag ${IMAGE_URL}/mars_ros_test_env:latest --compress --squash --force-rm --push ./docker/
