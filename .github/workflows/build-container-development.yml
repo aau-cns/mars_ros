@@ -1,13 +1,13 @@
-name: Docker Container Build (main)
+name: Docker Container Build (dev)
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "development" ]
     paths:
       - 'docker/**'
 
 jobs:
-  build_env_latest:
+  build_env_dev:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -35,4 +35,4 @@ jobs:
         env:
           IMAGE_URL: ${{secrets.REGISTRY_IMAGE_URL}}
         run: >
-             docker buildx build --platform=linux/amd64,linux/arm64 --tag ${IMAGE_URL}/mars_ros_test_env:latest --compress --squash --force-rm --push ./docker/
+             docker buildx build --platform=linux/amd64,linux/arm64 --tag ${IMAGE_URL}/mars_ros_test_env:dev --compress --squash --force-rm --push ./docker/
