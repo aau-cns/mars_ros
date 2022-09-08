@@ -29,3 +29,5 @@ RUN /bin/bash -c '. /opt/ros/noetic/setup.bash; catkin build'
 
 COPY ./docker_application_test.sh /
 CMD /docker_application_test.sh
+
+#test some changes
