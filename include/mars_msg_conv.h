@@ -260,9 +260,10 @@ public:
 
     mars::PositionMeasurementType position_meas = mars::PositionMeasurementType(position);
     std::vector<double> R_vec(msg.pose.covariance.begin(), msg.pose.covariance.end());
-    position_meas.meas_noise = Eigen::Map<Eigen::Matrix<double, 6, 6, Eigen::RowMajor> >(R_vec.data());
-    position_meas.meas_noise = position_meas.meas_noise.block(0, 0, 3, 3);
+    position_meas.set_meas_noise(
+        Eigen::Map<Eigen::Matrix<double, 6, 6, Eigen::RowMajor> >(R_vec.data()).block(0, 0, 3, 3));
     position_meas.has_meas_noise = true;
+
     return position_meas;
   }
 
@@ -355,7 +356,7 @@ public:
                                          msg.pose.pose.orientation.y, msg.pose.pose.orientation.z);
     mars::PoseMeasurementType pose_meas = mars::PoseMeasurementType(position, orientation);
     std::vector<double> R_vec(msg.pose.covariance.begin(), msg.pose.covariance.end());
-    pose_meas.meas_noise = Eigen::Map<Eigen::Matrix<double, 6, 6, Eigen::RowMajor> >(R_vec.data());
+    pose_meas.set_meas_noise(Eigen::Map<Eigen::Matrix<double, 6, 6, Eigen::RowMajor> >(R_vec.data()));
     pose_meas.has_meas_noise = true;
     return pose_meas;
   }
@@ -398,11 +399,11 @@ public:
         msg_vel.twist.twist.linear.y, msg_vel.twist.twist.linear.z);
     std::vector<double> R_vec_1(msg_coord.position_covariance.begin(), msg_coord.position_covariance.end());
     std::vector<double> R_vec_2(msg_vel.twist.covariance.begin(), msg_vel.twist.covariance.end());
-    gps_vel_meas.meas_noise = Eigen::MatrixXd::Zero(6, 6);
-    gps_vel_meas.meas_noise.block(0, 0, 3, 3) =
-        Eigen::Map<Eigen::Matrix<double, 3, 3, Eigen::RowMajor> >(R_vec_1.data());
-    gps_vel_meas.meas_noise.block(3, 3, 3, 3) =
+    Eigen::MatrixXd meas_noise = Eigen::MatrixXd::Zero(6, 6);
+    meas_noise.block(0, 0, 3, 3) = Eigen::Map<Eigen::Matrix<double, 3, 3, Eigen::RowMajor> >(R_vec_1.data());
+    meas_noise.block(3, 3, 3, 3) =
         Eigen::Map<Eigen::Matrix<double, 3, 3, Eigen::RowMajor> >(R_vec_2.data()).block(0, 0, 3, 3);
+    gps_vel_meas.set_meas_noise(meas_noise);
     gps_vel_meas.has_meas_noise = true;
 
     return gps_vel_meas;
