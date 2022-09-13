@@ -258,7 +258,13 @@ public:
   {
     const Eigen::Vector3d position(msg.pose.pose.position.x, msg.pose.pose.position.y, msg.pose.pose.position.z);
 
-    return mars::PositionMeasurementType(position);
+    mars::PositionMeasurementType position_meas = mars::PositionMeasurementType(position);
+    std::vector<double> R_vec(msg.pose.covariance.begin(), msg.pose.covariance.end());
+    position_meas.set_meas_noise(
+        Eigen::Map<Eigen::Matrix<double, 6, 6, Eigen::RowMajor>>(R_vec.data()).block(0, 0, 3, 3));
+    position_meas.has_meas_noise = true;
+
+    return position_meas;
   }
 
   static inline mars::PositionMeasurementType TransformMsgToPositionMeas(const geometry_msgs::TransformStamped& msg)
@@ -348,7 +354,12 @@ public:
     const Eigen::Vector3d position(msg.pose.pose.position.x, msg.pose.pose.position.y, msg.pose.pose.position.z);
     const Eigen::Quaterniond orientation(msg.pose.pose.orientation.w, msg.pose.pose.orientation.x,
                                          msg.pose.pose.orientation.y, msg.pose.pose.orientation.z);
-    return mars::PoseMeasurementType(position, orientation);
+
+    mars::PoseMeasurementType pose_meas = mars::PoseMeasurementType(position, orientation);
+    std::vector<double> R_vec(msg.pose.covariance.begin(), msg.pose.covariance.end());
+    pose_meas.set_meas_noise(Eigen::Map<Eigen::Matrix<double, 6, 6, Eigen::RowMajor>>(R_vec.data()));
+    pose_meas.has_meas_noise = true;
+    return pose_meas;
   }
 
   static inline mars::PoseMeasurementType TransformMsgToPoseMeas(const geometry_msgs::TransformStamped& msg)
@@ -384,9 +395,24 @@ public:
   static inline mars::GpsVelMeasurementType NavSatTwistWithCovMsgToGpsVelMeas(
       const sensor_msgs::NavSatFix& msg_coord, const geometry_msgs::TwistWithCovarianceStamped& msg_vel)
   {
-    return mars::GpsVelMeasurementType(msg_coord.latitude, msg_coord.longitude, msg_coord.altitude,
-                                       msg_vel.twist.twist.linear.x, msg_vel.twist.twist.linear.y,
-                                       msg_vel.twist.twist.linear.z);
+    mars::GpsVelMeasurementType gps_vel_meas = mars::GpsVelMeasurementType(
+        msg_coord.latitude, msg_coord.longitude, msg_coord.altitude, msg_vel.twist.twist.linear.x,
+        msg_vel.twist.twist.linear.y, msg_vel.twist.twist.linear.z);
+
+    // Position Covariance
+    std::vector<double> R_vec_p(msg_coord.position_covariance.begin(), msg_coord.position_covariance.end());
+    // Velocity Covariance
+    std::vector<double> R_vec_v(msg_vel.twist.covariance.begin(), msg_vel.twist.covariance.end());
+
+    Eigen::MatrixXd meas_noise = Eigen::MatrixXd::Zero(6, 6);
+    meas_noise.block(0, 0, 3, 3) = Eigen::Map<Eigen::Matrix<double, 3, 3, Eigen::RowMajor>>(R_vec_p.data());
+    meas_noise.block(3, 3, 3, 3) =
+        Eigen::Map<Eigen::Matrix<double, 3, 3, Eigen::RowMajor>>(R_vec_v.data()).block(0, 0, 3, 3);
+
+    gps_vel_meas.set_meas_noise(meas_noise);
+    gps_vel_meas.has_meas_noise = true;
+
+    return gps_vel_meas;
   }
 
   static inline mars::GpsVelMeasurementType NavSatTwistMsgToGpsVelMeas(const sensor_msgs::NavSatFix& msg_coord,

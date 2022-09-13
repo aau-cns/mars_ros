@@ -83,6 +83,7 @@ MarsWrapperGpsVision::MarsWrapperGpsVision(ros::NodeHandle nh)
     Eigen::Matrix<double, 6, 1> vision_meas_std;
     vision_meas_std << m_sett_.vision1_pos_meas_noise_, m_sett_.vision1_att_meas_noise_;
     vision1_sensor_sptr_->R_ = vision_meas_std.cwiseProduct(vision_meas_std);
+    vision1_sensor_sptr_->use_dynamic_meas_noise_ = false;
 
     // TODO is set here for now, but will be managed by core logic in later versions
     vision1_sensor_sptr_->const_ref_to_nav_ = true;
