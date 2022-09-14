@@ -1,0 +1,125 @@
+# Copyright (C) 2022 Martin Scheiber and Christian Brommer,
+# Control of Networked Systems, University of Klagenfurt, Austria.
+#
+# All rights reserved.
+#
+# This software is licensed under the terms of the BSD-2-Clause-License with
+# no commercial use allowed, the full terms of which are made available
+# in the LICENSE file. No license in patents is granted.
+#
+# You can contact the author at <martin.scheiber@ieee.org> and
+# <christian.brommer@ieee.org>.
+
+name: ROS
+
+on:
+  push:
+    branches: [ "main", "development"]
+  pull_request:
+    branches: [ "main", "development"]
+
+jobs:
+  ros_ci:
+    name: ROS ${{ matrix.ROS_DISTRO }} (${{ matrix.BUILD_TYPE }})
+    runs-on: ubuntu-latest
+    container: ros:${{ matrix.ROS_DISTRO }}-ros-core
+    strategy:
+      matrix:
+        ROS_DISTRO: [noetic, melodic, kinetic]
+        BUILD_TYPE: [Release, Debug]
+    env:
+      BADGE_CREATION: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository_owner == 'aau-cns' }}
+    steps:
+    - name: Create Badge (running)
+      if: ${{ env.BADGE_CREATION == 'true' }}
+      uses: schneegans/dynamic-badges-action@v1.4.0
+      with:
+        auth: ${{ secrets.GIST_SECRET }}
+        gistID: 43fe7d2cb351d05d5101f8d1d6b94bd9
+        filename: build_mars_ros_${{ matrix.ROS_DISTRO }}_${{ matrix.BUILD_TYPE }}.json
+        label: ${{ matrix.ROS_DISTRO }}
+        message: running
+        color: yellow
+        namedLogo: ROS
+        style: plastic
+
+    - name: Get newest Git version
+      run: >
+           apt update && apt install --no-install-recommends -y
+           software-properties-common
+           && add-apt-repository ppa:git-core/ppa
+
+    - name: Install Dependencies
+      run: >
+           apt update && apt install --no-install-recommends -y
+           git
+           doxygen
+           graphviz
+           build-essential
+           libeigen3-dev
+           ros-${{ matrix.ROS_DISTRO }}-dynamic-reconfigure
+           ros-${{ matrix.ROS_DISTRO }}-tf2-ros
+
+    - name: Install ROS dependencies (python3)
+      if: ${{ matrix.ROS_DISTRO != 'kinetic' }}
+      run: >
+           apt update && apt install --no-install-recommends -y
+           python3-catkin-tools
+
+    - name: Install ROS dependencies (python2)
+      if: ${{ matrix.ROS_DISTRO == 'kinetic' }}
+      run: >
+           apt update && apt install --no-install-recommends -y
+           python-catkin-tools
+
+    - name: Create Catkin Workspace
+      run: mkdir -p ${{github.workspace}}/flightstack_cws
+
+    - name: Checkout Latest Version
+      uses: actions/checkout@v3
+      with:
+        path: ${{github.workspace}}/catkin_ws/src
+        submodules: recursive
+
+    - name: Build
+      working-directory: ${{github.workspace}}/catkin_ws
+      run: /bin/bash -c '. /opt/ros/${{ matrix.ROS_DISTRO }}/setup.bash; catkin build -DCMAKE_BUILD_TYPE=${{ matrix.BUILD_TYPE }};'
+
+    - name: Create Badge (success)
+      if: ${{ success() && env.BADGE_CREATION == 'true' }}
+      uses: schneegans/dynamic-badges-action@v1.4.0
+      with:
+        auth: ${{ secrets.GIST_SECRET }}
+        gistID: 43fe7d2cb351d05d5101f8d1d6b94bd9
+        filename: build_mars_ros_${{ matrix.ROS_DISTRO }}_${{ matrix.BUILD_TYPE }}.json
+        label: ${{ matrix.ROS_DISTRO }}
+        message: passing
+        color: success
+        namedLogo: ROS
+        style: plastic
+
+    - name: Create Badge (failure)
+      if: ${{ failure() && env.BADGE_CREATION == 'true' }}
+      uses: schneegans/dynamic-badges-action@v1.4.0
+      with:
+        auth: ${{ secrets.GIST_SECRET }}
+        gistID: 43fe7d2cb351d05d5101f8d1d6b94bd9
+        filename: build_mars_ros_${{ matrix.ROS_DISTRO }}_${{ matrix.BUILD_TYPE }}.json
+        label: ${{ matrix.ROS_DISTRO }}
+        message: failure
+        isError: true
+        namedLogo: ROS
+        style: plastic
+
+    - name: Create Badge (cancelled)
+      if: ${{ cancelled() && env.BADGE_CREATION == 'true' }}
+      uses: schneegans/dynamic-badges-action@v1.4.0
+      with:
+        auth: ${{ secrets.GIST_SECRET }}
+        gistID: 43fe7d2cb351d05d5101f8d1d6b94bd9
+        filename: build_mars_ros_${{ matrix.ROS_DISTRO }}_${{ matrix.BUILD_TYPE }}.json
+        label: ${{ matrix.ROS_DISTRO }}
+        message: cancelled
+        color: inactive
+        namedLogo: ROS
+        style: plastic
