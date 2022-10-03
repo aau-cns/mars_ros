@@ -68,7 +68,7 @@ MarsWrapperPose::MarsWrapperPose(ros::NodeHandle nh)
   Eigen::Matrix<double, 6, 1> pose_meas_std;
   pose_meas_std << m_sett_.pose1_pos_meas_noise_, m_sett_.pose1_rot_meas_noise_;
   pose1_sensor_sptr_->R_ = pose_meas_std.cwiseProduct(pose_meas_std);
-  pose1_sensor_sptr_->use_dynamic_meas_noise_ = false;
+  pose1_sensor_sptr_->use_dynamic_meas_noise_ = m_sett_.pose1_use_dyn_meas_noise_;
 
   mars::PoseSensorData pose_calibration;
   pose_calibration.state_.p_ip_ = m_sett_.pose1_cal_p_ip_;

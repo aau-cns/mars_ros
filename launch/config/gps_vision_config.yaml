@@ -42,6 +42,7 @@ core_init_cov_ba: [0.01,0.01,0.01]
 vision1_fixed_scale: True
 vision1_pos_meas_noise: [0.01,0.01,0.01]
 vision1_att_meas_noise: [0.01,0.01,0.01]
+vision1_use_dyn_meas_noise = false
 vision1_cal_p_ip: [0,0,0]
 vision1_cal_q_ip: [1,0,0,0]
 vision1_cal_ip_init_cov: [0.00001,0.00001,0.00001,0.00001,0.00001,0.00001]
@@ -49,11 +50,13 @@ vision1_cal_ip_init_cov: [0.00001,0.00001,0.00001,0.00001,0.00001,0.00001]
 # GPS Settings
 gps1_pos_meas_noise: [1.0,1.0,1.0]
 gps1_vel_meas_noise: [2,2,2]
+gps1_use_dyn_meas_noise = false
 gps1_cal_ig: [0,0,0.21]
 gps1_state_init_cov: [0.001,0.001,0.001]
 
 # Baro Settings
 pressure1_meas_noise: [1.0]
+pressure1_use_dyn_meas_noise = false
 pressure1_cal_ip: [0,0,0]
 pressure1_state_init_cov: [0.00001,0.00001,0.00001]
 
@@ -61,5 +64,6 @@ pressure1_state_init_cov: [0.00001,0.00001,0.00001]
 mag1_normalize: true
 mag1_declination: 0.0 #degree
 mag1_meas_noise: [0.5,0.5,0.5]
+mag1_use_dyn_meas_noise = false
 mag1_cal_q_im: [1, 0, 0, 0] # w,x,y,z
 mag1_state_init_cov: [0.25, 0.25, 0.25, 0.0305,0.0305,0.0305] #v_wm q_im

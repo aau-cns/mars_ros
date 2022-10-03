@@ -73,12 +73,14 @@ public:
 
   Eigen::Vector3d gps1_pos_meas_noise_;
   Eigen::Vector3d gps1_vel_meas_noise_;
+  bool gps1_use_dyn_meas_noise_{ false };
   Eigen::Vector3d gps1_cal_ig_;
   Eigen::Vector3d gps1_state_init_cov_;
 
   bool mag1_normalize_{ true };
   double mag1_declination_{ 0.0 };
   Eigen::Vector3d mag1_meas_noise_;
+  bool mag1_use_dyn_meas_noise_{ false };
   Eigen::Quaterniond mag1_cal_q_im_;
   Eigen::Matrix<double, 6, 1> mag1_state_init_cov_;
 
@@ -163,6 +165,8 @@ public:
     check_size(gps1_vel_meas_noise.size(), 3);
     gps1_vel_meas_noise_ = Eigen::Map<Eigen::Matrix<double, 3, 1> >(gps1_vel_meas_noise.data());
 
+    gps1_use_dyn_meas_noise_ = nh.param<bool>("gps1_use_dyn_meas_noise", gps1_use_dyn_meas_noise_);
+
     std::vector<double> gps1_cal_ig;
     nh.param("gps1_cal_ig", gps1_cal_ig, std::vector<double>());
     check_size(gps1_cal_ig.size(), 3);
@@ -181,6 +185,8 @@ public:
     nh.param("mag1_meas_noise", mag1_meas_noise, std::vector<double>());
     check_size(mag1_meas_noise.size(), 3);
     mag1_meas_noise_ = Eigen::Map<Eigen::Matrix<double, 3, 1> >(mag1_meas_noise.data());
+
+    mag1_use_dyn_meas_noise_ = nh.param<bool>("mag1_use_dyn_meas_noise", mag1_use_dyn_meas_noise_);
 
     std::vector<double> mag1_cal_q_im;
     nh.param("mag1_cal_q_im", mag1_cal_q_im, std::vector<double>());

@@ -62,6 +62,7 @@ public:
 
   Eigen::Vector3d gps1_pos_meas_noise_;
   Eigen::Vector3d gps1_vel_meas_noise_;
+  bool gps1_use_dyn_meas_noise_{ false };
   Eigen::Vector3d gps1_cal_ig_;
   Eigen::Vector3d gps1_state_init_cov_;
 
@@ -136,6 +137,8 @@ public:
     nh.param("gps1_vel_meas_noise", gps1_vel_meas_noise, std::vector<double>());
     check_size(gps1_vel_meas_noise.size(), 3);
     gps1_vel_meas_noise_ = Eigen::Map<Eigen::Matrix<double, 3, 1> >(gps1_vel_meas_noise.data());
+
+    gps1_use_dyn_meas_noise_ = nh.param<bool>("gps1_use_dyn_meas_noise", gps1_use_dyn_meas_noise_);
 
     std::vector<double> gps1_cal_ig;
     nh.param("gps1_cal_ig", gps1_cal_ig, std::vector<double>());

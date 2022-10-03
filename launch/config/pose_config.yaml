@@ -34,6 +34,7 @@ core_init_cov_ba: [0.01,0.01,0.01]
 # Pose1 sensor settings
 pose1_pos_meas_noise: [0.1,0.1,0.1]
 pose1_rot_meas_noise: [0.03,0.03,0.03]
+pose1_use_dyn_meas_noise = false
 pose1_cal_p_ip: [0.0, 0.0, 0.0]
 pose1_cal_q_ip: [1.0, 0.0, 0.0, 0.0] #w,x,y,z
 pose1_state_init_cov: [0.01,0.01,0.01, 0.03,0.03,0.03] #position[3], rot[3]

@@ -30,7 +30,7 @@ public:
   bool discard_ooo_prop_meas_{ false };    ///< If true, all out of order propagation sensor meas are discarded
   bool use_common_gps_reference_{ true };  ///< Use a common GPS reference for all sensors
   bool pub_cov_{ true };                   ///< Publish covariances in the ext core state message if true
-  bool pub_path_{ false };               ///< Publish all core states as nav_msgs::Path (for rviz)
+  bool pub_path_{ false };                 ///< Publish all core states as nav_msgs::Path (for rviz)
   uint32_t buffer_size_{ 2000 };           ///< Set mars buffersize
 
   bool use_pressure_{ true };
@@ -75,6 +75,7 @@ public:
   // Pose1 calibration
   Eigen::Vector3d pose1_pos_meas_noise_;
   Eigen::Vector3d pose1_att_meas_noise_;
+  bool pose1_use_dyn_meas_noise_{ false };
   Eigen::Vector3d pose1_cal_p_ip_;
   Eigen::Quaterniond pose1_cal_q_ip_;
   Eigen::Matrix<double, 6, 1> pose1_state_init_cov_;
@@ -83,6 +84,7 @@ public:
   {
     PARAM_PRINTER("pose1_pos_meas_noise_:     " << pose1_pos_meas_noise_.transpose() << "\n");
     PARAM_PRINTER("pose1_att_meas_noise_:     " << pose1_att_meas_noise_.transpose() << "\n");
+    PARAM_PRINTER("pose1_use_dyn_meas_noise_: " << pose1_use_dyn_meas_noise_ << "\n");
     PARAM_PRINTER("pose1_cal_p_ip_:           " << pose1_cal_p_ip_.transpose() << "\n");
     PARAM_PRINTER("pose1_cal_q_ip_:           " << pose1_cal_q_ip_.w() << " " << pose1_cal_q_ip_.vec().transpose()
                                                 << "\n");
@@ -92,6 +94,7 @@ public:
   // Pose2 calibration
   Eigen::Vector3d pose2_pos_meas_noise_;
   Eigen::Vector3d pose2_att_meas_noise_;
+  bool pose2_use_dyn_meas_noise_{ false };
   Eigen::Vector3d pose2_cal_p_ip_;
   Eigen::Quaterniond pose2_cal_q_ip_;
   Eigen::Matrix<double, 6, 1> pose2_state_init_cov_;
@@ -100,6 +103,7 @@ public:
   {
     PARAM_PRINTER("pose2_pos_meas_noise_:     " << pose2_pos_meas_noise_.transpose() << "\n");
     PARAM_PRINTER("pose2_att_meas_noise_:     " << pose2_att_meas_noise_.transpose() << "\n");
+    PARAM_PRINTER("pose2_use_dyn_meas_noise_: " << pose2_use_dyn_meas_noise_ << "\n");
     PARAM_PRINTER("pose2_cal_p_ip_:           " << pose2_cal_p_ip_.transpose() << "\n");
     PARAM_PRINTER("pose2_cal_q_ip_:           " << pose2_cal_q_ip_.w() << " " << pose2_cal_q_ip_.vec().transpose()
                                                 << "\n");
@@ -109,6 +113,7 @@ public:
   // GPS1 calibration
   Eigen::Vector3d gps1_pos_meas_noise_;
   Eigen::Vector3d gps1_vel_meas_noise_;
+  bool gps1_use_dyn_meas_noise_{ false };
   Eigen::Vector3d gps1_cal_ig_;
   Eigen::Vector3d gps1_state_init_cov_;
 
@@ -116,12 +121,14 @@ public:
   {
     PARAM_PRINTER("gps1_pos_meas_noise_:      " << gps1_pos_meas_noise_.transpose() << "\n");
     PARAM_PRINTER("gps1_vel_meas_noise_:      " << gps1_vel_meas_noise_.transpose() << "\n");
+    PARAM_PRINTER("gps1_use_dyn_meas_noise_:  " << gps1_use_dyn_meas_noise_ << "\n");
     PARAM_PRINTER("gps1_cal_ig_:              " << gps1_cal_ig_.transpose() << "\n");
     PARAM_PRINTER("gps1_state_init_cov_:      " << gps1_state_init_cov_.transpose() << "\n");
   }
 
   // Pressure calibration
   double pressure1_meas_noise_;
+  bool pressure1_use_dyn_meas_noise_{ false };
   Eigen::Vector3d pressure1_cal_ip_;
   Eigen::Vector3d pressure1_state_init_cov_;
 
@@ -132,6 +139,7 @@ public:
   void printBaro()
   {
     PARAM_PRINTER("pressure1_meas_noise_:      " << pressure1_meas_noise_ << "\n");
+    PARAM_PRINTER("pressure1_use_dyn_meas_noise_: " << pressure1_use_dyn_meas_noise_ << "\n");
     PARAM_PRINTER("pressure1_cal_ip_:         " << pressure1_cal_ip_.transpose() << "\n");
     PARAM_PRINTER("pressure1_state_init_cov_: " << pressure1_state_init_cov_.transpose() << "\n");
     PARAM_PRINTER("pressure1_const_temp_:     " << pressure1_const_temp_ << "\n");
@@ -143,6 +151,7 @@ public:
   bool mag1_normalize_{ true };
   double mag1_declination_{ 0.0 };
   Eigen::Vector3d mag1_meas_noise_;
+  bool mag1_use_dyn_meas_noise_{ false };
   Eigen::Quaterniond mag1_cal_q_im_;
   Eigen::Matrix<double, 6, 1> mag1_state_init_cov_;
 
@@ -151,6 +160,7 @@ public:
     PARAM_PRINTER("mag1_normalize_:           " << mag1_normalize_ << "\n");
     PARAM_PRINTER("mag1_declination_:         " << mag1_declination_ << "\n");
     PARAM_PRINTER("mag1_meas_noise_:          " << mag1_meas_noise_.transpose() << "\n");
+    PARAM_PRINTER("mag1_use_dyn_meas_noise_:  " << mag1_use_dyn_meas_noise_ << "\n");
     PARAM_PRINTER("mag1_cal_q_im_:            " << mag1_cal_q_im_.w() << " " << mag1_cal_q_im_.vec().transpose()
                                                 << "\n");
     PARAM_PRINTER("mag1_state_init_cov_:      " << mag1_state_init_cov_.transpose() << "\n");
@@ -250,6 +260,7 @@ public:
     // Pose1 Settings
     check_and_load<3>(pose1_pos_meas_noise_, nh, "pose1_pos_meas_noise");
     check_and_load<3>(pose1_att_meas_noise_, nh, "pose1_att_meas_noise");
+    pose1_use_dyn_meas_noise_ = nh.param<bool>("pose1_use_dyn_meas_noise", pose1_use_dyn_meas_noise_);
     check_and_load<3>(pose1_cal_p_ip_, nh, "pose1_cal_p_ip");
 
     std::vector<double> pose1_cal_q_ip;
@@ -259,12 +270,12 @@ public:
     pose1_cal_q_ip_.x() = pose1_cal_q_ip.at(1);
     pose1_cal_q_ip_.y() = pose1_cal_q_ip.at(2);
     pose1_cal_q_ip_.z() = pose1_cal_q_ip.at(3);
-    //    check_and_load<4>(pose1_cal_q_ip_, nh, "pose1_cal_q_ip");
     check_and_load<6>(pose1_state_init_cov_, nh, "pose1_state_init_cov");
 
     // Pose2 Settings
     check_and_load<3>(pose2_pos_meas_noise_, nh, "pose2_pos_meas_noise");
     check_and_load<3>(pose2_att_meas_noise_, nh, "pose2_att_meas_noise");
+    pose2_use_dyn_meas_noise_ = nh.param<bool>("pose2_use_dyn_meas_noise", pose2_use_dyn_meas_noise_);
     check_and_load<3>(pose2_cal_p_ip_, nh, "pose2_cal_p_ip");
 
     std::vector<double> pose2_cal_q_ip;
@@ -274,7 +285,6 @@ public:
     pose2_cal_q_ip_.x() = pose2_cal_q_ip.at(1);
     pose2_cal_q_ip_.y() = pose2_cal_q_ip.at(2);
     pose2_cal_q_ip_.z() = pose2_cal_q_ip.at(3);
-    //    check_and_load<4>(pose2_cal_q_ip_, nh, "pose2_cal_q_ip");
 
     check_and_load<6>(pose2_state_init_cov_, nh, "pose2_state_init_cov");
 
@@ -283,11 +293,13 @@ public:
 #ifndef GPS_W_VEL
     check_and_load<3>(gps1_vel_meas_noise_, nh, "gps1_vel_meas_noise");
 #endif
+    gps1_use_dyn_meas_noise_ = nh.param<bool>("gps1_use_dyn_meas_noise", gps1_use_dyn_meas_noise_);
     check_and_load<3>(gps1_cal_ig_, nh, "gps1_cal_ig");
     check_and_load<3>(gps1_state_init_cov_, nh, "gps1_state_init_cov");
 
     // Baro Settings
     pressure1_meas_noise_ = nh.param<double>("pressure1_meas_noise", 1.0);
+    pressure1_use_dyn_meas_noise_ = nh.param<bool>("pressure1_use_dyn_meas_noise", pressure1_use_dyn_meas_noise_);
     pressure1_const_temp_ = nh.param<bool>("pressure1_const_temp", pressure1_const_temp_);
     pressure1_temp_K_ = nh.param<double>("pressure1_temp_K", pressure1_temp_K_);
     pressure1_init_duration_ = nh.param<double>("pressure1_init_duration", pressure1_init_duration_);
@@ -298,6 +310,7 @@ public:
     mag1_normalize_ = nh.param<bool>("mag1_normalize", mag1_normalize_);
     nh.param("mag1_declination", mag1_declination_, double());
     check_and_load<3>(mag1_meas_noise_, nh, "mag1_meas_noise");
+    mag1_use_dyn_meas_noise_ = nh.param<bool>("mag1_use_dyn_meas_noise", mag1_use_dyn_meas_noise_);
     std::vector<double> mag_cal_q_im;
     nh.param("mag1_cal_q_im", mag_cal_q_im, std::vector<double>());
     check_size(mag_cal_q_im.size(), 4);
