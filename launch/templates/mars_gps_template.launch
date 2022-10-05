@@ -11,13 +11,16 @@
     <!-- Output Core State -->
     <arg name="full_state_out_topic" default="~full_state_out" />
     <arg name="pose_state_out_topic" default="~pose_state_out" />
-    <arg name="full_state_lite_out_topic" default="~full_state_lite_out" />
+    <arg name="pose_state_lite_out_topic" default="~pose_state_lite_out" />
 
     <!-- Output Calibration State -->
     <arg name="gps_cal_state_out_topic" default="~gps_cal_state_out" />
 
     <!-- Node Options -->
     <arg name="respawn" default="false" />
+
+    <!-- Config File -->
+    <arg name="config_file" default="$(find mars_ros)/launch/config/gps_config.yaml" />
 
   </include>
 

@@ -20,10 +20,11 @@ sub_sensor_cb_buffer_size: 1
 
 # Node specific settings
 publish_gps_enu: true
+enable_manual_yaw_init: false
 
 ## Yaw initialization
-enable_manual_yaw_init: false
 yaw_init_deg: -30
+auto_mag_init_samples: 30
 
 # Sensor Settings
 gyro_rate_noise: 0.0023089
@@ -40,6 +41,13 @@ core_init_cov_ba: [0.01,0.01,0.01]
 
 # GPS Settings
 gps1_pos_meas_noise: [0.5,0.5,0.5]
-gps1_vel_meas_noise: [0.1,0.1,0.1]
+gps1_vel_meas_noise: [2,2,2]
 gps1_cal_ig: [0,0,0]
-gps1_state_init_cov: [0.0000001,0.0000001,0.0000001]
+gps1_state_init_cov: [0.00001,0.00001,0.00001]
+
+# Magnetometer Settings
+mag1_normalize: true
+mag1_declination: 0.0 #degree
+mag1_meas_noise: [0.5,0.5,0.5]
+mag1_cal_q_im: [1, 0, 0, 0] # w,x,y,z
+mag1_state_init_cov: [0.25, 0.25, 0.25, 0.0305,0.0305,0.0305] #v_wm q_im

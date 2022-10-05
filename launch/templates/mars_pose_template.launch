@@ -22,6 +22,9 @@
     <!-- Node Options -->
     <arg name="respawn" default="false" />
 
+    <!-- Config File -->
+    <arg name="config_file" default="$(find mars_ros)/launch/config/pose_config.yaml" />
+
   </include>
 
 </launch>

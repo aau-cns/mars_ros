@@ -2,8 +2,8 @@
 
 <launch>
   <!-- Input -->
-  <arg name="imu_in_topic" default="~imu_in_topic" />
-  <arg name="transform_in_topic" default="~transform_in_topic" />
+  <arg name="imu_in_topic" default="~imu_in" />
+  <arg name="point_in_topic" default="~point_in" />
   <arg name="pose_in_topic" default="~pose_in" />
   <arg name="pose_with_cov_in_topic" default="~pose_with_cov_in" />
   <arg name="odom_in_topic" default="~odom_in" />
@@ -12,21 +12,28 @@
   <arg name="full_state_out_topic" default="~full_state_out" />
   <arg name="full_state_lite_out_topic" default="~full_state_lite_out" />
   <arg name="pose_state_out_topic" default="~pose_state_out" />
+  <arg name="odom_state_out_topic" default="~odom_state_out" />
+  <arg name="path_states_out_topic" default="~path_states_out" />
 
   <!-- Output Calibration State -->
   <arg name="position_cal_state_out_topic" default="~position_cal_state_out" />
 
   <!-- Node Options -->
   <arg name="respawn" default="false" />
+  <arg name="rviz"    default="false" />
+
+  <!-- Config File -->
+  <arg name="config_file" default="$(find mars_ros)/launch/config/position_config.yaml" />
 
   <!-- Launching the mars_ros pose_node -->
   <node name="mars_position_node" pkg="mars_ros" type="position_node" clear_params="true" output="screen" respawn="$(arg respawn)">
 
-    <rosparam command="load" file="$(find mars_ros)/launch/config/position_config.yaml" />
+    <!-- Config File -->
+    <rosparam command="load" file="$(arg config_file)" />
 
     <!-- Input -->
     <remap from="~imu_in" to="$(arg imu_in_topic)"/>
-    <remap from="~transform_in" to="$(arg transform_in_topic)"/>
+    <remap from="~point_in" to="$(arg point_in_topic)"/>
     <remap from="~pose_in" to="$(arg pose_in_topic)"/>
     <remap from="~pose_with_cov_in" to="$(arg pose_with_cov_in_topic)"/>
     <remap from="~odom_in" to="$(arg odom_in_topic)"/>
@@ -35,9 +42,37 @@
     <remap from="~core_ext_state_out" to="$(arg full_state_out_topic)"/>
     <remap from="~core_ext_state_lite_out" to="$(arg full_state_lite_out_topic)"/>
     <remap from="~core_pose_state_out" to="$(arg pose_state_out_topic)"/>
+    <remap from="~core_odom_state_out" to="$(arg odom_state_out_topic)"/>
+    <remap from="~core_states_path" to="$(arg path_states_out_topic)"/>
 
     <!-- Output Calibration State -->
     <remap from="~position_cal_state_out" to="$(arg position_cal_state_out_topic)"/>
   </node>
+
+  <!-- launch rviz -->
+  <group if="$(arg rviz)">
+    <include file="$(find mars_ros)/launch/rviz/mars_rviz.launch">
+      <arg name="topic_path_in"   value="$(arg path_states_out_topic)" />
+      <arg name="topic_pose_in"   value="$(arg pose_state_out_topic)" />
+      <arg name="namespace_mars"  value="mars_position_node" />
+    </include>
+
+    <arg name="pose_topic"  value="$(eval eval(compile('pose_state_out_topic.replace(\'~\',\'\')','string','eval')))" />
+    <node name="rviz_mars_pose_br" pkg="mars_ros" type="mars_tf2_converter" clear_params="true" output="screen" args="-t pose">
+      <param name="child_id"      value="imu" />
+
+      <remap from="~pose_in" to="$(arg pose_state_out_topic)" unless="$(eval pose_state_out_topic[0]=='~')"/>
+      <remap from="~pose_in" to="/mars_position_node/$(arg pose_topic)" if="$(eval pose_state_out_topic[0]=='~')"/>
+    </node>
+
+    <arg name="pos_cal_topic"  value="$(eval eval(compile('position_cal_state_out_topic.replace(\'~\',\'\')','string','eval')))" />
+    <node name="rviz_mars_pos_cal_br" pkg="mars_ros" type="mars_tf2_converter" clear_params="true" output="screen" args="-t pose">
+      <param name="child_id"      value="pos_sensor" />
+      <param name="parent_id"     value="imu" />
+
+      <remap from="~pose_in" to="$(arg position_cal_state_out_topic)" unless="$(eval position_cal_state_out_topic[0]=='~')"/>
+      <remap from="~pose_in" to="/mars_position_node/$(arg pos_cal_topic)" if="$(eval position_cal_state_out_topic[0]=='~')"/>
+    </node>
+  </group>
 
 </launch>

@@ -7,13 +7,19 @@ project(mars_ros)
 #
 if (NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release")
-  message("**** Release build ****")
+endif()
+
+if (CMAKE_BUILD_TYPE STREQUAL "Release")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fomit-frame-pointer -fno-signed-zeros")
+elseif (CMAKE_BUILD_TYPE STREQUAL "Debug")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3")
 endif ()
+
+message("Build Type: " ${CMAKE_BUILD_TYPE})
+message("CMAKE CXX Flags:" ${CMAKE_CXX_FLAGS})
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++11)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fomit-frame-pointer -fno-signed-zeros")
-message("CMAKE CXX Flags" ${CMAKE_CXX_FLAGS})
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -23,8 +29,10 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   sensor_msgs
   geometry_msgs
+  message_filters
   message_generation
   dynamic_reconfigure
+  tf2_ros
 )
 
 #set(Eigen_DIR ${CMAKE_CURRENT_SOURCE_DIR}/mars_lib/cmake)
@@ -43,6 +51,12 @@ find_package(
 
 set(mars_lib_DIR ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 find_package(mars_lib REQUIRED)
+
+if (CMAKE_BUILD_TYPE STREQUAL "Release")
+  set(MARS_LIBRARY ${MARS_LIBRARY_RELEASE})
+elseif (CMAKE_BUILD_TYPE STREQUAL "Debug")
+  set(MARS_LIBRARY ${MARS_LIBRARY_DEBUG})
+endif ()
 
 message(" * Eigen: ${EIGEN3_INCLUDE_DIR}")
 message(" * Mars:  ${MARS_INCLUDE_DIR}")
@@ -85,6 +99,7 @@ message(" * Boost: ${Boost_INCLUDE_DIRS}")
    FILES
    ExtCoreState.msg
    ExtCoreStateLite.msg
+   VisionSensorState.msg
  )
 
 ## Generate services in the 'srv' folder
@@ -175,7 +190,7 @@ include_directories(
 add_executable(pose_node src/mars_node.cpp src/mars_wrapper_pose.cpp)
 add_dependencies(pose_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} mars_lib)
 target_link_libraries(pose_node
-  ${catkin_LIBRARIES} ${MARS_LIBRARIE}
+  ${catkin_LIBRARIES} ${MARS_LIBRARY}
 )
 set_property(TARGET pose_node PROPERTY COMPILE_DEFINITIONS POSE)
 
@@ -183,7 +198,7 @@ set_property(TARGET pose_node PROPERTY COMPILE_DEFINITIONS POSE)
 add_executable(position_node src/mars_node.cpp src/mars_wrapper_position.cpp)
 add_dependencies(position_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} mars_lib)
 target_link_libraries(position_node
-  ${catkin_LIBRARIES} ${MARS_LIBRARIE}
+  ${catkin_LIBRARIES} ${MARS_LIBRARY}
 )
 set_property(TARGET position_node PROPERTY COMPILE_DEFINITIONS POSITION)
 
@@ -191,10 +206,56 @@ set_property(TARGET position_node PROPERTY COMPILE_DEFINITIONS POSITION)
 add_executable(gps_node src/mars_node.cpp src/mars_wrapper_gps.cpp)
 add_dependencies(gps_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} mars_lib)
 target_link_libraries(gps_node
-  ${catkin_LIBRARIES} ${MARS_LIBRARIE}
+  ${catkin_LIBRARIES} ${MARS_LIBRARY}
 )
 set_property(TARGET gps_node PROPERTY COMPILE_DEFINITIONS GPS)
 
+## GPS Mag
+add_executable(gps_mag_node src/mars_node.cpp src/mars_wrapper_gps_mag.cpp)
+add_dependencies(gps_mag_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} mars_lib)
+target_link_libraries(gps_mag_node
+  ${catkin_LIBRARIES} ${MARS_LIBRARY}
+)
+set_property(TARGET gps_mag_node PROPERTY COMPILE_DEFINITIONS GPS_MAG)
+
+## DUAL POSE FULL (GPS, BARO, MAG)
+add_executable(dualpose_full_node src/mars_node.cpp src/mars_wrapper_dualpose_full.cpp)
+add_dependencies(dualpose_full_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} mars_lib)
+target_link_libraries(dualpose_full_node
+  ${catkin_LIBRARIES} ${MARS_LIBRARY}
+)
+set_property(TARGET dualpose_full_node PROPERTY COMPILE_DEFINITIONS DUALPOSE_FULL)
+
+## DUAL POSE FULL (GPS+VEL, BARO, MAG)
+add_executable(dualpose_gpsvel_node src/mars_node.cpp src/mars_wrapper_dualpose_full.cpp)
+add_dependencies(dualpose_gpsvel_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} mars_lib)
+target_link_libraries(dualpose_gpsvel_node
+  ${catkin_LIBRARIES} ${MARS_LIBRARY}
+)
+set_property(TARGET dualpose_gpsvel_node PROPERTY COMPILE_DEFINITIONS DUALPOSE_FULL GPS_W_VEL)
+
+## GPS Vision (GPS, BARO, Vision)
+add_executable(gps_vision_node src/mars_node.cpp src/mars_wrapper_gps_vision.cpp)
+add_dependencies(gps_vision_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} mars_lib)
+target_link_libraries(gps_vision_node
+  ${catkin_LIBRARIES} ${MARS_LIBRARY}
+)
+set_property(TARGET gps_vision_node PROPERTY COMPILE_DEFINITIONS GPS_VISION)
+
+## GPS Vision (GPS, BARO, Vision)
+add_executable(gpsvel_vision_node src/mars_node.cpp src/mars_wrapper_gps_vision.cpp)
+add_dependencies(gpsvel_vision_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} mars_lib)
+target_link_libraries(gpsvel_vision_node
+  ${catkin_LIBRARIES} ${MARS_LIBRARY}
+)
+set_property(TARGET gpsvel_vision_node PROPERTY COMPILE_DEFINITIONS GPS_VISION GPS_W_VEL)
+
+## TF2 Converter
+add_executable(mars_tf2_converter src/tf2_mars/mars_tf2_converter.cpp)
+add_dependencies(mars_tf2_converter ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(mars_tf2_converter
+ ${catkin_LIBRARIES}
+)
 
 #############
 ## Install ##

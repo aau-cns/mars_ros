@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Christian Brommer, Control of Networked Systems, University of Klagenfurt, Austria.
+// Copyright (C) 2022 Christian Brommer, Control of Networked Systems, University of Klagenfurt, Austria.
 //
 // All rights reserved.
 //
@@ -18,6 +18,15 @@
 #endif
 #ifdef GPS
 #include "mars_wrapper_gps.h"
+#endif
+#ifdef GPS_MAG
+#include "mars_wrapper_gps_mag.h"
+#endif
+#ifdef DUALPOSE_FULL
+#include "mars_wrapper_dualpose_full.h"
+#endif
+#ifdef GPS_VISION
+#include "mars_wrapper_gps_vision.h"
 #endif
 
 int main(int argc, char* argv[])
@@ -41,6 +50,15 @@ int main(int argc, char* argv[])
 #endif
 #ifdef GPS
   MarsWrapperGps mars_core(nh);
+#endif
+#ifdef GPS_MAG
+  MarsWrapperGpsMag mars_core(nh);
+#endif
+#ifdef DUALPOSE_FULL
+  MarsWrapperDualPoseFull mars_core(nh);
+#endif
+#ifdef GPS_VISION
+  MarsWrapperGpsVision mars_core(nh);
 #endif
 
   ros::spin();

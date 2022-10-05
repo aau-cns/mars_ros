@@ -15,7 +15,9 @@
 
   <depend>roscpp</depend>
   <depend>std_msgs</depend>
+  <depend>message_filters</depend>
   <depend>dynamic_reconfigure</depend>
+  <depend>tf2_ros</depend>
  
   <!-- Use exec_depend for packages you need at runtime: -->
   <exec_depend>message_runtime</exec_depend>

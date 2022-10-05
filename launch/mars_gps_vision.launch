@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<launch>
+  <!-- Input -->
+  <arg name="imu_in_topic"      default="~imu_in" />
+
+  <arg name="vision1_in_topic"  default="~vision1_in" />
+  <arg name="gps1_pos_in"       default="~gps1_pos_in" />
+  <arg name="gps1_vel_in"       default="~gps1_vel_in" />
+  <arg name="pressure1_in"      default="~baro1_in" />
+  <arg name="mag1_in"           default="~mag1_in" />
+
+  <arg name="use_gps_vel"       default="False" />
+
+  <!-- Output Core State -->
+  <arg name="full_state_out_topic"      default="~full_state_out" />
+  <arg name="full_state_lite_out_topic" default="~full_state_lite_out" />
+  <arg name="pose_state_out_topic"      default="~pose_state_out" />
+  <arg name="odom_state_out_topic"      default="~odom_state_out" />
+  <arg name="path_states_out_topic"     default="~path_states_out" />
+
+  <!-- Output Calibration State -->
+  <arg name="vision1_cal_state_out_topic"   default="~vision1_cal_state_out" />
+  <arg name="gps1_cal_state_out_topic"      default="~gps1_cal_state_out" />
+  <arg name="pressure1_cal_state_out_topic" default="~pressure1_cal_state_out" />
+  <arg name="mag1_cal_state_out_topic"      default="~mag1_cal_state_out" />
+
+  <!-- Node Options -->
+  <arg name="respawn" default="false" />
+  <arg name="rviz"    default="false" />
+
+  <!-- Config File -->
+  <arg name="config_file" default="$(find mars_ros)/launch/config/gps_vision_config.yaml" />
+
+  <!-- Launching the mars_ros pose_node -->
+  <node name="mars_gps_vision_node" pkg="mars_ros" type="gps_vision_node" clear_params="true" output="screen" respawn="$(arg respawn)" unless="$(arg use_gps_vel)">
+
+    <!-- Config File -->
+    <rosparam command="load" file="$(arg config_file)" />
+
+    <!-- Input -->
+    <remap from="~imu_in"       to="$(arg imu_in_topic)"/>
+
+    <remap from="~vision1_in"   to="$(arg vision1_in_topic)"/>
+    <remap from="~gps1_in"      to="$(arg gps1_pos_in)"/>
+    <remap from="~pressure1_in" to="$(arg pressure1_in)"/>
+    <remap from="~mag1_in"      to="$(arg mag1_in)"/>
+
+    <!-- Output Core State -->
+    <remap from="~core_ext_state_out"       to="$(arg full_state_out_topic)"/>
+    <remap from="~core_ext_state_lite_out"  to="$(arg full_state_lite_out_topic)"/>
+    <remap from="~core_pose_state_out"      to="$(arg pose_state_out_topic)"/>
+    <remap from="~core_odom_state_out"      to="$(arg odom_state_out_topic)"/>
+    <remap from="~core_states_path"         to="$(arg path_states_out_topic)"/>
+
+    <!-- Output Calibration State -->
+    <remap from="~vision1_cal_state_out"    to="$(arg vision1_cal_state_out_topic)"/>
+    <remap from="~gps1_cal_state_out"       to="$(arg gps1_cal_state_out_topic)"/>
+    <remap from="~pressure1_cal_state_out"  to="$(arg pressure1_cal_state_out_topic)"/>
+    <remap from="~mag1_cal_state_out"       to="$(arg mag1_cal_state_out_topic)"/>
+  </node>
+
+  <node name="mars_gpsvel_vision_node" pkg="mars_ros" type="gpsvel_vision_node" clear_params="true" output="screen" respawn="$(arg respawn)" if="$(arg use_gps_vel)">
+
+    <!-- Config File -->
+    <rosparam command="load" file="$(arg config_file)" />
+
+    <!-- Input -->
+    <remap from="~imu_in"         to="$(arg imu_in_topic)"/>
+
+    <remap from="~vision1_in"     to="$(arg vision1_in_topic)"/>
+    <remap from="~gps1_coord_in"  to="$(arg gps1_pos_in)"/>
+    <remap from="~gps1_vel_in"    to="$(arg gps1_vel_in)"/>
+    <remap from="~pressure1_in"   to="$(arg pressure1_in)"/>
+    <remap from="~mag1_in"        to="$(arg mag1_in)"/>
+
+    <!-- Output Core State -->
+    <remap from="~core_ext_state_out"       to="$(arg full_state_out_topic)"/>
+    <remap from="~core_ext_state_lite_out"  to="$(arg full_state_lite_out_topic)"/>
+    <remap from="~core_pose_state_out"      to="$(arg pose_state_out_topic)"/>
+    <remap from="~core_odom_state_out"      to="$(arg odom_state_out_topic)"/>
+    <remap from="~core_states_path"         to="$(arg path_states_out_topic)"/>
+
+    <!-- Output Calibration State -->
+    <remap from="~vision1_cal_state_out"    to="$(arg vision1_cal_state_out_topic)"/>
+    <remap from="~gps1_cal_state_out"       to="$(arg gps1_cal_state_out_topic)"/>
+    <remap from="~pressure1_cal_state_out"  to="$(arg pressure1_cal_state_out_topic)"/>
+    <remap from="~mag1_cal_state_out"       to="$(arg mag1_cal_state_out_topic)"/>
+  </node>
+
+  <!-- launch rviz -->
+  <group if="$(arg rviz)">
+    <arg name="namespace_mars"  value="mars_gps_vision_node" unless="$(arg use_gps_vel)"/>
+    <arg name="namespace_mars"  value="mars_gpsvel_vision_node" if="$(arg use_gps_vel)"/>
+
+    <include file="$(find mars_ros)/launch/rviz/mars_rviz.launch" if="$(arg rviz)">
+      <arg name="topic_path_in"   value="$(arg path_states_out_topic)" />
+      <arg name="topic_pose_in"   value="$(arg pose_state_out_topic)" />
+      <arg name="namespace_mars"  value="$(arg namespace_mars)" />
+    </include>
+
+    <arg name="pose_topic"  value="$(eval eval(compile('pose_state_out_topic.replace(\'~\',\'\')','string','eval')))" />
+    <node name="rviz_mars_pose_br" pkg="mars_ros" type="mars_tf2_converter" clear_params="true" output="screen" args="-t pose">
+      <param name="child_id"      value="imu" />
+
+      <remap from="~pose_in" to="$(arg pose_state_out_topic)" unless="$(eval pose_state_out_topic[0]=='~')"/>
+      <remap from="~pose_in" to="/$(arg namespace_mars)/$(arg pose_topic)" if="$(eval pose_state_out_topic[0]=='~')"/>
+    </node>
+
+    <arg name="vision1_cal_topic"  value="$(eval eval(compile('vision1_cal_state_out_topic.replace(\'~\',\'\')','string','eval')))" />
+    <node name="rviz_mars_vision1_cal_br" pkg="mars_ros" type="mars_tf2_converter" clear_params="true" output="screen" args="-t vision">
+      <param name="child_id"      value="vision1_sensor" />
+      <param name="parent_id"     value="imu" />
+
+      <remap from="~state_in" to="$(arg vision1_cal_state_out_topic)" unless="$(eval vision1_cal_state_out_topic[0]=='~')"/>
+      <remap from="~state_in" to="/$(arg namespace_mars)/$(arg vision1_cal_topic)" if="$(eval vision1_cal_state_out_topic[0]=='~')"/>
+    </node>
+
+    <arg name="gps1_cal_topic"  value="$(eval eval(compile('gps1_cal_state_out_topic.replace(\'~\',\'\')','string','eval')))" />
+    <node name="rviz_mars_gps1_cal_br" pkg="mars_ros" type="mars_tf2_converter" clear_params="true" output="screen" args="-t posecov">
+      <param name="child_id"      value="gps1_sensor" />
+      <param name="parent_id"     value="imu" />
+
+      <remap from="~pose_in" to="$(arg gps1_cal_state_out_topic)" unless="$(eval gps1_cal_state_out_topic[0]=='~')"/>
+      <remap from="~pose_in" to="/$(arg namespace_mars)/$(arg gps1_cal_topic)" if="$(eval gps1_cal_state_out_topic[0]=='~')"/>
+    </node>
+
+    <arg name="mag1_cal_topic"  value="$(eval eval(compile('mag1_cal_state_out_topic.replace(\'~\',\'\')','string','eval')))" />
+    <node name="rviz_mars_mag1_cal_br" pkg="mars_ros" type="mars_tf2_converter" clear_params="true" output="screen" args="-t posecov">
+      <param name="child_id"      value="mag1_sensor" />
+      <param name="parent_id"     value="imu" />
+
+      <remap from="~pose_in" to="$(arg mag1_cal_state_out_topic)" unless="$(eval mag1_cal_state_out_topic[0]=='~')"/>
+      <remap from="~pose_in" to="/$(arg namespace_mars)/$(arg mag1_cal_topic)" if="$(eval mag1_cal_state_out_topic[0]=='~')"/>
+    </node>
+
+    <arg name="pressure1_cal_topic"  value="$(eval eval(compile('pressure1_cal_state_out_topic.replace(\'~\',\'\')','string','eval')))" />
+    <node name="rviz_mars_pressure1_cal_br" pkg="mars_ros" type="mars_tf2_converter" clear_params="true" output="screen" args="-t pose">
+      <param name="child_id"      value="pressure1_sensor" />
+      <param name="parent_id"     value="imu" />
+
+      <remap from="~pose_in" to="$(arg pressure1_cal_state_out_topic)" unless="$(eval pressure1_cal_state_out_topic[0]=='~')"/>
+      <remap from="~pose_in" to="/$(arg namespace_mars)/$(arg pressure1_cal_topic)" if="$(eval pressure1_cal_state_out_topic[0]=='~')"/>
+    </node>
+
+  </group>
+
+</launch>
