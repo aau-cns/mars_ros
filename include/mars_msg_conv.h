@@ -416,7 +416,7 @@ public:
     Eigen::MatrixXd meas_noise = Eigen::MatrixXd::Zero(6, 6);
     meas_noise.block(0, 0, 3, 3) = Eigen::Map<Eigen::Matrix<double, 3, 3, Eigen::RowMajor>>(R_vec_p.data());
     meas_noise.block(3, 3, 3, 3) =
-        Eigen::Map<Eigen::Matrix<double, 3, 3, Eigen::RowMajor>>(R_vec_v.data()).block(0, 0, 3, 3);
+        Eigen::Map<Eigen::Matrix<double, 6, 6, Eigen::RowMajor>>(R_vec_v.data()).block(0, 0, 3, 3);
 
     gps_vel_meas.set_meas_noise(meas_noise);
     gps_vel_meas.has_meas_noise = true;
