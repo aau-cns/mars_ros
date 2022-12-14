@@ -1,4 +1,4 @@
-# Copyright (C) 2022 Martin Scheiber and Christian Brommer,
+# Copyright (C) 2022-2023 Martin Scheiber and Christian Brommer,
 # Control of Networked Systems, University of Klagenfurt, Austria.
 #
 # All rights reserved.
@@ -29,7 +29,7 @@ jobs:
       matrix:
         ROS_DISTRO: [noetic, melodic, kinetic]
     env:
-      BADGE_CREATION: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository_owner == 'aau-cns' }}
+      BADGE_CREATION: ${{ github.event_name == 'push' && github.repository_owner == 'aau-cns' }}
     steps:
     - name: Create Badge (running)
       if: ${{ env.BADGE_CREATION == 'true' }}
@@ -40,9 +40,9 @@ jobs:
         filename: build_mars_ros_${{ matrix.ROS_DISTRO }}.json
         label: ${{ matrix.ROS_DISTRO }}
         message: running
-        color: yellow
+        color: yellowgreen
         namedLogo: ROS
-        style: plastic
+        style: flat
 
     - name: Get newest Git version
       run: >
@@ -99,9 +99,9 @@ jobs:
         filename: build_mars_ros_${{ matrix.ROS_DISTRO }}.json
         label: ${{ matrix.ROS_DISTRO }}
         message: passing
-        color: green
+        color: success
         namedLogo: ROS
-        style: plastic
+        style: flat
 
     - name: Create Badge (failure)
       if: ${{ failure() && env.BADGE_CREATION == 'true' }}
@@ -114,7 +114,7 @@ jobs:
         message: failure
         isError: true
         namedLogo: ROS
-        style: plastic
+        style: flat
 
     - name: Create Badge (cancelled)
       if: ${{ cancelled() && env.BADGE_CREATION == 'true' }}
@@ -127,4 +127,4 @@ jobs:
         message: cancelled
         color: inactive
         namedLogo: ROS
-        style: plastic
+        style: flat
