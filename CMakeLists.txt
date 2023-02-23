@@ -96,6 +96,7 @@ message(" * Boost: ${Boost_INCLUDE_DIRS}")
 
 ## Generate messages in the 'msg' folder
  add_message_files(
+   DIRECTORY msg
    FILES
    ExtCoreState.msg
    ExtCoreStateLite.msg
@@ -153,7 +154,7 @@ generate_dynamic_reconfigure_options(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include ${EIGEN3_INCLUDE_DIR} ${MARS_INCLUDE_DIR} ${catkin_INCLUDE_DIRS}
-  LIBRARIES mars_lib mars_ros
+  LIBRARIES mars_lib
   CATKIN_DEPENDS roscpp message_runtime std_msgs
   DEPENDS #system_lib
 )
