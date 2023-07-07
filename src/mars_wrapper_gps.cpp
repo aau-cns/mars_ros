@@ -70,7 +70,7 @@ MarsWrapperGps::MarsWrapperGps(ros::NodeHandle nh)
     Eigen::Matrix<double, 3, 1> gps_meas_std;
     gps_meas_std << m_sett_.gps1_pos_meas_noise_, m_sett_.gps1_vel_meas_noise_;
     gps1_sensor_sptr_->R_ = gps_meas_std.cwiseProduct(gps_meas_std);
-    gps1_sensor_sptr_->use_dynamic_meas_noise_ = false;
+    gps1_sensor_sptr_->use_dynamic_meas_noise_ = m_sett_.gps1_use_dyn_meas_noise_;
 
     GpsSensorData gps_calibration;
     gps_calibration.state_.p_ig_ = Eigen::Vector3d(m_sett_.gps1_cal_ig_);

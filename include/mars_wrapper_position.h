@@ -63,6 +63,7 @@ public:
 
   Eigen::Vector3d position1_pos_meas_noise_;
   Eigen::Vector3d position1_cal_p_ip_;
+  bool position1_use_dyn_meas_noise_{ false };
   Eigen::Quaterniond position1_cal_q_ip_;
   Eigen::Matrix<double, 3, 1> position1_state_init_cov_;
 
@@ -129,6 +130,8 @@ public:
     nh.param("position1_pos_meas_noise", position1_pos_meas_noise, std::vector<double>());
     check_size(position1_pos_meas_noise.size(), 3);
     position1_pos_meas_noise_ = Eigen::Map<Eigen::Matrix<double, 3, 1> >(position1_pos_meas_noise.data());
+
+    position1_use_dyn_meas_noise_ = nh.param<bool>("position1_use_dyn_meas_noise", position1_use_dyn_meas_noise_);
 
     std::vector<double> position1_cal_p_ip;
     nh.param("position1_cal_p_ip", position1_cal_p_ip, std::vector<double>());

@@ -2,7 +2,7 @@
 
 # Introduction
 
-[![ROS-Noetic](https://github.com/aau-cns/mars_ros/actions/workflows/ros_noetic.yml/badge.svg)](https://github.com/aau-cns/mars_ros/actions/workflows/ros_noetic.yml) [![ROS-Melodic](https://github.com/aau-cns/mars_ros/actions/workflows/ros_melodic.yml/badge.svg)](https://github.com/aau-cns/mars_ros/actions/workflows/ros_melodic.yml) [![ROS-Kinetic](https://github.com/aau-cns/mars_ros/actions/workflows/ros_kinetic.yml/badge.svg)](https://github.com/aau-cns/mars_ros/actions/workflows/ros_kinetic.yml)<br/>
+[![noetic_badge](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/ist-cns/43fe7d2cb351d05d5101f8d1d6b94bd9/raw/build_mars_ros_noetic.json)](https://github.com/aau-cns/mars_ros/actions/workflows/ros.yml) [![kitetic_badge](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/ist-cns/43fe7d2cb351d05d5101f8d1d6b94bd9/raw/build_mars_ros_kinetic.json)](https://github.com/aau-cns/mars_ros/actions/workflows/ros.yml) [![melodic_badge](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/ist-cns/43fe7d2cb351d05d5101f8d1d6b94bd9/raw/build_mars_ros_melodic.json)](https://github.com/aau-cns/mars_ros/actions/workflows/ros.yml) <br/>
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5185909.svg)](https://doi.org/10.5281/zenodo.5185909) [![IEEE](https://img.shields.io/badge/IEEE-10.1109/LRA.2020.3043195-00498d.svg)](https://ieeexplore.ieee.org/document/9286578) [![License](https://img.shields.io/badge/License-AAUCNS-green.svg)](./LICENSE)
 
 This package is a ROS Wrapper for the Modular and Robust State-Estimation (MaRS) Library, which can be found [here](https://github.com/aau-cns/mars_lib), with the technology described by this [publication](https://ieeexplore.ieee.org/document/9286578). The wrapper defines simple nodes for direct use. Additional sensors can be added to pre-existing nodes, or a dedicated ROS node can be designed for a specific application.
@@ -59,16 +59,23 @@ $ catkin build
 
 ## Isolated Build with Docker
 
+The docker image is published regularly with updates to [Dockerhub](https://hub.docker.com/r/aaucns/mars_ros_test_env).
+If you want to build the image yourself, you can do so with
+
 ```sh
 $ cd mars_ros # Enter the source directory
-$ docker build --network=host -t mars_ros_test_env:latest . # Build the Docker image
+$ docker build --network=host -t aaucns/mars_ros_test_env:latest . # Build the Docker image
+```
 
+Either way, you can then test your MaRS ROS wrapper by executing the following.
+
+```sh
 # The following runs the container, maps the source code (read only)
 # and executes the script in 'docker/docker_application_test.sh'
 $ docker run -it --rm \
   --network=host \
   -v "$(pwd)":/source:ro \
-  mars_ros_test_env:latest
+  aaucns/mars_ros_test_env:latest
 ```
 
 # Usage

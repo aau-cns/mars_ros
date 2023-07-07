@@ -20,7 +20,6 @@
 #include <mars/sensors/pose/pose_measurement_type.h>
 #include <mars/type_definitions/buffer_data_type.h>
 #include <mars/type_definitions/buffer_entry_type.h>
-
 #include <mars_ros/ExtCoreState.h>
 #include <mars_ros/ExtCoreStateLite.h>
 #include <nav_msgs/Odometry.h>
@@ -83,7 +82,7 @@ MarsWrapperDualPoseFull::MarsWrapperDualPoseFull(ros::NodeHandle nh)
     Eigen::Matrix<double, 6, 1> pose_meas_std;
     pose_meas_std << m_sett_.pose1_pos_meas_noise_, m_sett_.pose1_att_meas_noise_;
     pose1_sensor_sptr_->R_ = pose_meas_std.cwiseProduct(pose_meas_std);
-    pose1_sensor_sptr_->use_dynamic_meas_noise_ = false;
+    pose1_sensor_sptr_->use_dynamic_meas_noise_ = m_sett_.pose1_use_dyn_meas_noise_;
 
     PoseSensorData pose_calibration;
     pose_calibration.state_.p_ip_ = m_sett_.pose1_cal_p_ip_;
@@ -106,12 +105,13 @@ MarsWrapperDualPoseFull::MarsWrapperDualPoseFull(ros::NodeHandle nh)
               << " ]" << std::endl;
   }
 
-  // Pose1
+  // Pose2
   pose2_sensor_sptr_ = std::make_shared<mars::PoseSensorClass>("Pose2", core_states_sptr_);
   {  // Limit scope of temp variables
     Eigen::Matrix<double, 6, 1> pose_meas_std;
     pose_meas_std << m_sett_.pose1_pos_meas_noise_, m_sett_.pose2_att_meas_noise_;
     pose2_sensor_sptr_->R_ = pose_meas_std.cwiseProduct(pose_meas_std);
+    pose2_sensor_sptr_->use_dynamic_meas_noise_ = m_sett_.pose2_use_dyn_meas_noise_;
 
     PoseSensorData pose_calibration;
     pose_calibration.state_.p_ip_ = m_sett_.pose2_cal_p_ip_;
@@ -149,6 +149,7 @@ MarsWrapperDualPoseFull::MarsWrapperDualPoseFull(ros::NodeHandle nh)
     gps1_meas_std << m_sett_.gps1_pos_meas_noise_, m_sett_.gps1_vel_meas_noise_;
 #endif
     gps1_sensor_sptr_->R_ = gps1_meas_std.cwiseProduct(gps1_meas_std);
+    gps1_sensor_sptr_->use_dynamic_meas_noise_ = m_sett_.gps1_use_dyn_meas_noise_;
 
 #ifndef GPS_W_VEL
     GpsSensorData gps_calibration;
@@ -180,6 +181,7 @@ MarsWrapperDualPoseFull::MarsWrapperDualPoseFull(ros::NodeHandle nh)
     Eigen::Matrix<double, 1, 1> pressure_meas_std;
     pressure_meas_std << m_sett_.pressure1_meas_noise_;
     pressure1_sensor_sptr_->R_ = pressure_meas_std.cwiseProduct(pressure_meas_std);
+    pressure1_sensor_sptr_->use_dynamic_meas_noise_ = m_sett_.pressure1_use_dyn_meas_noise_;
 
     PressureSensorData pressure_calibration;
     pressure_calibration.state_.p_ip_ = Eigen::Vector3d(m_sett_.pressure1_cal_ip_);

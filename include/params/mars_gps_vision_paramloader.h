@@ -82,6 +82,7 @@ public:
   bool vision1_fixed_scale_;
   Eigen::Vector3d vision1_pos_meas_noise_;
   Eigen::Vector3d vision1_att_meas_noise_;
+  bool vision1_use_dyn_meas_noise_{ false };
   Eigen::Vector3d vision1_cal_p_ip_;
   Eigen::Quaterniond vision1_cal_q_ip_;
   Eigen::Matrix<double, 6, 1> vision1_cal_ip_init_cov_;
@@ -91,6 +92,7 @@ public:
   {
     PARAM_PRINTER("vision1_pos_meas_noise_:   " << vision1_pos_meas_noise_.transpose() << "\n");
     PARAM_PRINTER("vision1_att_meas_noise_:   " << vision1_att_meas_noise_.transpose() << "\n");
+    PARAM_PRINTER("vision1_use_dyn_meas_noise_: " << vision1_use_dyn_meas_noise_ << "\n");
     PARAM_PRINTER("vision1_cal_p_ip_:         " << vision1_cal_p_ip_.transpose() << "\n");
     PARAM_PRINTER("vision1_cal_q_ip_:         " << vision1_cal_q_ip_.w() << " " << vision1_cal_q_ip_.vec().transpose()
                                                 << "\n");
@@ -110,6 +112,7 @@ public:
   // GPS1 calibration
   Eigen::Vector3d gps1_pos_meas_noise_;
   Eigen::Vector3d gps1_vel_meas_noise_;
+  bool gps1_use_dyn_meas_noise_{ false };
   Eigen::Vector3d gps1_cal_ig_;
   Eigen::Vector3d gps1_state_init_cov_;
 
@@ -117,12 +120,14 @@ public:
   {
     PARAM_PRINTER("gps1_pos_meas_noise_:      " << gps1_pos_meas_noise_.transpose() << "\n");
     PARAM_PRINTER("gps1_vel_meas_noise_:      " << gps1_vel_meas_noise_.transpose() << "\n");
+    PARAM_PRINTER("gps1_use_dyn_meas_noise_:  " << gps1_use_dyn_meas_noise_ << "\n");
     PARAM_PRINTER("gps1_cal_ig_:              " << gps1_cal_ig_.transpose() << "\n");
     PARAM_PRINTER("gps1_state_init_cov_:      " << gps1_state_init_cov_.transpose() << "\n");
   }
 
   // Pressure calibration
   double pressure1_meas_noise_;
+  bool pressure1_use_dyn_meas_noise_{ false };
   Eigen::Vector3d pressure1_cal_ip_;
   Eigen::Vector3d pressure1_state_init_cov_;
 
@@ -135,6 +140,7 @@ public:
     if (use_pressure_)
     {
       PARAM_PRINTER("pressure1_meas_noise_:     " << pressure1_meas_noise_ << "\n");
+      PARAM_PRINTER("pressure1_use_dyn_meas_noise_: " << pressure1_use_dyn_meas_noise_ << "\n");
       PARAM_PRINTER("pressure1_cal_ip_:         " << pressure1_cal_ip_.transpose() << "\n");
       PARAM_PRINTER("pressure1_state_init_cov_: " << pressure1_state_init_cov_.transpose() << "\n");
       PARAM_PRINTER("pressure1_const_temp_:     " << pressure1_const_temp_ << "\n");
@@ -151,6 +157,7 @@ public:
   bool mag1_normalize_{ true };
   double mag1_declination_{ 0.0 };
   Eigen::Vector3d mag1_meas_noise_;
+  bool mag1_use_dyn_meas_noise_{ false };
   Eigen::Quaterniond mag1_cal_q_im_;
   Eigen::Matrix<double, 6, 1> mag1_state_init_cov_;
 
@@ -161,6 +168,7 @@ public:
       PARAM_PRINTER("mag1_normalize_:           " << mag1_normalize_ << "\n");
       PARAM_PRINTER("mag1_declination_:         " << mag1_declination_ << "\n");
       PARAM_PRINTER("mag1_meas_noise_:          " << mag1_meas_noise_.transpose() << "\n");
+      PARAM_PRINTER("mag1_use_dyn_meas_noise_:  " << mag1_use_dyn_meas_noise_ << "\n");
       PARAM_PRINTER("mag1_cal_q_im_:            " << mag1_cal_q_im_.coeffs() << "\n");
       PARAM_PRINTER("mag1_state_init_cov_:      " << mag1_state_init_cov_.transpose() << "\n");
     }
@@ -264,6 +272,7 @@ public:
     nh.param("vision1_fixed_scale", vision1_fixed_scale_, true);
     check_and_load<3>(vision1_pos_meas_noise_, nh, "vision1_pos_meas_noise");
     check_and_load<3>(vision1_att_meas_noise_, nh, "vision1_att_meas_noise");
+    vision1_use_dyn_meas_noise_ = nh.param<bool>("vision1_use_dyn_meas_noise", vision1_use_dyn_meas_noise_);
     check_and_load<3>(vision1_cal_p_ip_, nh, "vision1_cal_p_ip");
 
     std::vector<double> vision1_cal_q_ip;
@@ -289,6 +298,7 @@ public:
 
     // Pressure Settings
     pressure1_meas_noise_ = nh.param<double>("pressure1_meas_noise", 1.0);
+    pressure1_use_dyn_meas_noise_ = nh.param<bool>("pressure1_use_dyn_meas_noise", pressure1_use_dyn_meas_noise_);
     pressure1_const_temp_ = nh.param<bool>("pressure1_const_temp", pressure1_const_temp_);
     pressure1_temp_K_ = nh.param<double>("pressure1_temp_K", pressure1_temp_K_);
     pressure1_init_duration_ = nh.param<double>("pressure1_init_duration", pressure1_init_duration_);
@@ -300,6 +310,7 @@ public:
     nh.param("mag1_declination", mag1_declination_, double());
 
     check_and_load<3>(mag1_meas_noise_, nh, "mag1_meas_noise");
+    mag1_use_dyn_meas_noise_ = nh.param<bool>("mag1_use_dyn_meas_noise", mag1_use_dyn_meas_noise_);
 
     std::vector<double> mag1_cal_q_im;
     nh.param("mag1_cal_q_im", mag1_cal_q_im, std::vector<double>());

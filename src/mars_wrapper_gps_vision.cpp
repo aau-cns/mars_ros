@@ -83,7 +83,7 @@ MarsWrapperGpsVision::MarsWrapperGpsVision(ros::NodeHandle nh)
     Eigen::Matrix<double, 6, 1> vision_meas_std;
     vision_meas_std << m_sett_.vision1_pos_meas_noise_, m_sett_.vision1_att_meas_noise_;
     vision1_sensor_sptr_->R_ = vision_meas_std.cwiseProduct(vision_meas_std);
-    vision1_sensor_sptr_->use_dynamic_meas_noise_ = false;
+    vision1_sensor_sptr_->use_dynamic_meas_noise_ = m_sett_.vision1_use_dyn_meas_noise_;
 
     // TODO is set here for now, but will be managed by core logic in later versions
     vision1_sensor_sptr_->const_ref_to_nav_ = true;
@@ -96,6 +96,7 @@ MarsWrapperGpsVision::MarsWrapperGpsVision(ros::NodeHandle nh)
     Eigen::Matrix<double, 3, 1> mag_meas_std;
     mag_meas_std << m_sett_.mag1_meas_noise_;
     mag1_sensor_sptr_->R_ = mag_meas_std.cwiseProduct(mag_meas_std);
+    mag1_sensor_sptr_->use_dynamic_meas_noise_ = m_sett_.mag1_use_dyn_meas_noise_;
 
     MagSensorData mag_calibration;
     mag_calibration.state_.mag_ = Eigen::Vector3d(0, 1, 0);
@@ -127,6 +128,7 @@ MarsWrapperGpsVision::MarsWrapperGpsVision(ros::NodeHandle nh)
     gps1_meas_std << m_sett_.gps1_pos_meas_noise_, m_sett_.gps1_vel_meas_noise_;
 #endif  // GPS_W_VEL
     gps1_sensor_sptr_->R_ = gps1_meas_std.cwiseProduct(gps1_meas_std);
+    gps1_sensor_sptr_->use_dynamic_meas_noise_ = m_sett_.gps1_use_dyn_meas_noise_;
 
 #ifndef GPS_W_VEL
     GpsSensorData gps_calibration;
@@ -158,6 +160,7 @@ MarsWrapperGpsVision::MarsWrapperGpsVision(ros::NodeHandle nh)
     Eigen::Matrix<double, 1, 1> pressure_meas_std;
     pressure_meas_std << m_sett_.pressure1_meas_noise_;
     pressure1_sensor_sptr_->R_ = pressure_meas_std.cwiseProduct(pressure_meas_std);
+    pressure1_sensor_sptr_->use_dynamic_meas_noise_ = m_sett_.pressure1_use_dyn_meas_noise_;
 
     PressureSensorData pressure_calibration;
     pressure_calibration.state_.p_ip_ = Eigen::Vector3d(m_sett_.pressure1_cal_ip_);

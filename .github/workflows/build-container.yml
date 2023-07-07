@@ -1,0 +1,74 @@
+# Copyright (C) 2022-2023 Martin Scheiber and Christian Brommer,
+# Control of Networked Systems, University of Klagenfurt, Austria.
+#
+# All rights reserved.
+#
+# This software is licensed under the terms of the BSD-2-Clause-License with
+# no commercial use allowed, the full terms of which are made available
+# in the LICENSE file. No license in patents is granted.
+#
+# You can contact the author at <martin.scheiber@ieee.org> and
+# <christian.brommer@ieee.org>.
+
+name: Docker Container Build
+
+on:
+  push:
+    branches: [ "main", "development" ]
+    paths:
+      - 'docker/**'
+      - '.github/workflows/build-container.yml'
+
+jobs:
+  build_env:
+    name: Build Container ${{ github.ref_name }}
+    runs-on: ubuntu-latest
+    if: github.repository_owner == 'aau-cns'
+    env:
+      IMAGE_URL: aaucns
+      IMAGE_NAME: mars_ros_test_env
+      COMMIT_HASH: ${{ github.sha }}
+      PLATFORMS: "linux/amd64,linux/arm64"
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v2
+
+      # old for internal registry
+      # - name: Login to Registry
+      #   env:
+      #     DOCKER_USER: ${{ secrets.GITLAB_REGISTRY_USER }}
+      #     DOCKER_PASSWORD: ${{ secrets.GITLAB_REGISTRY_PASSWORD }}
+      #     DOCKER_URL: ${{ secrets.GITLAB_REGISTRY_URL }}
+      #   run: |
+      #     docker login -u ${DOCKER_USER} -p ${DOCKER_PASSWORD} ${DOCKER_URL}
+
+      - name: Login to Registry
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_REGISTRY_USER }}
+          password: ${{ secrets.DOCKERHUB_REGISTRY_PASSWORD }}
+
+      - name: Build Docker Image (dev)
+        if: github.ref == 'refs/heads/development'
+        run: >
+             docker buildx build \
+               --platform=${PLATFORMS} \
+               --tag ${IMAGE_URL}/${IMAGE_NAME}:dev \
+               --tag ${IMAGE_URL}/${IMAGE_NAME}:${COMMIT_HASH::6} \
+               --compress --force-rm --push ./docker/
+
+      - name: Build Docker Image (stable)
+        if: github.ref == 'refs/heads/main'
+        run: >
+             docker buildx build \
+               --platform=${PLATFORMS} \
+               --tag ${IMAGE_URL}/${IMAGE_NAME}:latest \
+               --tag ${IMAGE_URL}/${IMAGE_NAME}:${COMMIT_HASH::6} \
+               --compress --force-rm --push ./docker/
