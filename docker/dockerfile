@@ -1,9 +1,22 @@
-FROM ros:noetic-ros-core
+# Copyright (C) 2022 Christian Brommer and Martin Scheiber,
+# Control of Networked Systems, University of Klagenfurt, Austria.
+#
+# All rights reserved.
+#
+# This software is licensed under the terms of the BSD-2-Clause-License with
+# no commercial use allowed, the full terms of which are made available
+# in the LICENSE file. No license in patents is granted.
+#
+# You can contact the author at <christian.brommer@ieee.org>
+# and <martin.scheiber@ieee.org>.
 
+FROM ros:noetic-ros-core as stage1
+LABEL author="Christian Brommer <christian.brommer@aau.at>"
+LABEL author="Martin Scheiber <martin.scheiber@aau.at>"
 LABEL maintainer="Christian Brommer <christian.brommer@aau.at>"
 LABEL description="Mars Ros Wrapper Test Environment"
 
-ENV DEBIAN_FRONTEND noninteractive
+ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
     vim \
@@ -11,21 +24,27 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     doxygen \
     graphviz \
     build-essential \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN apt-get update && apt-get install --no-install-recommends -y \
     libeigen3-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN apt-get update && apt-get install --no-install-recommends -y \
     python3-catkin-tools \
     ros-noetic-dynamic-reconfigure \
     ros-noetic-tf2-ros \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /catkin_build_ws/src \
+    && mkdir -p /catkin_make_ws/src
 
-RUN mkdir -p /catkin_ws/src
-WORKDIR /catkin_ws
-RUN /bin/bash -c '. /opt/ros/noetic/setup.bash; catkin build'
+WORKDIR /catkin_build_ws
+RUN /bin/bash -c "source /opt/ros/noetic/setup.sh; rosdep init && rosdep update; \
+                  source /opt/ros/noetic/setup.sh; catkin init; catkin config --extend /opt/ros/noetic; \
+                  source /opt/ros/noetic/setup.sh; catkin build;"
+
+WORKDIR /catkin_make_ws
+RUN /bin/bash -c "source /opt/ros/noetic/setup.sh; catkin_make;"
 
 COPY ./docker_application_test.sh /
+
+# flatten image
+FROM scratch as final
+COPY --from=stage1 / /
+
+ENTRYPOINT ["/bin/bash"]
 CMD /docker_application_test.sh

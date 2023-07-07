@@ -59,16 +59,23 @@ $ catkin build
 
 ## Isolated Build with Docker
 
+The docker image is published regularly with updates to [Dockerhub](https://hub.docker.com/r/aaucns/mars_ros_test_env).
+If you want to build the image yourself, you can do so with
+
 ```sh
 $ cd mars_ros # Enter the source directory
-$ docker build --network=host -t mars_ros_test_env:latest . # Build the Docker image
+$ docker build --network=host -t aaucns/mars_ros_test_env:latest . # Build the Docker image
+```
 
+Either way, you can then test your MaRS ROS wrapper by executing the following.
+
+```sh
 # The following runs the container, maps the source code (read only)
 # and executes the script in 'docker/docker_application_test.sh'
 $ docker run -it --rm \
   --network=host \
   -v "$(pwd)":/source:ro \
-  mars_ros_test_env:latest
+  aaucns/mars_ros_test_env:latest
 ```
 
 # Usage
