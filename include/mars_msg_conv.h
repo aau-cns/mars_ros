@@ -208,9 +208,9 @@ public:
       }
 
       // add core state to path msg if vaild
-      if (buffer_entry.IsState())
+      if (buffer_entry.HasStates())
       {
-        mars::CoreStateType buffer_core_state = static_cast<mars::CoreType*>(buffer_entry.data_.core_.get())->state_;
+        mars::CoreStateType buffer_core_state = static_cast<mars::CoreType*>(buffer_entry.data_.core_state_.get())->state_;
         path_msg.poses.push_back(
             ExtCoreStateToPoseMsg(buffer_entry.timestamp_.get_seconds(), buffer_core_state, frame_id));
       }

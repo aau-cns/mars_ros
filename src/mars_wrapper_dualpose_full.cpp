@@ -322,7 +322,7 @@ void MarsWrapperDualPoseFull::set_common_gps_reference(const GpsCoordinates& ref
           if ((timestamp - tmp_meas.timestamp_).get_seconds() < 1.0)
           {
             // add measruement to average reference
-            GpsCoordinates tmp_coords = static_cast<GpsMeasurementType*>(tmp_meas.data_.sensor_.get())->coordinates_;
+            GpsCoordinates tmp_coords = static_cast<GpsMeasurementType*>(tmp_meas.data_.measurement_.get())->coordinates_;
             avg_ref.altitude_ += tmp_coords.altitude_;
             avg_ref.latitude_ += tmp_coords.latitude_;
             avg_ref.longitude_ += tmp_coords.longitude_;
@@ -383,7 +383,7 @@ void MarsWrapperDualPoseFull::ImuMeasurementCallback(const sensor_msgs::ImuConst
 
   // Generate a measurement data block
   BufferDataType data;
-  data.set_sensor_data(std::make_shared<IMUMeasurementType>(MarsMsgConv::ImuMsgToImuMeas(*meas)));
+  data.set_measurement(std::make_shared<IMUMeasurementType>(MarsMsgConv::ImuMsgToImuMeas(*meas)));
 
   // Call process measurement
   core_logic_.ProcessMeasurement(imu_sensor_sptr_, timestamp, data);
@@ -506,7 +506,7 @@ void MarsWrapperDualPoseFull::Gps1MeasurementCallback(const sensor_msgs::NavSatF
     mars::BufferEntryType latest_sensor_state;
     core_logic_.buffer_.get_latest_sensor_handle_state(gps1_sensor_sptr_, &latest_sensor_state);
 
-    mars::GpsSensorStateType gps_sensor_state = gps1_sensor_sptr_.get()->get_state(latest_sensor_state.data_.sensor_);
+    mars::GpsSensorStateType gps_sensor_state = gps1_sensor_sptr_.get()->get_state(latest_sensor_state.data_.sensor_state_);
     pub_gps1_state_.publish(MarsMsgConv::GpsStateToMsg(latest_sensor_state.timestamp_.get_seconds(), gps_sensor_state));
   }
 }
@@ -543,7 +543,7 @@ void MarsWrapperDualPoseFull::Gps1MeasurementCallback(const sensor_msgs::NavSatF
     }
 
     mars::GpsVelSensorStateType gps_sensor_state =
-        gps1_sensor_sptr_.get()->get_state(latest_sensor_state.data_.sensor_);
+        gps1_sensor_sptr_.get()->get_state(latest_sensor_state.data_.sensor_state_);
 
     pub_gps1_state_.publish(
         MarsMsgConv::GpsVelStateToMsg(latest_sensor_state.timestamp_.get_seconds(), gps_sensor_state));
@@ -589,7 +589,7 @@ void MarsWrapperDualPoseFull::RunCoreStatePublisher()
   // only publish valid states
   if (core_logic_.buffer_.get_latest_state(&latest_state))
   {
-    mars::CoreStateType latest_core_state = static_cast<mars::CoreType*>(latest_state.data_.core_.get())->state_;
+    mars::CoreStateType latest_core_state = static_cast<mars::CoreType*>(latest_state.data_.core_state_.get())->state_;
 
     pub_ext_core_state_.publish(
         MarsMsgConv::ExtCoreStateToMsg(latest_state.timestamp_.get_seconds(), latest_core_state));
@@ -653,7 +653,7 @@ bool MarsWrapperDualPoseFull::PoseMeasurementUpdate(std::shared_ptr<mars::PoseSe
       // get current core state
       mars::BufferEntryType latest_state;
       core_logic_.buffer_.get_latest_state(&latest_state);
-      mars::CoreStateType latest_core_state = static_cast<mars::CoreType*>(latest_state.data_.core_.get())->state_;
+      mars::CoreStateType latest_core_state = static_cast<mars::CoreType*>(latest_state.data_.core_state_.get())->state_;
 
       // save sensor 1 to sensor 2 calibration!
       /// \note NOTE(scm): variable names are wrong here, reusage of existing variables with their naming conventions,
@@ -678,7 +678,7 @@ bool MarsWrapperDualPoseFull::PoseMeasurementUpdate(std::shared_ptr<mars::PoseSe
   // Generate a measurement data block
   BufferDataType data;
   //  data.set_sensor_data(std::make_shared<PoseMeasurementType>(pose_meas));
-  data.set_sensor_data(std::make_shared<PoseMeasurementType>(rotated_pose_meas));
+  data.set_measurement(std::make_shared<PoseMeasurementType>(rotated_pose_meas));
 
   // Call process measurement
   if (!core_logic_.ProcessMeasurement(sensor_sptr, timestamp_corr, data))
@@ -692,7 +692,7 @@ bool MarsWrapperDualPoseFull::PoseMeasurementUpdate(std::shared_ptr<mars::PoseSe
   // Publish the latest sensor state
   mars::BufferEntryType latest_result;
   core_logic_.buffer_.get_latest_sensor_handle_state(sensor_sptr, &latest_result);
-  mars::PoseSensorStateType pose_sensor_state = sensor_sptr.get()->get_state(latest_result.data_.sensor_);
+  mars::PoseSensorStateType pose_sensor_state = sensor_sptr.get()->get_state(latest_result.data_.sensor_state_);
 
   pub_pose1_state_.publish(MarsMsgConv::PoseStateToPoseMsg(latest_result.timestamp_.get_seconds(), pose_sensor_state));
 
@@ -709,10 +709,10 @@ bool MarsWrapperDualPoseFull::GpsMeasurementUpdate(std::shared_ptr<mars::GpsSens
 
   // Generate a measurement data block
   BufferDataType data;
-  data.set_sensor_data(std::make_shared<GpsMeasurementType>(gps_meas));
+  data.set_measurement(std::make_shared<GpsMeasurementType>(gps_meas));
 
   // Update init buffer
-  BufferEntryType gps_meas_entry(timestamp, data, gps1_sensor_sptr_, BufferMetadataType::measurement);
+  BufferEntryType gps_meas_entry(timestamp, data, gps1_sensor_sptr_);
   gps_meas_buffer_.AddEntrySorted(gps_meas_entry);
 
   // only continue if we have common gps ref set
@@ -738,10 +738,10 @@ bool MarsWrapperDualPoseFull::GpsVelMeasurementUpdate(std::shared_ptr<mars::GpsV
 
   // Generate a measurement data block
   BufferDataType data;
-  data.set_sensor_data(std::make_shared<GpsVelMeasurementType>(gps_meas));
+  data.set_measurement(std::make_shared<GpsVelMeasurementType>(gps_meas));
 
   // Update init buffer
-  BufferEntryType gps_meas_entry(timestamp, data, gps1_sensor_sptr_, BufferMetadataType::measurement);
+  BufferEntryType gps_meas_entry(timestamp, data, gps1_sensor_sptr_);
   gps_meas_buffer_.AddEntrySorted(gps_meas_entry);
 
   // Call process measurement
@@ -763,7 +763,7 @@ bool MarsWrapperDualPoseFull::PressureMeasurementUpdate(std::shared_ptr<mars::Pr
 {
   // Generate a measurement data block
   BufferDataType data;
-  data.set_sensor_data(std::make_shared<PressureMeasurementType>(press_meas));
+  data.set_measurement(std::make_shared<PressureMeasurementType>(press_meas));
 
   // Call process measurement
   if (!core_logic_.ProcessMeasurement(sensor_sptr, timestamp, data))

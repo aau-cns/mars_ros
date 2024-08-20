@@ -192,7 +192,7 @@ void MarsWrapperGps::ImuMeasurementCallback(const sensor_msgs::ImuConstPtr& meas
 
   // Generate a measurement data block
   BufferDataType data;
-  data.set_sensor_data(std::make_shared<IMUMeasurementType>(MarsMsgConv::ImuMsgToImuMeas(*meas)));
+  data.set_measurement(std::make_shared<IMUMeasurementType>(MarsMsgConv::ImuMsgToImuMeas(*meas)));
 
   // Call process measurement
   const bool valid_update = core_logic_.ProcessMeasurement(imu_sensor_sptr_, timestamp, data);
@@ -245,7 +245,7 @@ void MarsWrapperGps::Gps1MeasurementCallback(const sensor_msgs::NavSatFixConstPt
     return;
   }
 
-  mars::GpsSensorStateType gps_sensor_state = gps1_sensor_sptr_.get()->get_state(latest_sensor_state.data_.sensor_);
+  mars::GpsSensorStateType gps_sensor_state = gps1_sensor_sptr_.get()->get_state(latest_sensor_state.data_.sensor_state_);
 
   pub_gps1_state_.publish(MarsMsgConv::GpsStateToMsg(latest_sensor_state.timestamp_.get_seconds(), gps_sensor_state));
 }
@@ -260,11 +260,11 @@ void MarsWrapperGps::RunCoreStatePublisher()
     return;
   }
 
-  mars::CoreStateType latest_core_state = static_cast<mars::CoreType*>(latest_state.data_.core_.get())->state_;
+  mars::CoreStateType latest_core_state = static_cast<mars::CoreType*>(latest_state.data_.core_state_.get())->state_;
 
   if (m_sett_.pub_cov_)
   {
-    mars::CoreStateMatrix cov = static_cast<mars::CoreType*>(latest_state.data_.core_.get())->cov_;
+    mars::CoreStateMatrix cov = static_cast<mars::CoreType*>(latest_state.data_.core_state_.get())->cov_;
     pub_ext_core_state_.publish(
         MarsMsgConv::ExtCoreStateToMsgCov(latest_state.timestamp_.get_seconds(), latest_core_state, cov));
   }
@@ -299,7 +299,7 @@ void MarsWrapperGps::GpsMeasurementUpdate(std::shared_ptr<mars::GpsSensorClass> 
 
   // Generate a measurement data block
   BufferDataType data;
-  data.set_sensor_data(std::make_shared<GpsMeasurementType>(gps_meas));
+  data.set_measurement(std::make_shared<GpsMeasurementType>(gps_meas));
 
   // Call process measurement
   if (!core_logic_.ProcessMeasurement(sensor_sptr, timestamp, data))
