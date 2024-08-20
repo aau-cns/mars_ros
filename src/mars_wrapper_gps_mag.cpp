@@ -232,7 +232,7 @@ void MarsWrapperGpsMag::ImuMeasurementCallback(const sensor_msgs::ImuConstPtr& m
 
   // Generate a measurement data block
   BufferDataType data;
-  data.set_sensor_data(std::make_shared<IMUMeasurementType>(MarsMsgConv::ImuMsgToImuMeas(*meas)));
+  data.set_measurement(std::make_shared<IMUMeasurementType>(MarsMsgConv::ImuMsgToImuMeas(*meas)));
 
   // Call process measurement
   const bool valid_update = core_logic_.ProcessMeasurement(imu_sensor_sptr_, timestamp, data);
@@ -289,7 +289,7 @@ void MarsWrapperGpsMag::Gps1MeasurementCallback(const sensor_msgs::NavSatFixCons
     }
 
     mars::GpsVelSensorStateType gps_sensor_state =
-        gps1_sensor_sptr_.get()->get_state(latest_sensor_state.data_.sensor_);
+        gps1_sensor_sptr_.get()->get_state(latest_sensor_state.data_.sensor_state_);
 
     pub_gps1_state_.publish(
         MarsMsgConv::GpsVelStateToMsg(latest_sensor_state.timestamp_.get_seconds(), gps_sensor_state));
@@ -314,7 +314,7 @@ void MarsWrapperGpsMag::Mag1MeasurementCallback(const sensor_msgs::MagneticField
     };
 
     mars::IMUMeasurementType imu_meas =
-        *static_cast<mars::IMUMeasurementType*>(latest_imu_meas_entry.data_.sensor_.get());
+        *static_cast<mars::IMUMeasurementType*>(latest_imu_meas_entry.data_.sensor_state_.get());
 
     // Get current Magnetometer measurement
     mars::MagMeasurementType mag_meas = MarsMsgConv::MagMsgToMagMeas(*meas);
@@ -364,7 +364,7 @@ void MarsWrapperGpsMag::Mag1MeasurementCallback(const sensor_msgs::MagneticField
       return;
     }
 
-    mars::MagSensorStateType mag_sensor_state = mag1_sensor_sptr_.get()->get_state(latest_sensor_state.data_.sensor_);
+    mars::MagSensorStateType mag_sensor_state = mag1_sensor_sptr_.get()->get_state(latest_sensor_state.data_.sensor_state_);
 
     pub_mag1_state_.publish(MarsMsgConv::MagStateToMsg(latest_sensor_state.timestamp_.get_seconds(), mag_sensor_state));
   }
@@ -380,11 +380,11 @@ void MarsWrapperGpsMag::RunCoreStatePublisher()
     return;
   }
 
-  mars::CoreStateType latest_core_state = static_cast<mars::CoreType*>(latest_state.data_.core_.get())->state_;
+  mars::CoreStateType latest_core_state = static_cast<mars::CoreType*>(latest_state.data_.core_state_.get())->state_;
 
   if (m_sett_.pub_cov_)
   {
-    mars::CoreStateMatrix cov = static_cast<mars::CoreType*>(latest_state.data_.core_.get())->cov_;
+    mars::CoreStateMatrix cov = static_cast<mars::CoreType*>(latest_state.data_.core_state_.get())->cov_;
     pub_ext_core_state_.publish(
         MarsMsgConv::ExtCoreStateToMsgCov(latest_state.timestamp_.get_seconds(), latest_core_state, cov));
   }
@@ -415,7 +415,7 @@ bool MarsWrapperGpsMag::GpsVelMeasurementUpdate(std::shared_ptr<mars::GpsVelSens
 {
   // Generate a measurement data block
   BufferDataType data;
-  data.set_sensor_data(std::make_shared<GpsVelMeasurementType>(gps_meas));
+  data.set_measurement(std::make_shared<GpsVelMeasurementType>(gps_meas));
 
   // Call process measurement
   if (!core_logic_.ProcessMeasurement(sensor_sptr, timestamp, data))
@@ -434,7 +434,7 @@ bool MarsWrapperGpsMag::MagMeasurementUpdate(std::shared_ptr<MagSensorClass> sen
 {
   // Generate a measurement data block
   BufferDataType data;
-  data.set_sensor_data(std::make_shared<MagMeasurementType>(mag_meas));
+  data.set_measurement(std::make_shared<MagMeasurementType>(mag_meas));
 
   // Call process measurement
   if (!core_logic_.ProcessMeasurement(sensor_sptr, timestamp, data))
