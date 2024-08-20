@@ -161,7 +161,7 @@ void MarsWrapperPose::ImuMeasurementCallback(const sensor_msgs::ImuConstPtr& mea
 
   // Generate a measurement data block
   BufferDataType data;
-  data.set_sensor_data(std::make_shared<IMUMeasurementType>(MarsMsgConv::ImuMsgToImuMeas(*meas)));
+  data.set_measurement(std::make_shared<IMUMeasurementType>(MarsMsgConv::ImuMsgToImuMeas(*meas)));
 
   // Call process measurement
   const bool valid_update = core_logic_.ProcessMeasurement(imu_sensor_sptr_, timestamp, data);
@@ -224,11 +224,11 @@ void MarsWrapperPose::RunCoreStatePublisher()
     return;
   }
 
-  mars::CoreStateType latest_core_state = static_cast<mars::CoreType*>(latest_state.data_.core_.get())->state_;
+  mars::CoreStateType latest_core_state = static_cast<mars::CoreType*>(latest_state.data_.core_state_.get())->state_;
 
   if (m_sett_.pub_cov_)
   {
-    mars::CoreStateMatrix cov = static_cast<mars::CoreType*>(latest_state.data_.core_.get())->cov_;
+    mars::CoreStateMatrix cov = static_cast<mars::CoreType*>(latest_state.data_.core_state_.get())->cov_;
     pub_ext_core_state_.publish(
         MarsMsgConv::ExtCoreStateToMsgCov(latest_state.timestamp_.get_seconds(), latest_core_state, cov));
   }
@@ -279,7 +279,7 @@ void MarsWrapperPose::PoseMeasurementUpdate(std::shared_ptr<mars::PoseSensorClas
 
   // Generate a measurement data block
   BufferDataType data;
-  data.set_sensor_data(std::make_shared<PoseMeasurementType>(pose_meas));
+  data.set_measurement(std::make_shared<PoseMeasurementType>(pose_meas));
 
   // Call process measurement
   if (!core_logic_.ProcessMeasurement(sensor_sptr, timestamp_corr, data))
@@ -299,7 +299,7 @@ void MarsWrapperPose::PoseMeasurementUpdate(std::shared_ptr<mars::PoseSensorClas
     return;
   }
 
-  mars::PoseSensorStateType pose_sensor_state = sensor_sptr.get()->get_state(latest_result.data_.sensor_);
+  mars::PoseSensorStateType pose_sensor_state = sensor_sptr.get()->get_state(latest_result.data_.sensor_state_);
 
   pub_pose1_state_.publish(MarsMsgConv::PoseStateToPoseMsg(latest_result.timestamp_.get_seconds(), pose_sensor_state));
 }
